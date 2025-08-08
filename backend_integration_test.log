@@ -1,0 +1,199 @@
+2025-08-05 22:50:04,477 - backend_integration_test - INFO - Starting backend integration tests...
+2025-08-05 22:50:04,477 - backend_integration_test - INFO - Testing serialization and deserialization...
+2025-08-05 22:50:04,477 - backend_integration_test - INFO - Testing case 1/7:
+2025-08-05 22:50:04,477 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 22:50:04,506 - backend_integration_test - INFO - Testing case 2/7:
+2025-08-05 22:50:04,508 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 6000.0}
+2025-08-05 22:50:04,509 - backend_integration_test - INFO - Testing case 3/7:
+2025-08-05 22:50:04,509 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 5.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 22:50:04,510 - backend_integration_test - INFO - Testing case 4/7:
+2025-08-05 22:50:04,510 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 20.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 22:50:04,511 - backend_integration_test - INFO - Testing case 5/7:
+2025-08-05 22:50:04,512 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 60.0, 'dwell_duration': 45.0, 'fall_duration': 120.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 22:50:04,513 - backend_integration_test - INFO - Testing case 6/7:
+2025-08-05 22:50:04,513 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 15.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 22:50:04,514 - backend_integration_test - INFO - Testing case 7/7:
+2025-08-05 22:50:04,514 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 1.0, 'max_lift': 1.0, 'cam_duration': 180.0, 'rise_duration': 1.0, 'dwell_duration': 1.0, 'fall_duration': 1.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 1.0}
+2025-08-05 22:50:04,515 - backend_integration_test - INFO - Testing parameter validation...
+2025-08-05 22:50:04,515 - backend_integration_test - INFO - Testing valid parameter cases...
+2025-08-05 22:50:04,515 - backend_integration_test - INFO -   Testing valid case 1/3:
+2025-08-05 22:50:04,515 - backend_integration_test - INFO -     Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 22:50:04,515 - campro.models.movement_law.MotionLaw - INFO - Motion parameters validated successfully
+2025-08-05 22:50:04,516 - backend_integration_test - INFO -   Testing valid case 2/3:
+2025-08-05 22:50:04,516 - backend_integration_test - INFO -     Parameters: {'base_circle_radius': 1.0, 'max_lift': 1.0, 'cam_duration': 180.0, 'rise_duration': 1.0, 'dwell_duration': 1.0, 'fall_duration': 1.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 1.0}
+2025-08-05 22:50:04,516 - campro.models.movement_law.MotionLaw - INFO - Motion parameters validated successfully
+2025-08-05 22:50:04,517 - backend_integration_test - INFO -   Testing valid case 3/3:
+2025-08-05 22:50:04,517 - backend_integration_test - INFO -     Parameters: {'base_circle_radius': 1000.0, 'max_lift': 1000.0, 'cam_duration': 180.0, 'rise_duration': 359.0, 'dwell_duration': 359.0, 'fall_duration': 359.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 10000.0}
+2025-08-05 22:50:04,517 - campro.models.movement_law.MotionLaw - INFO - Motion parameters validated successfully
+2025-08-05 22:50:04,518 - backend_integration_test - INFO - Testing invalid parameter cases...
+2025-08-05 22:50:04,518 - backend_integration_test - INFO -   Testing invalid case 1/10:
+2025-08-05 22:50:04,518 - backend_integration_test - INFO -     Invalid parameter: {'base_circle_radius': -1.0}
+2025-08-05 22:50:04,520 - backend_integration_test - INFO -   Testing invalid case 2/10:
+2025-08-05 22:50:04,520 - backend_integration_test - INFO -     Invalid parameter: {'max_lift': -1.0}
+2025-08-05 22:50:04,521 - backend_integration_test - INFO -   Testing invalid case 3/10:
+2025-08-05 22:50:04,521 - backend_integration_test - INFO -     Invalid parameter: {'rise_duration': -1.0}
+2025-08-05 22:50:04,521 - campro.models.movement_law.MotionLaw - INFO - Motion parameters validated successfully
+2025-08-05 22:50:04,522 - backend_integration_test - INFO -   Testing invalid case 4/10:
+2025-08-05 22:50:04,522 - backend_integration_test - INFO -     Invalid parameter: {'dwell_duration': -1.0}
+2025-08-05 22:50:04,522 - campro.models.movement_law.MotionLaw - INFO - Motion parameters validated successfully
+2025-08-05 22:50:04,523 - backend_integration_test - INFO -   Testing invalid case 5/10:
+2025-08-05 22:50:04,523 - backend_integration_test - INFO -     Invalid parameter: {'fall_duration': -1.0}
+2025-08-05 22:50:04,523 - campro.models.movement_law.MotionLaw - INFO - Motion parameters validated successfully
+2025-08-05 22:50:04,523 - backend_integration_test - INFO -   Testing invalid case 6/10:
+2025-08-05 22:50:04,524 - backend_integration_test - INFO -     Invalid parameter: {'rpm': -1.0}
+2025-08-05 22:50:04,525 - backend_integration_test - INFO -   Testing invalid case 7/10:
+2025-08-05 22:50:04,525 - backend_integration_test - INFO -     Invalid parameter: {'rise_duration': 120.0, 'dwell_duration': 120.0, 'fall_duration': 121.0}
+2025-08-05 22:50:04,525 - campro.models.movement_law.MotionLaw - INFO - Motion parameters validated successfully
+2025-08-05 22:50:04,526 - backend_integration_test - INFO -   Testing invalid case 8/10:
+2025-08-05 22:50:04,526 - backend_integration_test - INFO -     Invalid parameter: {'base_circle_radius': 0.0}
+2025-08-05 22:50:04,527 - backend_integration_test - INFO -   Testing invalid case 9/10:
+2025-08-05 22:50:04,527 - backend_integration_test - INFO -     Invalid parameter: {'max_lift': 0.0}
+2025-08-05 22:50:04,529 - backend_integration_test - INFO -   Testing invalid case 10/10:
+2025-08-05 22:50:04,529 - backend_integration_test - INFO -     Invalid parameter: {'rpm': 0.0}
+2025-08-05 22:50:04,530 - backend_integration_test - INFO - Testing error handling and recovery mechanisms...
+2025-08-05 22:50:04,530 - backend_integration_test - INFO - Testing error case 1/8:
+2025-08-05 22:50:04,530 - backend_integration_test - INFO -   Input: { invalid json...
+2025-08-05 22:50:04,530 - backend_integration_test - INFO -   Format: json
+2025-08-05 22:50:04,530 - backend_integration_test - INFO -   Expected error: True
+2025-08-05 22:50:04,556 - backend_integration_test - INFO - Testing error case 2/8:
+2025-08-05 22:50:04,556 - backend_integration_test - INFO -   Input: invalid toml...
+2025-08-05 22:50:04,556 - backend_integration_test - INFO -   Format: toml
+2025-08-05 22:50:04,556 - backend_integration_test - INFO -   Expected error: True
+2025-08-05 22:50:04,568 - backend_integration_test - INFO - Testing error case 3/8:
+2025-08-05 22:50:04,568 - backend_integration_test - INFO -   Input: {"base_circle_radius": 10.0}...
+2025-08-05 22:50:04,568 - backend_integration_test - INFO -   Format: json
+2025-08-05 22:50:04,568 - backend_integration_test - INFO -   Expected error: True
+2025-08-05 22:50:04,569 - backend_integration_test - INFO - Testing error case 4/8:
+2025-08-05 22:50:04,569 - backend_integration_test - INFO -   Input: base_circle_radius = 10.0...
+2025-08-05 22:50:04,569 - backend_integration_test - INFO -   Format: toml
+2025-08-05 22:50:04,569 - backend_integration_test - INFO -   Expected error: True
+2025-08-05 22:50:04,570 - backend_integration_test - INFO - Testing error case 5/8:
+2025-08-05 22:50:04,570 - backend_integration_test - INFO -   Input: {"base_circle_radius": "not a number", "max_lift":...
+2025-08-05 22:50:04,570 - backend_integration_test - INFO -   Format: json
+2025-08-05 22:50:04,570 - backend_integration_test - INFO -   Expected error: True
+2025-08-05 22:50:04,571 - backend_integration_test - INFO - Testing error case 6/8:
+2025-08-05 22:50:04,572 - backend_integration_test - INFO -   Input: base_circle_radius = "not a number"
+max_lift = 10....
+2025-08-05 22:50:04,572 - backend_integration_test - INFO -   Format: toml
+2025-08-05 22:50:04,572 - backend_integration_test - INFO -   Expected error: True
+2025-08-05 22:50:04,573 - backend_integration_test - INFO - Testing error case 7/8:
+2025-08-05 22:50:04,573 - backend_integration_test - INFO -   Input: {"base_circle_radius": 10.0, "max_lift": 10.0, "ri...
+2025-08-05 22:50:04,574 - backend_integration_test - INFO -   Format: json
+2025-08-05 22:50:04,574 - backend_integration_test - INFO -   Expected error: False
+2025-08-05 22:50:04,574 - backend_integration_test - INFO - Testing error case 8/8:
+2025-08-05 22:50:04,574 - backend_integration_test - INFO -   Input: base_circle_radius = 10.0
+max_lift = 10.0
+rise_dur...
+2025-08-05 22:50:04,574 - backend_integration_test - INFO -   Format: toml
+2025-08-05 22:50:04,574 - backend_integration_test - INFO -   Expected error: False
+2025-08-05 22:50:04,575 - backend_integration_test - INFO - Backend integration tests completed:
+2025-08-05 22:50:04,575 - backend_integration_test - INFO -   Serialization/deserialization: SUCCESS
+2025-08-05 22:50:04,575 - backend_integration_test - INFO -   Parameter validation: FAILURE
+2025-08-05 22:50:04,575 - backend_integration_test - INFO -   Error handling: FAILURE
+2025-08-05 22:50:04,575 - backend_integration_test - INFO -   Overall: FAILURE
+2025-08-05 23:39:49,953 - backend_integration_test - INFO - Starting backend integration tests...
+2025-08-05 23:39:49,953 - backend_integration_test - INFO - Testing serialization and deserialization...
+2025-08-05 23:39:49,954 - backend_integration_test - INFO - Testing case 1/7:
+2025-08-05 23:39:49,954 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 23:39:49,955 - backend_integration_test - INFO - Testing case 2/7:
+2025-08-05 23:39:49,955 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 6000.0}
+2025-08-05 23:39:49,958 - backend_integration_test - INFO - Testing case 3/7:
+2025-08-05 23:39:49,958 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 5.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 23:39:49,959 - backend_integration_test - INFO - Testing case 4/7:
+2025-08-05 23:39:49,960 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 20.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 23:39:49,961 - backend_integration_test - INFO - Testing case 5/7:
+2025-08-05 23:39:49,961 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 60.0, 'dwell_duration': 45.0, 'fall_duration': 120.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 23:39:49,962 - backend_integration_test - INFO - Testing case 6/7:
+2025-08-05 23:39:49,962 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 15.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 23:39:49,963 - backend_integration_test - INFO - Testing case 7/7:
+2025-08-05 23:39:49,964 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 1.0, 'max_lift': 1.0, 'cam_duration': 180.0, 'rise_duration': 1.0, 'dwell_duration': 1.0, 'fall_duration': 1.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 1.0}
+2025-08-05 23:39:49,965 - backend_integration_test - INFO - Testing parameter validation...
+2025-08-05 23:40:16,093 - backend_integration_test - INFO - Starting backend integration tests...
+2025-08-05 23:40:16,094 - backend_integration_test - INFO - Testing serialization and deserialization...
+2025-08-05 23:40:16,094 - backend_integration_test - INFO - Testing case 1/7:
+2025-08-05 23:40:16,094 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 23:40:16,097 - backend_integration_test - INFO - Testing case 2/7:
+2025-08-05 23:40:16,097 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 6000.0}
+2025-08-05 23:40:16,099 - backend_integration_test - INFO - Testing case 3/7:
+2025-08-05 23:40:16,099 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 5.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 23:40:16,100 - backend_integration_test - INFO - Testing case 4/7:
+2025-08-05 23:40:16,101 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 20.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 23:40:16,102 - backend_integration_test - INFO - Testing case 5/7:
+2025-08-05 23:40:16,102 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 60.0, 'dwell_duration': 45.0, 'fall_duration': 120.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 23:40:16,103 - backend_integration_test - INFO - Testing case 6/7:
+2025-08-05 23:40:16,103 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 15.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 23:40:16,105 - backend_integration_test - INFO - Testing case 7/7:
+2025-08-05 23:40:16,105 - backend_integration_test - INFO -   Parameters: {'base_circle_radius': 1.0, 'max_lift': 1.0, 'cam_duration': 180.0, 'rise_duration': 1.0, 'dwell_duration': 1.0, 'fall_duration': 1.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 1.0}
+2025-08-05 23:40:16,106 - backend_integration_test - INFO - Testing parameter validation...
+2025-08-05 23:40:16,107 - backend_integration_test - INFO - Testing valid parameter cases...
+2025-08-05 23:40:16,107 - backend_integration_test - INFO -   Testing valid case 1/3:
+2025-08-05 23:40:16,107 - backend_integration_test - INFO -     Parameters: {'base_circle_radius': 25.0, 'max_lift': 10.0, 'cam_duration': 180.0, 'rise_duration': 90.0, 'dwell_duration': 45.0, 'fall_duration': 90.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 3000.0}
+2025-08-05 23:40:16,107 - campro.models.movement_law.MotionLaw - INFO - Motion parameters validated successfully
+2025-08-05 23:40:16,108 - backend_integration_test - INFO -   Testing valid case 2/3:
+2025-08-05 23:40:16,108 - backend_integration_test - INFO -     Parameters: {'base_circle_radius': 1.0, 'max_lift': 1.0, 'cam_duration': 180.0, 'rise_duration': 1.0, 'dwell_duration': 1.0, 'fall_duration': 1.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 1.0}
+2025-08-05 23:40:16,108 - campro.models.movement_law.MotionLaw - INFO - Motion parameters validated successfully
+2025-08-05 23:40:16,109 - backend_integration_test - INFO -   Testing valid case 3/3:
+2025-08-05 23:40:16,109 - backend_integration_test - INFO -     Parameters: {'base_circle_radius': 1000.0, 'max_lift': 1000.0, 'cam_duration': 180.0, 'rise_duration': 120.0, 'dwell_duration': 120.0, 'fall_duration': 120.0, 'jerk_limit': 1000.0, 'acceleration_limit': 500.0, 'velocity_limit': 100.0, 'rpm': 10000.0}
+2025-08-05 23:40:16,110 - campro.models.movement_law.MotionLaw - INFO - Motion parameters validated successfully
+2025-08-05 23:40:16,111 - backend_integration_test - INFO - Testing invalid parameter cases...
+2025-08-05 23:40:16,111 - backend_integration_test - INFO -   Testing invalid case 1/10:
+2025-08-05 23:40:16,111 - backend_integration_test - INFO -     Invalid parameter: {'base_circle_radius': -1.0}
+2025-08-05 23:40:16,113 - backend_integration_test - INFO -   Testing invalid case 2/10:
+2025-08-05 23:40:16,113 - backend_integration_test - INFO -     Invalid parameter: {'max_lift': -1.0}
+2025-08-05 23:40:16,115 - backend_integration_test - INFO -   Testing invalid case 3/10:
+2025-08-05 23:40:16,115 - backend_integration_test - INFO -     Invalid parameter: {'rise_duration': -1.0}
+2025-08-05 23:40:16,117 - backend_integration_test - INFO -   Testing invalid case 4/10:
+2025-08-05 23:40:16,117 - backend_integration_test - INFO -     Invalid parameter: {'dwell_duration': -1.0}
+2025-08-05 23:40:16,120 - backend_integration_test - INFO -   Testing invalid case 5/10:
+2025-08-05 23:40:16,120 - backend_integration_test - INFO -     Invalid parameter: {'fall_duration': -1.0}
+2025-08-05 23:40:16,122 - backend_integration_test - INFO -   Testing invalid case 6/10:
+2025-08-05 23:40:16,122 - backend_integration_test - INFO -     Invalid parameter: {'rpm': -1.0}
+2025-08-05 23:40:16,123 - backend_integration_test - INFO -   Testing invalid case 7/10:
+2025-08-05 23:40:16,123 - backend_integration_test - INFO -     Invalid parameter: {'rise_duration': 120.0, 'dwell_duration': 120.0, 'fall_duration': 121.0}
+2025-08-05 23:40:16,126 - backend_integration_test - INFO -   Testing invalid case 8/10:
+2025-08-05 23:40:16,126 - backend_integration_test - INFO -     Invalid parameter: {'base_circle_radius': 0.0}
+2025-08-05 23:40:16,127 - backend_integration_test - INFO -   Testing invalid case 9/10:
+2025-08-05 23:40:16,127 - backend_integration_test - INFO -     Invalid parameter: {'max_lift': 0.0}
+2025-08-05 23:40:16,129 - backend_integration_test - INFO -   Testing invalid case 10/10:
+2025-08-05 23:40:16,129 - backend_integration_test - INFO -     Invalid parameter: {'rpm': 0.0}
+2025-08-05 23:40:16,130 - backend_integration_test - INFO - Testing error handling and recovery mechanisms...
+2025-08-05 23:40:16,131 - backend_integration_test - INFO - Testing error case 1/8:
+2025-08-05 23:40:16,131 - backend_integration_test - INFO -   Input: { invalid json...
+2025-08-05 23:40:16,131 - backend_integration_test - INFO -   Format: json
+2025-08-05 23:40:16,131 - backend_integration_test - INFO -   Expected error: True
+2025-08-05 23:40:16,134 - backend_integration_test - INFO - Testing error case 2/8:
+2025-08-05 23:40:16,134 - backend_integration_test - INFO -   Input: invalid toml...
+2025-08-05 23:40:16,134 - backend_integration_test - INFO -   Format: toml
+2025-08-05 23:40:16,135 - backend_integration_test - INFO -   Expected error: True
+2025-08-05 23:40:16,137 - backend_integration_test - INFO - Testing error case 3/8:
+2025-08-05 23:40:16,137 - backend_integration_test - INFO -   Input: {"base_circle_radius": 10.0}...
+2025-08-05 23:40:16,137 - backend_integration_test - INFO -   Format: json
+2025-08-05 23:40:16,137 - backend_integration_test - INFO -   Expected error: True
+2025-08-05 23:40:16,139 - backend_integration_test - INFO - Testing error case 4/8:
+2025-08-05 23:40:16,139 - backend_integration_test - INFO -   Input: base_circle_radius = 10.0...
+2025-08-05 23:40:16,139 - backend_integration_test - INFO -   Format: toml
+2025-08-05 23:40:16,139 - backend_integration_test - INFO -   Expected error: True
+2025-08-05 23:40:16,141 - backend_integration_test - INFO - Testing error case 5/8:
+2025-08-05 23:40:16,141 - backend_integration_test - INFO -   Input: {"base_circle_radius": "not a number", "max_lift":...
+2025-08-05 23:40:16,141 - backend_integration_test - INFO -   Format: json
+2025-08-05 23:40:16,142 - backend_integration_test - INFO -   Expected error: True
+2025-08-05 23:40:16,143 - backend_integration_test - INFO - Testing error case 6/8:
+2025-08-05 23:40:16,143 - backend_integration_test - INFO -   Input: base_circle_radius = "not a number"
+max_lift = 10....
+2025-08-05 23:40:16,143 - backend_integration_test - INFO -   Format: toml
+2025-08-05 23:40:16,144 - backend_integration_test - INFO -   Expected error: True
+2025-08-05 23:40:16,146 - backend_integration_test - INFO - Testing error case 7/8:
+2025-08-05 23:40:16,146 - backend_integration_test - INFO -   Input: {"base_circle_radius": 10.0, "max_lift": 10.0, "ri...
+2025-08-05 23:40:16,146 - backend_integration_test - INFO -   Format: json
+2025-08-05 23:40:16,147 - backend_integration_test - INFO -   Expected error: False
+2025-08-05 23:40:16,147 - backend_integration_test - INFO - Testing error case 8/8:
+2025-08-05 23:40:16,148 - backend_integration_test - INFO -   Input: base_circle_radius = 10.0
+max_lift = 10.0
+rise_dur...
+2025-08-05 23:40:16,148 - backend_integration_test - INFO -   Format: toml
+2025-08-05 23:40:16,148 - backend_integration_test - INFO -   Expected error: False
+2025-08-05 23:40:16,150 - backend_integration_test - INFO - Backend integration tests completed:
+2025-08-05 23:40:16,150 - backend_integration_test - INFO -   Serialization/deserialization: SUCCESS
+2025-08-05 23:40:16,150 - backend_integration_test - INFO -   Parameter validation: SUCCESS
+2025-08-05 23:40:16,150 - backend_integration_test - INFO -   Error handling: SUCCESS
+2025-08-05 23:40:16,150 - backend_integration_test - INFO -   Overall: SUCCESS

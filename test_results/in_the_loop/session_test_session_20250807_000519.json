@@ -1,0 +1,222 @@
+{
+    "session_id": "test_session_20250807_000519",
+    "observations": [
+        {
+            "timestamp": "2025-08-07T00:05:20.084594",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:21.086121",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:22.086379",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:23.087075",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:24.087502",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:25.088169",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:26.089060",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:27.089618",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:28.089917",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:29.090487",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:30.091047",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:31.091674",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:32.091993",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:33.092570",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:34.093072",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:35.093685",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:36.094023",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:37.094206",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:38.094666",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:39.095103",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:40.096249",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:41.096441",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:42.096992",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:43.097420",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:44.098093",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:45.098585",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:46.099264",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:47.100813",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:48.102218",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:49.102794",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:50.103350",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:51.103623",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:52.103960",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:53.104260",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:54.104676",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:55.105155",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:56.105461",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:57.105942",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:58.106859",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:05:59.107233",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:06:00.107834",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:06:01.108237",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-07T00:06:02.108964",
+            "event_type": "ui_state",
+            "data": {}
+        }
+    ],
+    "suggestions": [],
+    "feedback": []
+}

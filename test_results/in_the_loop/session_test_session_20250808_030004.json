@@ -1,0 +1,27 @@
+{
+    "session_id": "test_session_20250808_030004",
+    "observations": [
+        {
+            "timestamp": "2025-08-08T03:00:05.308630",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-08T03:00:06.309188",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-08T03:00:07.309516",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-08T03:00:08.309760",
+            "event_type": "ui_state",
+            "data": {}
+        }
+    ],
+    "suggestions": [],
+    "feedback": []
+}

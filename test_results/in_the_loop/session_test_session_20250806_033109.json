@@ -1,0 +1,47 @@
+{
+    "session_id": "test_session_20250806_033109",
+    "observations": [
+        {
+            "timestamp": "2025-08-06T03:31:10.281454",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T03:31:11.282121",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T03:31:12.282688",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T03:31:13.287051",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T03:31:14.287883",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T03:31:15.288466",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T03:31:16.289003",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T03:31:17.290057",
+            "event_type": "ui_state",
+            "data": {}
+        }
+    ],
+    "suggestions": [],
+    "feedback": []
+}

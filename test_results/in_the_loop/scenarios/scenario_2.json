@@ -1,0 +1,16 @@
+{
+    "name": "Visualization Responsiveness Test",
+    "steps": [
+        "Set base_circle_radius to 10",
+        "Set rolling_circle_radius to 5",
+        "Set tracing_point_distance to 3",
+        "Click 'Generate Animation' button",
+        "Observe animation",
+        "Change parameters and regenerate"
+    ],
+    "expected_outcomes": [
+        "Animation renders within 2 seconds",
+        "Animation accurately reflects parameters",
+        "UI remains responsive during rendering"
+    ]
+}

@@ -1,0 +1,797 @@
+{
+    "session_id": "test_session_20250806_233454",
+    "observations": [
+        {
+            "timestamp": "2025-08-06T23:34:55.962211",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:34:56.962873",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:34:57.963080",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:34:58.963700",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:34:59.964231",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:00.964876",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:01.965611",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:02.966205",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:03.966977",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:04.967559",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:05.968236",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:06.968887",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:07.969437",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:08.970179",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:09.970732",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:10.971392",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:11.972052",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:12.972723",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:13.973107",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:14.973308",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:15.973793",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:16.974168",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:17.974479",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:18.975174",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:19.975847",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:20.976474",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:21.977139",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:22.977607",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:23.978221",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:24.978910",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:25.979323",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:26.979741",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:27.980064",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:28.980592",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:29.981192",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:30.981788",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:31.982417",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:32.982847",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:33.983690",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:34.984295",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:35.984786",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:36.985161",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:37.985722",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:38.986341",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:39.986631",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:40.987256",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:41.987552",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:42.988150",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:43.988684",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:44.989211",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:45.989654",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:46.990459",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:47.991110",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:48.991530",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:49.992351",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:50.992902",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:51.993399",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:52.994146",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:53.994828",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:54.995277",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:55.995941",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:56.996790",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:57.997423",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:58.998379",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:35:59.999390",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:00.999900",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:02.000201",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:03.000818",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:04.001247",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:05.001660",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:06.002087",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:07.002295",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:08.004029",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:09.004737",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:10.005244",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:11.005568",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:12.005893",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:13.006515",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:14.007158",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:15.007625",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:16.008183",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:17.008673",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:18.009299",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:19.009764",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:20.010625",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:21.011200",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:22.011811",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:23.012333",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:24.012652",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:25.013109",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:26.013571",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:27.014299",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:28.014725",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:29.015313",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:30.015731",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:31.016200",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:32.016622",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:33.017165",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:34.017649",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:35.017994",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:36.018638",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:37.019025",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:38.019744",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:39.020102",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:40.020498",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:41.020868",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:42.021346",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:43.021884",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:44.022130",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:45.022756",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:46.023393",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:47.023862",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:48.024351",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:49.024704",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:50.025165",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:51.025720",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:52.026260",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:53.026665",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:54.027281",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:55.027983",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:56.028179",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:57.028707",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:58.029314",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:36:59.029682",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:00.030315",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:01.031174",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:02.031815",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:03.032386",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:04.032655",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:05.033363",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:06.033933",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:07.034649",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:08.034932",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:09.035176",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:10.035547",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:11.035925",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:12.036290",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:13.036650",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:14.037184",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:15.037675",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:16.038079",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:17.038369",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:18.038816",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:19.039379",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:20.039832",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:21.040479",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:22.041027",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:23.041603",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:24.042163",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:25.042710",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:26.044011",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:27.044695",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:28.045230",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:29.045869",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:30.046362",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:31.046715",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:32.047232",
+            "event_type": "ui_state",
+            "data": {}
+        },
+        {
+            "timestamp": "2025-08-06T23:37:33.047633",
+            "event_type": "ui_state",
+            "data": {}
+        }
+    ],
+    "suggestions": [],
+    "feedback": []
+}

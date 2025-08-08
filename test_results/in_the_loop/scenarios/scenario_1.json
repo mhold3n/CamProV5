@@ -1,0 +1,14 @@
+{
+    "name": "Parameter Validation Test",
+    "steps": [
+        "Enter negative value for base_circle_radius",
+        "Observe error message",
+        "Enter valid value",
+        "Proceed to next parameter"
+    ],
+    "expected_outcomes": [
+        "Error message displayed for negative value",
+        "Form accepts valid value",
+        "Focus moves to next field"
+    ]
+}

@@ -1,0 +1,8 @@
+rootProject.name = "CamProV5"
+include ':app'
+
+// Define the project directory structure
+project(':app').projectDir = new File(rootDir, 'app')
+
+// Enable Gradle's dependency verification
+enableFeaturePreview('IMPROVED_POM_SUPPORT')

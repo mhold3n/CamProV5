@@ -1,0 +1,17 @@
+# Core dependencies
+numpy>=1.20.0
+matplotlib>=3.4.0
+scipy>=1.6.0
+pandas>=1.2.0
+
+# UI dependencies (assuming Qt-based UI)
+PyQt5>=5.15.0
+PyQtChart>=5.15.0
+
+# Testing dependencies
+pytest>=6.2.0
+pytest-qt>=4.0.0
+
+# Utilities
+tqdm>=4.60.0
+colorama>=0.4.4

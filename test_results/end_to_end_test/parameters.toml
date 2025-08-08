@@ -1,0 +1,10 @@
+base_circle_radius = 20.0
+max_lift = 12.0
+cam_duration = 180.0
+rise_duration = 90.0
+dwell_duration = 90.0
+fall_duration = 90.0
+jerk_limit = 1000.0
+acceleration_limit = 500.0
+velocity_limit = 100.0
+rpm = 2000.0

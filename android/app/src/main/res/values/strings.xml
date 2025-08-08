@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CamProV5</string>
+    <string name="input_tab">Inputs</string>
+    <string name="visualization_tab">Visualization</string>
+    <string name="compute_button">Compute &amp; Update Plots</string>
+    <string name="play_button">Play</string>
+    <string name="pause_button">Pause</string>
+    <string name="reset_button">Reset</string>
+    <string name="export_svg_button">Export SVG</string>
+    <string name="previous_button">Previous</string>
+    <string name="next_button">Next</string>
+    <string name="no_animation_data">No animation data available</string>
+    <string name="no_plot_data">No plot data available</string>
+    <string name="computed_results">Computed Results</string>
+</resources>

@@ -1,0 +1,12 @@
+{
+    "session_id": "test_session_20250806_203759",
+    "observations": [
+        {
+            "timestamp": "2025-08-06T20:38:00.110543",
+            "event_type": "ui_state",
+            "data": {}
+        }
+    ],
+    "suggestions": [],
+    "feedback": []
+}

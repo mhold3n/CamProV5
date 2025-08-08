@@ -1,0 +1,29 @@
+{
+    "agent": {
+        "observation_frequency": 1.0,
+        "suggestion_threshold": 0.7,
+        "learning_mode": true
+    },
+    "testing": {
+        "results_dir": "D:/Development/engine/CamProV5/test_results/in_the_loop",
+        "session_timeout": 1800,
+        "auto_save": true,
+        "auto_save_interval": 300
+    },
+    "ui": {
+        "components_to_monitor": [
+            "ResponsiveLayout",
+            "ParameterContainer", 
+            "AnimationContainer",
+            "PlotContainer",
+            "DataContainer"
+        ],
+        "discovery_method": "enhanced_ui",
+        "component_mapping": {
+            "ParameterInputForm": "Parameters.ResizableContainer",
+            "CycloidalAnimationWidget": "Animation.ResizableContainer", 
+            "PlotCarouselWidget": "Plots.ResizableContainer",
+            "DataDisplayPanel": "DataDisplay.ResizableContainer"
+        }
+    }
+}

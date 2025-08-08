@@ -1,0 +1,108 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
+
+android {
+    compileSdkVersion 33
+    buildToolsVersion "33.0.0"
+
+    defaultConfig {
+        applicationId "com.campro.v5"
+        minSdkVersion 21
+        targetSdkVersion 33
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Specify CMake version
+        externalNativeBuild {
+            cmake {
+                version "3.18.1"
+                arguments "-DANDROID_STL=c++_shared"
+            }
+        }
+        
+        // Specify ABIs to build
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    
+    kotlinOptions {
+        jvmTarget = '1.8'
+        useIR = true
+    }
+    
+    buildFeatures {
+        compose true
+    }
+    
+    composeOptions {
+        kotlinCompilerExtensionVersion compose_compiler_version
+    }
+    
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+    
+    // CMake configuration
+    externalNativeBuild {
+        cmake {
+            path "../../cpp/CMakeLists.txt"
+        }
+    }
+    
+    // Native library packaging
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
+}
+
+dependencies {
+    // Kotlin
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    
+    // AndroidX
+    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
+    
+    // Material Design
+    implementation 'com.google.android.material:material:1.7.0'
+    
+    // Jetpack Compose
+    implementation "androidx.compose.ui:ui:$compose_version"
+    implementation "androidx.compose.material:material:$compose_version"
+    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
+    implementation 'androidx.activity:activity-compose:1.6.1'
+    
+    // Charts for plots
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.4'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
+    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
+    
+    // Debug tools
+    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
+}
