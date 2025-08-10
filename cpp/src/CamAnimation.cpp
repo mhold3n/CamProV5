@@ -277,68 +277,144 @@ void CamAnimation::setupBuffers() {
 }
 
 void CamAnimation::calculateCamWorldState(float phi, float rCenter, float n) {
-    // This method would calculate the current state of the cam based on the input parameters
-    // For now, it's a placeholder
+    // Convert degrees to radians
+    float phiRad = phi * static_cast<float>(M_PI) / 180.0f;
+    float c = std::cos(phiRad);
+    float s = std::sin(phiRad);
+
+    // Cam center position
+    float cx = rCenter * c;
+    float cy = rCenter * s;
+
+    // Transform base cam profile to world coordinates
+    m_camWorldVertices.clear();
+    for (size_t i = 0; i < m_baseCamX.size(); ++i) {
+        float x = m_baseCamX[i];
+        float y = m_baseCamY[i];
+        float wx = c * x - s * y + cx;
+        float wy = s * x + c * y + cy;
+        m_camWorldVertices.push_back(wx);
+        m_camWorldVertices.push_back(wy);
+    }
+
+    // Inner envelope geometry
+    m_envelopeWorldVertices.clear();
+    size_t envCount = std::min(m_innerEnvelopeTheta.size(), m_innerEnvelopeR.size());
+    for (size_t i = 0; i < envCount; ++i) {
+        float thetaRad = m_innerEnvelopeTheta[i] * static_cast<float>(M_PI) / 180.0f;
+        float r = m_innerEnvelopeR[i];
+        float ex = r * std::cos(thetaRad);
+        float ey = r * std::sin(thetaRad);
+        float wx = c * ex - s * ey + cx;
+        float wy = s * ex + c * ey + cy;
+        m_envelopeWorldVertices.push_back(wx);
+        m_envelopeWorldVertices.push_back(wy);
+    }
+
+    // Connecting rod from cam center to outer boundary
+    m_rodVertices.clear();
+    float rodEndX = cx + c * (m_outerBoundaryRadius + m_rodLength);
+    float rodEndY = cy + s * (m_outerBoundaryRadius + m_rodLength);
+    m_rodVertices.push_back(cx);
+    m_rodVertices.push_back(cy);
+    m_rodVertices.push_back(rodEndX);
+    m_rodVertices.push_back(rodEndY);
 }
 
 void CamAnimation::drawCamProfile() {
-    // This method would draw the cam profile using the shader program and vertex buffer
-    // For now, it's a placeholder
-    
-    // Example of drawing a simple circle as a placeholder
-    const int numSegments = 100;
-    std::vector<float> vertices;
-    
-    // Generate circle vertices
-    for (int i = 0; i < numSegments; ++i) {
-        float theta = 2.0f * 3.14159f * static_cast<float>(i) / static_cast<float>(numSegments);
-        float x = 0.5f * cosf(theta);
-        float y = 0.5f * sinf(theta);
-        vertices.push_back(x);
-        vertices.push_back(y);
+    if (m_camWorldVertices.empty()) {
+        return;
     }
-    
-    // Bind vertex buffer
+
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_DYNAMIC_DRAW);
-    
-    // Set up vertex attributes
+    glBufferData(GL_ARRAY_BUFFER, m_camWorldVertices.size() * sizeof(float),
+                 m_camWorldVertices.data(), GL_DYNAMIC_DRAW);
+
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-    
-    // Set uniform values
+
     GLint transformLoc = glGetUniformLocation(m_shaderProgram, "transform");
     GLint colorLoc = glGetUniformLocation(m_shaderProgram, "color");
-    
-    // Identity matrix for transform
+
     float transform[16] = {
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f
     };
-    
-    // Set color to red
-    float color[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
-    
+
+    float color[4] = {1.0f, 0.0f, 0.0f, 1.0f};
+
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, transform);
     glUniform4fv(colorLoc, 1, color);
-    
-    // Draw the circle
-    glDrawArrays(GL_LINE_LOOP, 0, numSegments);
-    
-    // Disable vertex attributes
+
+    glDrawArrays(GL_LINE_LOOP, 0, static_cast<GLsizei>(m_camWorldVertices.size() / 2));
+
     glDisableVertexAttribArray(0);
 }
 
 void CamAnimation::drawEnvelope() {
-    // This method would draw the envelope using the shader program and vertex buffer
-    // For now, it's a placeholder
+    if (m_envelopeWorldVertices.empty()) {
+        return;
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, m_envelopeWorldVertices.size() * sizeof(float),
+                 m_envelopeWorldVertices.data(), GL_DYNAMIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+
+    GLint transformLoc = glGetUniformLocation(m_shaderProgram, "transform");
+    GLint colorLoc = glGetUniformLocation(m_shaderProgram, "color");
+
+    float transform[16] = {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+
+    float color[4] = {0.0f, 1.0f, 0.0f, 1.0f};
+
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, transform);
+    glUniform4fv(colorLoc, 1, color);
+
+    glDrawArrays(GL_LINE_LOOP, 0, static_cast<GLsizei>(m_envelopeWorldVertices.size() / 2));
+
+    glDisableVertexAttribArray(0);
 }
 
 void CamAnimation::drawRod() {
-    // This method would draw the connecting rod using the shader program and vertex buffer
-    // For now, it's a placeholder
+    if (m_rodVertices.size() < 4) {
+        return;
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, m_rodVertices.size() * sizeof(float),
+                 m_rodVertices.data(), GL_DYNAMIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+
+    GLint transformLoc = glGetUniformLocation(m_shaderProgram, "transform");
+    GLint colorLoc = glGetUniformLocation(m_shaderProgram, "color");
+
+    float transform[16] = {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+
+    float color[4] = {0.0f, 0.0f, 1.0f, 1.0f};
+
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, transform);
+    glUniform4fv(colorLoc, 1, color);
+
+    glDrawArrays(GL_LINES, 0, 2);
+
+    glDisableVertexAttribArray(0);
 }
 
 void CamAnimation::cleanup() {

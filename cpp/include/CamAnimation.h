@@ -124,10 +124,15 @@ private:
     float m_outerBoundaryRadius;
     float m_rodLength;
     float m_cycleRatio;
-    
+
     // Rendering dimensions
     int m_width;
     int m_height;
+
+    // Calculated geometry for current frame
+    std::vector<float> m_camWorldVertices;      // x,y pairs of cam profile
+    std::vector<float> m_envelopeWorldVertices; // x,y pairs of envelope
+    std::vector<float> m_rodVertices;           // line vertices for connecting rod
     
     // Helper methods
     void setupShaders();
