@@ -48,6 +48,10 @@ class MotionParameters:
     # Cam geometry parameters
     base_circle_radius: float = 25.0  # mm
     max_lift: float = 10.0  # mm
+    # Total duration of the cam profile. This value is derived from the rise,
+    # dwell and fall segments and is normalised during initialisation to avoid
+    # inconsistencies between individual segment durations and the reported
+    # total cam duration.
     cam_duration: float = 180.0  # degrees
 
     # Motion profile parameters
@@ -65,6 +69,16 @@ class MotionParameters:
     
     def __post_init__(self):
         """Validate parameters after initialization."""
+        # Ensure cam_duration always matches the sum of all motion segments.
+        # The original implementation left ``cam_duration`` unchanged which
+        # meant that providing custom rise/dwell/fall durations could result in
+        # a mismatched total duration.  This in turn caused serialization
+        # round-trips and downstream calculations to work with inconsistent
+        # data.  By normalising the value here we guarantee that the reported
+        # total duration is always self‑consistent.
+        self.cam_duration = (
+            self.rise_duration + self.dwell_duration + self.fall_duration
+        )
         self.validate()
         
     def validate(self) -> None:
