@@ -36,44 +36,81 @@ pub use motion_law::{MotionLaw, MotionParameters, KinematicAnalysis};
 pub use error::{FEAError, FEAResult, ErrorReport};
 pub use logging::{LogLevel, LogRecord, init_default_logger, init_file_logger, init_json_file_logger, init_memory_logger, get_last_logs, get_all_logs, clear_logs};
 
+// Error logging utilities
+use std::cell::RefCell;
+
+thread_local! {
+    static ERROR_LOG: RefCell<Vec<String>> = RefCell::new(Vec::new());
+}
+
+/// Push an error message to the thread-local error log.
+fn log_error(err: &FEAError) {
+    ERROR_LOG.with(|log| {
+        let msg = serde_json::json!({"error": err.to_string()}).to_string();
+        log.borrow_mut().push(msg);
+    });
+}
+
+/// Clear the thread-local error log. Mainly used for tests.
+pub fn clear_error_log() {
+    ERROR_LOG.with(|log| log.borrow_mut().clear());
+}
+
 /// Version information
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Load motion parameters from a TOML file
 pub fn load_motion_parameters_from_toml(toml_str: &str) -> FEAResult<MotionParameters> {
-    toml::from_str(toml_str)
-        .map_err(|e| FEAError::Deserialization(format!("Failed to parse TOML: {}", e)))
+    toml::from_str(toml_str).map_err(|e| {
+        let err = FEAError::Deserialization(format!("Failed to parse TOML: {}", e));
+        log_error(&err);
+        err
+    })
 }
 
 /// Load motion parameters from a JSON file
 pub fn load_motion_parameters_from_json(json_str: &str) -> FEAResult<MotionParameters> {
-    serde_json::from_str(json_str)
-        .map_err(|e| FEAError::Deserialization(format!("Failed to parse JSON: {}", e)))
+    serde_json::from_str(json_str).map_err(|e| {
+        let err = FEAError::Deserialization(format!("Failed to parse JSON: {}", e));
+        log_error(&err);
+        err
+    })
 }
 
 /// Create a new motion law from parameters
 pub fn create_motion_law(params: MotionParameters) -> FEAResult<MotionLaw> {
-    MotionLaw::new(params)
+    MotionLaw::new(params).map_err(|e| {
+        log_error(&e);
+        e
+    })
 }
 
 /// Export motion parameters to TOML
 pub fn export_motion_parameters_to_toml(params: &MotionParameters) -> FEAResult<String> {
-    toml::to_string(params)
-        .map_err(|e| FEAError::Serialization(format!("Failed to serialize to TOML: {}", e)))
+    toml::to_string(params).map_err(|e| {
+        let err = FEAError::Serialization(format!("Failed to serialize to TOML: {}", e));
+        log_error(&err);
+        err
+    })
 }
 
 /// Export motion parameters to JSON
 pub fn export_motion_parameters_to_json(params: &MotionParameters) -> FEAResult<String> {
-    serde_json::to_string_pretty(params)
-        .map_err(|e| FEAError::Serialization(format!("Failed to serialize to JSON: {}", e)))
+    serde_json::to_string_pretty(params).map_err(|e| {
+        let err = FEAError::Serialization(format!("Failed to serialize to JSON: {}", e));
+        log_error(&err);
+        err
+    })
 }
 
-/// Get the last error as a JSON string
+/// Get the last recorded error as a JSON string
 pub fn get_last_error() -> String {
-    // This is a placeholder for a more sophisticated error reporting system
-    // In a real implementation, we would maintain a thread-local error log
-    // and return the last error from it
-    "{\"error\": \"No error information available\"}".to_string()
+    ERROR_LOG.with(|log| {
+        log.borrow()
+            .last()
+            .cloned()
+            .unwrap_or_else(|| "{\"error\": \"No error information available\"}".to_string())
+    })
 }
 
 #[cfg(test)]
@@ -182,5 +219,25 @@ mod tests {
         let params3 = load_motion_parameters_from_json(&json_str).unwrap();
         assert_eq!(params.base_circle_radius, params3.base_circle_radius);
         assert_eq!(params.max_lift, params3.max_lift);
+    }
+
+    #[test]
+    fn test_error_logging_from_toml() {
+        clear_error_log();
+        let invalid_toml = "invalid = toml =";
+        let result = load_motion_parameters_from_toml(invalid_toml);
+        assert!(result.is_err());
+        let err = get_last_error();
+        assert!(err.contains("Failed to parse TOML"));
+    }
+
+    #[test]
+    fn test_error_logging_from_motion_law() {
+        clear_error_log();
+        let invalid_params = MotionParameters { max_lift: -5.0, ..MotionParameters::default() };
+        let result = create_motion_law(invalid_params);
+        assert!(result.is_err());
+        let err = get_last_error();
+        assert!(err.contains("Maximum lift must be positive"));
     }
 }
