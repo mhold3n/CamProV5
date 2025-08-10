@@ -9,6 +9,14 @@
 plugins {
     kotlin("jvm")
     id("org.jetbrains.compose")
+    application
+}
+
+group = "com.campro.v5"
+version = "1.0.0"
+
+kotlin {
+    jvmToolchain(17)
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
@@ -25,9 +33,14 @@ repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
+application {
+    // Entry point for the desktop application
+    mainClass.set("com.campro.v5.DesktopMainKt")
+}
+
 dependencies {
-    // This would reference a shared module containing code common to both Android and desktop
-    // implementation(project(":shared"))
+    // Reference the shared module containing code common to Android and desktop
+    implementation(project(":shared"))
     
     // Compose for Desktop dependencies
     implementation(compose.desktop.currentOs)
@@ -170,4 +183,17 @@ compose.desktop {
             }
         }
     }
+}
+
+// Convenience tasks for running and packaging the desktop app
+tasks.register("runDesktop") {
+    group = "application"
+    description = "Runs the CamProV5 desktop application"
+    dependsOn("run")
+}
+
+tasks.register("buildDesktop") {
+    group = "build"
+    description = "Packages the CamProV5 desktop application for the current OS"
+    dependsOn("packageReleaseDistributionForCurrentOS")
 }
