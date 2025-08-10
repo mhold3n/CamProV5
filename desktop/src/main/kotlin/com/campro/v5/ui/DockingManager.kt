@@ -324,12 +324,31 @@ class DockingManager {
      */
     fun setActiveTabPanel(tabGroupId: String, panelId: String) {
         val tabGroup = _tabGroups.value[tabGroupId] ?: return
-        
+
         if (panelId in tabGroup.panelIds) {
             _tabGroups.value = _tabGroups.value + (tabGroupId to tabGroup.copy(
                 activePanel = panelId
             ))
         }
+    }
+
+    /**
+     * Move a tab within a tab group by the specified offset
+     */
+    fun moveTab(tabGroupId: String, panelId: String, offset: Int) {
+        val tabGroup = _tabGroups.value[tabGroupId] ?: return
+        val currentIndex = tabGroup.panelIds.indexOf(panelId)
+        if (currentIndex == -1) return
+
+        val targetIndex = (currentIndex + offset).coerceIn(0, tabGroup.panelIds.size - 1)
+        if (targetIndex == currentIndex) return
+
+        val updated = tabGroup.panelIds.toMutableList().apply {
+            removeAt(currentIndex)
+            add(targetIndex, panelId)
+        }
+
+        _tabGroups.value = _tabGroups.value + (tabGroupId to tabGroup.copy(panelIds = updated))
     }
     
     /**

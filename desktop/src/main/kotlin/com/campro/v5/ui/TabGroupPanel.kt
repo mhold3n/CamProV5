@@ -99,6 +99,16 @@ fun TabGroupPanel(
                             dockingManager.makeFloating(panelId, Offset.Zero)
                         }
                     },
+                    onAddTab = {
+                        // Create a new panel and add it to this tab group
+                        val newPanelId = "tab_" + System.currentTimeMillis().toString()
+                        dockingManager.registerPanel(newPanelId, "New Tab")
+                        dockingManager.addToTabGroup(newPanelId, tabGroupId)
+                        dockingManager.setActiveTabPanel(tabGroupId, newPanelId)
+                    },
+                    onTabMove = { panelId, direction ->
+                        dockingManager.moveTab(tabGroupId, panelId, direction)
+                    },
                     onDragStart = { startPosition ->
                         if (enableDocking) {
                             isDragging = true
@@ -157,6 +167,8 @@ private fun TabGroupHeader(
     enableTabReordering: Boolean,
     onTabSelect: (String) -> Unit,
     onTabClose: (String) -> Unit,
+    onAddTab: () -> Unit,
+    onTabMove: (String, Int) -> Unit,
     onDragStart: (Offset) -> Unit,
     onDrag: (Offset) -> Unit,
     onDragEnd: () -> Unit
@@ -218,7 +230,8 @@ private fun TabGroupHeader(
                             maxWidth = maxTabWidth,
                             enableReordering = enableTabReordering,
                             onSelect = { onTabSelect(panelId) },
-                            onClose = { onTabClose(panelId) }
+                            onClose = { onTabClose(panelId) },
+                            onMoveTab = onTabMove
                         )
                     }
                 }
@@ -229,9 +242,9 @@ private fun TabGroupHeader(
                 modifier = Modifier.padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                // Add tab button (placeholder for future functionality)
+                // Add tab button
                 IconButton(
-                    onClick = { /* TODO: Implement add tab functionality */ },
+                    onClick = onAddTab,
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
@@ -241,10 +254,11 @@ private fun TabGroupHeader(
                         modifier = Modifier.size(12.dp)
                     )
                 }
-                
+
                 // Tab group menu
+                var menuExpanded by remember { mutableStateOf(false) }
                 IconButton(
-                    onClick = { /* TODO: Implement tab group menu */ },
+                    onClick = { menuExpanded = true },
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
@@ -252,6 +266,18 @@ private fun TabGroupHeader(
                         contentDescription = "Tab group options",
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(12.dp)
+                    )
+                }
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Close All Tabs") },
+                        onClick = {
+                            tabGroup.panelIds.forEach { onTabClose(it) }
+                            menuExpanded = false
+                        }
                     )
                 }
             }
@@ -270,10 +296,12 @@ private fun TabItem(
     maxWidth: androidx.compose.ui.unit.Dp,
     enableReordering: Boolean,
     onSelect: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onMoveTab: (String, Int) -> Unit
 ) {
     var isHovered by remember { mutableStateOf(false) }
     var isDragging by remember { mutableStateOf(false) }
+    var dragX by remember { mutableStateOf(0f) }
     
     // Animation states
     val backgroundColor by animateColorAsState(
@@ -312,9 +340,18 @@ private fun TabItem(
                         },
                         onDragEnd = {
                             isDragging = false
+                            dragX = 0f
                         },
-                        onDrag = { _, _ ->
-                            // TODO: Implement tab reordering logic
+                        onDrag = { _, dragAmount ->
+                            dragX += dragAmount.x
+                            val threshold = 40f
+                            if (dragX > threshold) {
+                                onMoveTab(panelId, 1)
+                                dragX = 0f
+                            } else if (dragX < -threshold) {
+                                onMoveTab(panelId, -1)
+                                dragX = 0f
+                            }
                         }
                     )
                 }
