@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.data.litvin.SchemaValidationExtraTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:26.659Z" hostname="ABED" time="0.003">
+  <properties/>
+  <testcase name="validate_diagnostics_against_schema()" classname="com.campro.v5.data.litvin.SchemaValidationExtraTest" time="0.001"/>
+  <testcase name="validate_pareto_against_schema()" classname="com.campro.v5.data.litvin.SchemaValidationExtraTest" time="0.001"/>
+  <testcase name="validate_parameters_against_schema()" classname="com.campro.v5.data.litvin.SchemaValidationExtraTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

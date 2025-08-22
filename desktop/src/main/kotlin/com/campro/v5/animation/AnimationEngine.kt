@@ -104,6 +104,9 @@ class ComponentBasedAnimationEngine(private var parameters: Map<String, String>)
     private val motionLawEngine = MotionLawEngine()
     private var lastDrawnAngle: Float = -1f
     private var cachedComponentPositions: ComponentPositions? = null
+
+    // Expose MotionLawEngine for UI previews (Week 1 preview panel)
+    fun motionEngine(): MotionLawEngine = motionLawEngine
     
     init {
         // Initialize the motion law engine with the parameters
@@ -134,18 +137,51 @@ class ComponentBasedAnimationEngine(private var parameters: Map<String, String>)
         scale: Float,
         offset: Offset
     ) {
-        // Get component positions from the motion law engine
-        // Use cached positions if available and angle hasn't changed significantly
-        val componentPositions = if (cachedComponentPositions != null && Math.abs(currentAngle - lastDrawnAngle) < 0.1f) {
-            cachedComponentPositions!!
-        } else {
-            val positions = motionLawEngine.getComponentPositions(currentAngle.toDouble())
-            cachedComponentPositions = positions
-            lastDrawnAngle = currentAngle
-            positions
+        // Litvin rendering path (if enabled and data available)
+        if (motionLawEngine.isLitvinActive() && motionLawEngine.getLitvinTables() != null && motionLawEngine.getLitvinCurves() != null) {
+            LitvinRenderer.drawFrame(
+                drawScope = drawScope,
+                canvasWidth = canvasWidth,
+                canvasHeight = canvasHeight,
+                scaleUser = scale,
+                offset = offset,
+                angleDeg = currentAngle,
+                parameters = parameters,
+                motion = motionLawEngine
+            )
+            return
+        }
+        // If Litvin mode is selected but data unavailable, block fallback rendering to avoid non-Litvin visuals
+        if (motionLawEngine.isLitvinActive()) {
+            return
+        }
+
+        // Determine number of assemblies and phase offset (default to 2 assemblies)
+        val n = ParameterResolver.int(parameters, "assembly_count", 2, "Assembly Count").coerceAtLeast(1)
+        val defaultStep = 360f / n
+        val step = ParameterResolver.float(parameters, "assembly_phase_offset_deg", defaultStep)
+
+        // Build positions list for phase-shifted assemblies
+        val positionsList = ArrayList<ComponentPositions>(n)
+        for (i in 0 until n) {
+            val phaseAngle = (currentAngle + i * step) % 360f
+            val pos = if (i == 0) {
+                // Cache for the base angle to avoid recomputation within small delta
+                if (cachedComponentPositions != null && Math.abs(currentAngle - lastDrawnAngle) < 0.1f) {
+                    cachedComponentPositions!!
+                } else {
+                    val p = motionLawEngine.getComponentPositions(phaseAngle.toDouble())
+                    cachedComponentPositions = p
+                    lastDrawnAngle = currentAngle
+                    p
+                }
+            } else {
+                motionLawEngine.getComponentPositions(phaseAngle.toDouble())
+            }
+            positionsList.add(pos)
         }
         
-        // Draw the components
+        // Draw the components (ring + multiple assemblies)
         ComponentBasedAnimationRenderer.drawFrame(
             drawScope,
             canvasWidth,
@@ -154,7 +190,7 @@ class ComponentBasedAnimationEngine(private var parameters: Map<String, String>)
             offset,
             currentAngle,
             parameters,
-            componentPositions
+            positionsList
         )
     }
     

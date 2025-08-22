@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.CommandProcessorTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:09.805Z" hostname="ABED" time="2.265">
+  <properties/>
+  <testcase name="testClickCommand()" classname="com.campro.v5.CommandProcessorTest" time="0.217"/>
+  <testcase name="testGetStateCommand()" classname="com.campro.v5.CommandProcessorTest" time="0.204"/>
+  <testcase name="testInvalidJson()" classname="com.campro.v5.CommandProcessorTest" time="0.203"/>
+  <testcase name="testUnknownCommand()" classname="com.campro.v5.CommandProcessorTest" time="0.204"/>
+  <testcase name="testGestureCommand()" classname="com.campro.v5.CommandProcessorTest" time="0.205"/>
+  <testcase name="testExportCommand()" classname="com.campro.v5.CommandProcessorTest" time="0.204"/>
+  <testcase name="testSetValueCommand()" classname="com.campro.v5.CommandProcessorTest" time="0.203"/>
+  <testcase name="testSelectTabCommand()" classname="com.campro.v5.CommandProcessorTest" time="0.204"/>
+  <testcase name="testImportCommand()" classname="com.campro.v5.CommandProcessorTest" time="0.204"/>
+  <testcase name="testResetCommand()" classname="com.campro.v5.CommandProcessorTest" time="0.204"/>
+  <testcase name="testGenerateCommand()" classname="com.campro.v5.CommandProcessorTest" time="0.206"/>
+  <system-out><![CDATA[[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

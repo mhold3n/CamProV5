@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.collaboration.ExportManagerTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:22.879Z" hostname="ABED" time="3.566">
+  <properties/>
+  <testcase name="test export progress tracking()" classname="com.campro.v5.collaboration.ExportManagerTest" time="0.01"/>
+  <testcase name="test export to CSV format()" classname="com.campro.v5.collaboration.ExportManagerTest" time="0.005"/>
+  <testcase name="test supported formats()" classname="com.campro.v5.collaboration.ExportManagerTest" time="0.001"/>
+  <testcase name="test export to non-existent directory()" classname="com.campro.v5.collaboration.ExportManagerTest" time="0.004"/>
+  <testcase name="test export with invalid format()" classname="com.campro.v5.collaboration.ExportManagerTest" time="0.003"/>
+  <testcase name="test export history clearing()" classname="com.campro.v5.collaboration.ExportManagerTest" time="0.004"/>
+  <testcase name="test export simulation results()" classname="com.campro.v5.collaboration.ExportManagerTest" time="0.005"/>
+  <testcase name="test export with custom options()" classname="com.campro.v5.collaboration.ExportManagerTest" time="0.005"/>
+  <testcase name="test export history tracking()" classname="com.campro.v5.collaboration.ExportManagerTest" time="0.504"/>
+  <testcase name="test export to XML format()" classname="com.campro.v5.collaboration.ExportManagerTest" time="0.004"/>
+  <testcase name="test concurrent exports()" classname="com.campro.v5.collaboration.ExportManagerTest" time="0.003"/>
+  <testcase name="test export to ZIP format()" classname="com.campro.v5.collaboration.ExportManagerTest" time="0.007"/>
+  <testcase name="test export events()" classname="com.campro.v5.collaboration.ExportManagerTest" time="3.005"/>
+  <testcase name="test export to JSON format()" classname="com.campro.v5.collaboration.ExportManagerTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

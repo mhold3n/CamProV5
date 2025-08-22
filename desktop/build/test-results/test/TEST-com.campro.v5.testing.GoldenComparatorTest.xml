@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.testing.GoldenComparatorTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:28.040Z" hostname="ABED" time="0.019">
+  <properties/>
+  <testcase name="compare_motionlaw_structure()" classname="com.campro.v5.testing.GoldenComparatorTest" time="0.003"/>
+  <testcase name="compare_transmission_count_and_mean()" classname="com.campro.v5.testing.GoldenComparatorTest" time="0.004"/>
+  <testcase name="compare_motionlaw_values_for_canonical_s5_step10_if_golden_present()" classname="com.campro.v5.testing.GoldenComparatorTest" time="0.01"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

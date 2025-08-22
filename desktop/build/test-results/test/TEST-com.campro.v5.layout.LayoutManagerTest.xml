@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.layout.LayoutManagerTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:26.743Z" hostname="ABED" time="0.22">
+  <properties/>
+  <testcase name="testTemplateChangeEmitsEvent()" classname="com.campro.v5.layout.LayoutManagerTest" time="0.006"/>
+  <testcase name="testWindowSizeChangesCanTriggerTemplateChanges()" classname="com.campro.v5.layout.LayoutManagerTest" time="0.205"/>
+  <testcase name="testSingletonInstance()" classname="com.campro.v5.layout.LayoutManagerTest" time="0.001"/>
+  <testcase name="testDensityFactorChangeEmitsEvent()" classname="com.campro.v5.layout.LayoutManagerTest" time="0.002"/>
+  <testcase name="testWindowSizeChangeEmitsEvent()" classname="com.campro.v5.layout.LayoutManagerTest" time="0.002"/>
+  <testcase name="testAppropriateSpacingForDifferentWindowSizes()" classname="com.campro.v5.layout.LayoutManagerTest" time="0.001"/>
+  <testcase name="testHelperMethodsForDifferentTemplates()" classname="com.campro.v5.layout.LayoutManagerTest" time="0.002"/>
+  <system-out><![CDATA[[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -29,6 +29,7 @@ extern crate lazy_static;
 pub mod motion_law;
 pub mod error;
 pub mod logging;
+pub mod litvin;
 pub mod jni;
 
 // Re-export types

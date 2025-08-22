@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.collaboration.SharingManagerTest" tests="19" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:26.446Z" hostname="ABED" time="0.168">
+  <properties/>
+  <testcase name="test share project to cloud()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.017"/>
+  <testcase name="test active shares tracking()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.002"/>
+  <testcase name="test collaboration with different roles()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.008"/>
+  <testcase name="test supported platforms()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.0"/>
+  <testcase name="test revoke share()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.002"/>
+  <testcase name="test collaboration session duration()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.001"/>
+  <testcase name="test sharing with different access levels()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.002"/>
+  <testcase name="test local network sharing()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.003"/>
+  <testcase name="test sharing with expiration date()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.001"/>
+  <testcase name="test start collaboration session()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.001"/>
+  <testcase name="test sharing history()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.002"/>
+  <testcase name="test share with unsupported platform()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.003"/>
+  <testcase name="test sharing events()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.107"/>
+  <testcase name="test sharing progress tracking()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.001"/>
+  <testcase name="test collaboration session management()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.002"/>
+  <testcase name="test share project via email()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.004"/>
+  <testcase name="test generate QR code()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.002"/>
+  <testcase name="test Git repository sharing()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.002"/>
+  <testcase name="test generate share link()" classname="com.campro.v5.collaboration.SharingManagerTest" time="0.001"/>
+  <system-out><![CDATA[[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/d5a5afb1aead?token=12ab7fe20e7aecadd6b83b9c85384018, shareId=239f9e9ed73a)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/1f1b72201d79, shareId=6a0fd59a1f55)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/444fc6cdfa0d, shareId=75b2673f9d95)
+[DEBUG_LOG] Emitted event: CollaborationStarted(sessionId=session_1755891926468_7033, collaboratorCount=3)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/be5a2ff4c010, shareId=d50c026656e4)
+[DEBUG_LOG] Emitted event: ShareRevoked(shareId=d50c026656e4)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/aadc48bb9199, shareId=264a054f16ab)
+[DEBUG_LOG] Emitted event: CollaborationStarted(sessionId=session_1755891926478_1028, collaboratorCount=2)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/0191d847008c, shareId=4c014035e77f)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/688de24b54b5, shareId=0555a6bcec3a)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/eab369575b10, shareId=ed4c09e6fb5f)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=local, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=local, shareUrl=Local sharing at: http://localhost:8082, shareId=dc648e40674d)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/ddbff17b966a, shareId=62bddc2f67b6)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/f4d4c3fdf5c2, shareId=b051e33ae157)
+[DEBUG_LOG] Emitted event: CollaborationStarted(sessionId=session_1755891926486_5599, collaboratorCount=2)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/58c2eec721ea, shareId=08c76f0255bf)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=unsupported_platform, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingFailed(platform=unsupported_platform, error=Unsupported platform: unsupported_platform)
+[DEBUG_LOG] Starting event collector
+[DEBUG_LOG] Received event: SharingCompleted(platform=local, shareUrl=Local sharing at: http://localhost:8082, shareId=dc648e40674d)
+[DEBUG_LOG] Received event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Received event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/ddbff17b966a, shareId=62bddc2f67b6)
+[DEBUG_LOG] Received event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Received event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/f4d4c3fdf5c2, shareId=b051e33ae157)
+[DEBUG_LOG] Received event: CollaborationStarted(sessionId=session_1755891926486_5599, collaboratorCount=2)
+[DEBUG_LOG] Received event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Received event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/58c2eec721ea, shareId=08c76f0255bf)
+[DEBUG_LOG] Received event: SharingStarted(platform=unsupported_platform, projectName=Test Sharing Project)
+[DEBUG_LOG] Received event: SharingFailed(platform=unsupported_platform, error=Unsupported platform: unsupported_platform)
+[DEBUG_LOG] Event collector is ready
+[DEBUG_LOG] Sharing project
+[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Received event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Received event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/06808c88617f, shareId=34c816e43b15)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/06808c88617f, shareId=34c816e43b15)
+[DEBUG_LOG] Sharing result: Success(shareUrl=https://cloud.campro.com/projects/06808c88617f)
+[DEBUG_LOG] Events check - hasStarted: true, hasCompleted: true, count: 12
+[DEBUG_LOG] All collected events: [SharingCompleted(platform=local, shareUrl=Local sharing at: http://localhost:8082, shareId=dc648e40674d), SharingStarted(platform=cloud, projectName=Test Sharing Project), SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/ddbff17b966a, shareId=62bddc2f67b6), SharingStarted(platform=cloud, projectName=Test Sharing Project), SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/f4d4c3fdf5c2, shareId=b051e33ae157), CollaborationStarted(sessionId=session_1755891926486_5599, collaboratorCount=2), SharingStarted(platform=cloud, projectName=Test Sharing Project), SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/58c2eec721ea, shareId=08c76f0255bf), SharingStarted(platform=unsupported_platform, projectName=Test Sharing Project), SharingFailed(platform=unsupported_platform, error=Unsupported platform: unsupported_platform), SharingStarted(platform=cloud, projectName=Test Sharing Project), SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/06808c88617f, shareId=34c816e43b15)]
+[DEBUG_LOG] Error in event collector: StandaloneCoroutine was cancelled
+[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/9be46a85ae5a, shareId=4d33380c6ae5)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/1a975674a01d, shareId=a629eafe1ea7)
+[DEBUG_LOG] Emitted event: CollaborationStarted(sessionId=session_1755891926602_4003, collaboratorCount=2)
+[DEBUG_LOG] Emitted event: CollaborationEnded(sessionId=session_1755891926602_4003)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=email, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=email, shareUrl=Email sent to test1@example.com, test2@example.com, shareId=89021940366f)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=qr, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=qr, shareUrl=QR Code generated: C:\Users\maxed/CamPro_QR_Test_Sharing_Project.png, shareId=ad5da51c29bf)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=git, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=git, shareUrl=Pushed to Git repository: https://github.com/user/campro-project.git, shareId=7c2dc1cf5540)
+[DEBUG_LOG] Emitted event: SharingStarted(platform=link, projectName=Test Sharing Project)
+[DEBUG_LOG] Emitted event: SharingCompleted(platform=link, shareUrl=https://share.campro.com/share/f3af8a3b6642, shareId=807fefb39f0a)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.animation.LitvinSignatureTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:12.293Z" hostname="ABED" time="0.012">
+  <properties/>
+  <testcase name="non numeric values are normalized()" classname="com.campro.v5.animation.LitvinSignatureTest" time="0.005"/>
+  <testcase name="same map different order yields same signature()" classname="com.campro.v5.animation.LitvinSignatureTest" time="0.003"/>
+  <testcase name="different significant value changes signature()" classname="com.campro.v5.animation.LitvinSignatureTest" time="0.003"/>
+  <testcase name="whitespace and case insensitivity on keys()" classname="com.campro.v5.animation.LitvinSignatureTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

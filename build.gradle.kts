@@ -1,25 +1,13 @@
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-    }
-    dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.20")
-        classpath("org.jetbrains.compose:compose-gradle-plugin:1.2.0")
-    }
+/**
+ * Aggregator build script for the parent Gradle project ':CamProV5'.
+ * This exists to satisfy IDE/Gradle multi-project discovery when including ':CamProV5:desktop'.
+ * No build logic is required here; all configuration lives in subprojects.
+ */
+
+plugins {
+    base
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-    }
-}
+description = "CamProV5 aggregator module (no build logic)"
 
-tasks.register("clean") {
-    doLast {
-        delete(rootProject.buildDir)
-    }
-}
+// Intentionally empty: subprojects (e.g., :CamProV5:desktop) configure their own plugins and repositories.

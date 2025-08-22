@@ -1,0 +1,225 @@
+n12:45:09,018 |-INFO in ch.qos.logback.classic.LoggerContext[default] - This is logback-classic version 1.5.6
+à12:45:09,020 |-INFO in ch.qos.logback.classic.util.ContextInitializer@2564b4ea - No custom configurators were discovered as a service.
+§12:45:09,020 |-INFO in ch.qos.logback.classic.util.ContextInitializer@2564b4ea - Trying to configure with ch.qos.logback.classic.joran.SerializedModelConfigurator
+≤12:45:09,021 |-INFO in ch.qos.logback.classic.util.ContextInitializer@2564b4ea - Constructed configurator of type class ch.qos.logback.classic.joran.SerializedModelConfigurator
+t12:45:09,024 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback-test.scmo]
+o12:45:09,024 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback.scmo]
+÷12:45:09,029 |-INFO in ch.qos.logback.classic.util.ContextInitializer@2564b4ea - ch.qos.logback.classic.joran.SerializedModelConfigurator.configure() call lasted 5 milliseconds. ExecutionStatus=INVOKE_NEXT_IF_ANY
+†12:45:09,029 |-INFO in ch.qos.logback.classic.util.ContextInitializer@2564b4ea - Trying to configure with ch.qos.logback.classic.util.DefaultJoranConfigurator
+Æ12:45:09,029 |-INFO in ch.qos.logback.classic.util.ContextInitializer@2564b4ea - Constructed configurator of type class ch.qos.logback.classic.util.DefaultJoranConfigurator
+s12:45:09,029 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback-test.xml]
+∏12:45:09,031 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Found resource [logback.xml] at [file:/D:/Development/engine/CamProV5/desktop/build/resources/main/logback.xml]
+w12:45:09,099 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - Processing appender named [CONSOLE]
+ü12:45:09,100 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - About to instantiate appender of type [ch.qos.logback.core.ConsoleAppender]
+∂12:45:09,104 |-INFO in ch.qos.logback.core.model.processor.ImplicitModelHandler - Assuming default type [ch.qos.logback.classic.encoder.PatternLayoutEncoder] for [encoder] property
+t12:45:09,119 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - Processing appender named [FILE]
+´12:45:09,119 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - About to instantiate appender of type [ch.qos.logback.core.rolling.RollingFileAppender]
+g12:45:09,127 |-INFO in c.q.l.core.rolling.TimeBasedRollingPolicy@222063775 - Will use zip compression
+ô12:45:09,127 |-INFO in c.q.l.core.rolling.TimeBasedRollingPolicy@222063775 - Will use the pattern logs/campro-%d{yyyy-MM-dd}.%i.log for the active file
+µ12:45:09,130 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@fc6f5a3 - The date pattern is 'yyyy-MM-dd' from file name pattern 'logs/campro-%d{yyyy-MM-dd}.%i.log.zip'.
+k12:45:09,130 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@fc6f5a3 - Roll-over at midnight.
+á12:45:09,130 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@fc6f5a3 - Setting initial period to 2025-08-22T19:18:00.889Z
+£12:45:09,130 |-WARN in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@fc6f5a3 - SizeAndTimeBasedFNATP is deprecated. Use SizeAndTimeBasedRollingPolicy instead
+∑12:45:09,130 |-WARN in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@fc6f5a3 - For more information see http://logback.qos.ch/manual/appenders.html#SizeAndTimeBasedRollingPolicy
+c12:45:09,132 |-INFO in c.q.l.core.rolling.TimeBasedRollingPolicy@222063775 - Cleaning on start up
+∂12:45:09,134 |-INFO in ch.qos.logback.core.model.processor.ImplicitModelHandler - Assuming default type [ch.qos.logback.classic.encoder.PatternLayoutEncoder] for [encoder] property
+y12:45:09,134 |-INFO in c.q.l.core.rolling.helper.TimeBasedArchiveRemover - first clean up after appender initialization
+¨12:45:09,134 |-INFO in c.q.l.core.rolling.helper.TimeBasedArchiveRemover - Multiple periods, i.e. 32 periods, seem to have elapsed. This is expected at application start.
+Ö12:45:09,135 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[FILE] - Active log file name: logs/campro-%d{yyyy-MM-dd}.log
+â12:45:09,136 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[FILE] - File property is set to [logs/campro-%d{yyyy-MM-dd}.log]
+t12:45:09,136 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - Processing appender named [JSON]
+´12:45:09,136 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - About to instantiate appender of type [ch.qos.logback.core.rolling.RollingFileAppender]
+f12:45:09,137 |-INFO in c.q.l.core.rolling.TimeBasedRollingPolicy@900832078 - Will use gz compression
+°12:45:09,137 |-INFO in c.q.l.core.rolling.TimeBasedRollingPolicy@900832078 - Will use the pattern logs/campro-json-%d{yyyy-MM-dd}.%i.ndjson for the active file
+Ω12:45:09,137 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@3572aaf6 - The date pattern is 'yyyy-MM-dd' from file name pattern 'logs/campro-json-%d{yyyy-MM-dd}.%i.ndjson.gz'.
+l12:45:09,137 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@3572aaf6 - Roll-over at midnight.
+à12:45:09,138 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@3572aaf6 - Setting initial period to 2025-08-22T19:18:00.889Z
+§12:45:09,138 |-WARN in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@3572aaf6 - SizeAndTimeBasedFNATP is deprecated. Use SizeAndTimeBasedRollingPolicy instead
+∏12:45:09,138 |-WARN in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@3572aaf6 - For more information see http://logback.qos.ch/manual/appenders.html#SizeAndTimeBasedRollingPolicy
+c12:45:09,138 |-INFO in c.q.l.core.rolling.TimeBasedRollingPolicy@900832078 - Cleaning on start up
+y12:45:09,138 |-INFO in c.q.l.core.rolling.helper.TimeBasedArchiveRemover - first clean up after appender initialization
+¨12:45:09,138 |-INFO in c.q.l.core.rolling.helper.TimeBasedArchiveRemover - Multiple periods, i.e. 32 periods, seem to have elapsed. This is expected at application start.
+ç12:45:09,235 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[JSON] - Active log file name: logs/campro-json-%d{yyyy-MM-dd}.ndjson
+ë12:45:09,235 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[JSON] - File property is set to [logs/campro-json-%d{yyyy-MM-dd}.ndjson]
+á12:45:09,235 |-INFO in ch.qos.logback.classic.model.processor.LoggerModelHandler - Setting level of logger [com.campro.event] to INFO
+ç12:45:09,237 |-INFO in ch.qos.logback.classic.model.processor.LoggerModelHandler - Setting additivity of logger [com.campro.event] to false
+í12:45:09,238 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [JSON] to Logger[com.campro.event]
+í12:45:09,238 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [FILE] to Logger[com.campro.event]
+ï12:45:09,238 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [CONSOLE] to Logger[com.campro.event]
+}12:45:09,238 |-INFO in ch.qos.logback.classic.model.processor.RootLoggerModelHandler - Setting level of ROOT logger to INFO
+â12:45:09,238 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [CONSOLE] to Logger[ROOT]
+Ü12:45:09,238 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [FILE] to Logger[ROOT]
+Ü12:45:09,238 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [JSON] to Logger[ROOT]
+n12:45:09,238 |-INFO in ch.qos.logback.core.model.processor.DefaultProcessor@5b447053 - End of configuration.
+ã12:45:09,239 |-INFO in ch.qos.logback.classic.joran.JoranConfigurator@6317ed75 - Registering current configuration as safe fallback point
+€12:45:09,239 |-INFO in ch.qos.logback.classic.util.ContextInitializer@2564b4ea - ch.qos.logback.classic.util.DefaultJoranConfigurator.configure() call lasted 210 milliseconds. ExecutionStatus=DO_NOT_INVOKE_NEXT_IF_ANY
+
+$[DEBUG_LOG] Test teardown complete
+	$[DEBUG_LOG] Test teardown complete
+
+$[DEBUG_LOG] Test teardown complete
+$[DEBUG_LOG] Test teardown complete
+$[DEBUG_LOG] Test teardown complete
+$[DEBUG_LOG] Test teardown complete
+$[DEBUG_LOG] Test teardown complete
+$[DEBUG_LOG] Test teardown complete
+$[DEBUG_LOG] Test teardown complete
+$[DEBUG_LOG] Test teardown complete
+$[DEBUG_LOG] Test teardown complete
+$[DEBUG_LOG] Test teardown complete
+$[DEBUG_LOG] Test teardown complete
+$[DEBUG_LOG] Test teardown complete
+$[DEBUG_LOG] Test teardown complete
+$[DEBUG_LOG] Test teardown complete
+0[DEBUG_LOG] Starting native library test setup
+*[DEBUG_LOG] Testing system properties...
+![DEBUG_LOG] OS Name: Windows 11
+[DEBUG_LOG] OS Arch: amd64
+˛[DEBUG_LOG] Java Library Path: C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot\bin;C:\Program Files\Python311\Scripts\;C:\Program Files\Python311\;C:\Program Files (x86)\Common Files\Oracle\Java\java8path;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA app\NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\Git\cmd;c:\Users\maxed\AppData\Local\Programs\cursor\resources\app\bin;C:\Program Files\dotnet\;C:\Users\maxed\AppData\Local\Muse Hub\lib;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\Program Files (x86)\Microsoft SQL Server\150\Tools\Binn\;C:\Program Files\Microsoft SQL Server\150\Tools\Binn\;C:\Program Files\Microsoft SQL Server\150\DTS\Binn\;C:\Program Files (x86)\Windows Kits\8.1\Windows Performance Toolkit\;C:\Program Files\Docker\Docker\resources\bin;C:\Users\maxed\.cargo\bin;C:\Users\maxed\AppData\Local\Microsoft\WindowsApps;C:\Users\maxed\AppData\Local\GitHubDesktop\bin;C:\Users\maxed\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\maxed\AppData\Local\Programs\cursor\resources\app\bin;C:\Users\maxed\AppData\Local\Muse Hub\lib;C:\Program Files\JetBrains\IntelliJ IDEA 2025.1.4.1\bin;;C:\Users\maxed\AppData\Local\JetBrains\Toolbox\scripts;;.
+.[DEBUG_LOG] FEA library resource found: true
+1[DEBUG_LOG] Motion library resource found: true
+0[DEBUG_LOG] Starting native library test setup
+3[DEBUG_LOG] Testing FEA engine library loading...
+]Attempting to load native library from resource path: /native/windows/x86_64/campro_fea.dll
+mExtracted native library to: C:\Users\maxed\AppData\Local\Temp\campro_fea4421600719829324430\campro_fea.dll
+{Loaded Rust FEA engine native library from C:\Users\maxed\AppData\Local\Temp\campro_fea4421600719829324430\campro_fea.dll
+(Native library verification successful
+6[DEBUG_LOG] FEA engine instance created successfully
+([DEBUG_LOG] FEA engine available: true
+'[DEBUG_LOG] FEA engine version: 1.0.0
+0[DEBUG_LOG] Starting native library test setup
+:[DEBUG_LOG] Testing Motion Law engine library loading...
+·2025-08-22 12:45:12.280 [Test worker] INFO  com.campro.v5.animation.MotionLawEngine - Initialized Rust logger: session=2025-08-22T19:45:12.076Z-503bc7e1 level=(default) dir=logs [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+=[DEBUG_LOG] Motion Law engine instance created successfully
+†[DEBUG_LOG] Component positions retrieved: ComponentPositions(pistonPosition=Offset(17.7, 58.5), rodPosition=Offset(17.7, 22.7), camPosition=Offset(0.0, 0.0))
+Q[DEBUG_LOG] theta_last=358.8, step=1.2000000000000455, ratio=0.9999999999999526
+\[DEBUG_LOG] x0=0.0, x1=0.0, |x0-x1|=0.0, tx=1.3174041832595073E-9, maxX=1.3174041832595071
+g[DEBUG_LOG] v0=0.0, v360=-3.469446951953614E-18, |v0-v360|=3.469446951953614E-18, tv=1.0E-5, vMax=1.0
+^[DEBUG_LOG] a0=0.0, a360=0.0, |a0-a360|=0.0, ta=5.695338181491137E-8, aMax=5.695338181491137
+:9®2025-08-22 12:45:12.503 [Test worker] INFO  com.campro.v5.animation.OptimizationEngine - NSGA-II complete: gen=2, pop=10 [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+:;®2025-08-22 12:45:12.643 [Test worker] INFO  com.campro.v5.animation.OptimizationEngine - NSGA-II complete: gen=2, pop=10 [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+:<®2025-08-22 12:45:13.100 [Test worker] INFO  com.campro.v5.animation.OptimizationEngine - NSGA-II complete: gen=3, pop=12 [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+:<®2025-08-22 12:45:13.225 [Test worker] INFO  com.campro.v5.animation.OptimizationEngine - NSGA-II complete: gen=3, pop=12 [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+éç][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éç≥[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/d5a5afb1aead?token=12ab7fe20e7aecadd6b83b9c85384018, shareId=239f9e9ed73a)
+éè][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éèå[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/1f1b72201d79, shareId=6a0fd59a1f55)
+éê][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éêå[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/444fc6cdfa0d, shareId=75b2673f9d95)
+éêl[DEBUG_LOG] Emitted event: CollaborationStarted(sessionId=session_1755891926468_7033, collaboratorCount=3)
+éí][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éíå[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/be5a2ff4c010, shareId=d50c026656e4)
+éí?[DEBUG_LOG] Emitted event: ShareRevoked(shareId=d50c026656e4)
+éì][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éìå[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/aadc48bb9199, shareId=264a054f16ab)
+éìl[DEBUG_LOG] Emitted event: CollaborationStarted(sessionId=session_1755891926478_1028, collaboratorCount=2)
+éî][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éîå[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/0191d847008c, shareId=4c014035e77f)
+éî][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éîå[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/688de24b54b5, shareId=0555a6bcec3a)
+éî][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éîå[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/eab369575b10, shareId=ed4c09e6fb5f)
+éï][DEBUG_LOG] Emitted event: SharingStarted(platform=local, projectName=Test Sharing Project)
+éïÖ[DEBUG_LOG] Emitted event: SharingCompleted(platform=local, shareUrl=Local sharing at: http://localhost:8082, shareId=dc648e40674d)
+éñ][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éñå[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/ddbff17b966a, shareId=62bddc2f67b6)
+éó][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éóå[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/f4d4c3fdf5c2, shareId=b051e33ae157)
+éól[DEBUG_LOG] Emitted event: CollaborationStarted(sessionId=session_1755891926486_5599, collaboratorCount=2)
+éò][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éòå[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/58c2eec721ea, shareId=08c76f0255bf)
+éôl[DEBUG_LOG] Emitted event: SharingStarted(platform=unsupported_platform, projectName=Test Sharing Project)
+éô{[DEBUG_LOG] Emitted event: SharingFailed(platform=unsupported_platform, error=Unsupported platform: unsupported_platform)
+éö&[DEBUG_LOG] Starting event collector
+éöÜ[DEBUG_LOG] Received event: SharingCompleted(platform=local, shareUrl=Local sharing at: http://localhost:8082, shareId=dc648e40674d)
+éö^[DEBUG_LOG] Received event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éöç[DEBUG_LOG] Received event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/ddbff17b966a, shareId=62bddc2f67b6)
+éö^[DEBUG_LOG] Received event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éöç[DEBUG_LOG] Received event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/f4d4c3fdf5c2, shareId=b051e33ae157)
+éöm[DEBUG_LOG] Received event: CollaborationStarted(sessionId=session_1755891926486_5599, collaboratorCount=2)
+éö^[DEBUG_LOG] Received event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éöç[DEBUG_LOG] Received event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/58c2eec721ea, shareId=08c76f0255bf)
+éöm[DEBUG_LOG] Received event: SharingStarted(platform=unsupported_platform, projectName=Test Sharing Project)
+éö|[DEBUG_LOG] Received event: SharingFailed(platform=unsupported_platform, error=Unsupported platform: unsupported_platform)
+éö&[DEBUG_LOG] Event collector is ready
+éö[DEBUG_LOG] Sharing project
+éö][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éö^[DEBUG_LOG] Received event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éöç[DEBUG_LOG] Received event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/06808c88617f, shareId=34c816e43b15)
+éöå[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/06808c88617f, shareId=34c816e43b15)
+éö^[DEBUG_LOG] Sharing result: Success(shareUrl=https://cloud.campro.com/projects/06808c88617f)
+éöL[DEBUG_LOG] Events check - hasStarted: true, hasCompleted: true, count: 12
+éö‹[DEBUG_LOG] All collected events: [SharingCompleted(platform=local, shareUrl=Local sharing at: http://localhost:8082, shareId=dc648e40674d), SharingStarted(platform=cloud, projectName=Test Sharing Project), SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/ddbff17b966a, shareId=62bddc2f67b6), SharingStarted(platform=cloud, projectName=Test Sharing Project), SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/f4d4c3fdf5c2, shareId=b051e33ae157), CollaborationStarted(sessionId=session_1755891926486_5599, collaboratorCount=2), SharingStarted(platform=cloud, projectName=Test Sharing Project), SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/58c2eec721ea, shareId=08c76f0255bf), SharingStarted(platform=unsupported_platform, projectName=Test Sharing Project), SharingFailed(platform=unsupported_platform, error=Unsupported platform: unsupported_platform), SharingStarted(platform=cloud, projectName=Test Sharing Project), SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/06808c88617f, shareId=34c816e43b15)]
+éöI[DEBUG_LOG] Error in event collector: StandaloneCoroutine was cancelled
+éõ][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éõå[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/9be46a85ae5a, shareId=4d33380c6ae5)
+éú][DEBUG_LOG] Emitted event: SharingStarted(platform=cloud, projectName=Test Sharing Project)
+éúå[DEBUG_LOG] Emitted event: SharingCompleted(platform=cloud, shareUrl=https://cloud.campro.com/projects/1a975674a01d, shareId=a629eafe1ea7)
+éúl[DEBUG_LOG] Emitted event: CollaborationStarted(sessionId=session_1755891926602_4003, collaboratorCount=2)
+éúU[DEBUG_LOG] Emitted event: CollaborationEnded(sessionId=session_1755891926602_4003)
+éù][DEBUG_LOG] Emitted event: SharingStarted(platform=email, projectName=Test Sharing Project)
+éùê[DEBUG_LOG] Emitted event: SharingCompleted(platform=email, shareUrl=Email sent to test1@example.com, test2@example.com, shareId=89021940366f)
+éûZ[DEBUG_LOG] Emitted event: SharingStarted(platform=qr, projectName=Test Sharing Project)
+éûü[DEBUG_LOG] Emitted event: SharingCompleted(platform=qr, shareUrl=QR Code generated: C:\Users\maxed/CamPro_QR_Test_Sharing_Project.png, shareId=ad5da51c29bf)
+éü[[DEBUG_LOG] Emitted event: SharingStarted(platform=git, projectName=Test Sharing Project)
+éü†[DEBUG_LOG] Emitted event: SharingCompleted(platform=git, shareUrl=Pushed to Git repository: https://github.com/user/campro-project.git, shareId=7c2dc1cf5540)
+é†\[DEBUG_LOG] Emitted event: SharingStarted(platform=link, projectName=Test Sharing Project)
+é†à[DEBUG_LOG] Emitted event: SharingCompleted(platform=link, shareUrl=https://share.campro.com/share/f3af8a3b6642, shareId=807fefb39f0a)
+¢§S[DEBUG_LOG] Default(S5) jerkMax=1.2530586979511105E13, accelMax=5793565.566882875
+¢§J[DEBUG_LOG] S7 jerkMax=1.0964263607072217E13, accelMax=5846695.510089801
+øæ![DEBUG_LOG] Test setup complete
+øæe[DEBUG_LOG] Test model file: C:\Users\maxed\AppData\Local\Temp\test_model_14982104339858305710.json
+øæ'[DEBUG_LOG] Testing transferToRust...
+øæ0[DEBUG_LOG] Testing transferLargeDataToRust...
+øæ [DEBUG_LOG] Testing caching...
+øæ*[DEBUG_LOG] Data transfer tests complete
+øæ$[DEBUG_LOG] Test teardown complete
+ø¿![DEBUG_LOG] Test setup complete
+ø¿e[DEBUG_LOG] Test model file: C:\Users\maxed\AppData\Local\Temp\test_model_13624207720063319487.json
+ø¿$[DEBUG_LOG] Creating test error...
+ø¿ó2025-08-22 12:45:26.726 [Test worker @coroutine#459] INFO  com.campro.event - {"type":"error","message":"Test error message", "component":"ErrorHandler","ts":1755891926726,"seq":1009,"sessionId":"2025-08-22T19:45:12.076Z-503bc7e1"} [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+ø¿'[DEBUG_LOG] Testing error handling...
+ø¿†2025-08-22 12:45:26.728 [DefaultDispatcher-worker-6 @coroutine#459] INFO  com.campro.event - {"type":"error","message":"Recovery failed for error: Test error message", "component":"ErrorHandler","ts":1755891926728,"seq":1010,"sessionId":"2025-08-22T19:45:12.076Z-503bc7e1"} [sessionId=]
+ø¿$[DEBUG_LOG] Running diagnostics...
+ø¿º2025-08-22 12:45:26.736 [DefaultDispatcher-worker-6 @coroutine#459] INFO  com.campro.event - {"type":"error","message":"Insufficient memory for FEA operations: 83 MB available, 1024 MB required", "component":"ErrorHandler","ts":1755891926736,"seq":1011,"sessionId":"2025-08-22T19:45:12.076Z-503bc7e1"} [sessionId=]
+ø¿ [DEBUG_LOG] Diagnostic report:
+ø¿FEA Diagnostic Report
+ø¿--------------------
+ø¿FEA Engine Available: true
+ø¿FEA Engine Version: 1.0.0
+ø¿$Memory-Mapped Files Supported: true
+ø¿Max Memory: 512 MB
+ø¿Free Memory: 83 MB
+ø¿Total Memory: 120 MB
+ø¿Used Memory: 36 MB
+ø¿Sufficient Memory: false
+ø¿System Ready for FEA: false
+ø¿
+ø¿Errors:
+ø¿[- OUT_OF_MEMORY: Insufficient memory for FEA operations: 83 MB available, 1024 MB required
+ø¿
+ø¿+[DEBUG_LOG] Error handling tests complete
+ø¿$[DEBUG_LOG] Test teardown complete
+ø¡![DEBUG_LOG] Test setup complete
+ø¡d[DEBUG_LOG] Test model file: C:\Users\maxed\AppData\Local\Temp\test_model_1163747277210453311.json
+ø¡([DEBUG_LOG] FEA engine available: true
+ø¡$[DEBUG_LOG] Test teardown complete
+≈ƒ$[DEBUG_LOG] Test teardown complete
+≈∆$[DEBUG_LOG] Test teardown complete
+≈«$[DEBUG_LOG] Test teardown complete
+≈»$[DEBUG_LOG] Test teardown complete
+≈…$[DEBUG_LOG] Test teardown complete
+≈ $[DEBUG_LOG] Test teardown complete
+≈À$[DEBUG_LOG] Test teardown complete
+ÕÃ$[DEBUG_LOG] Test teardown complete
+ÕŒ$[DEBUG_LOG] Test teardown complete
+Õœ$[DEBUG_LOG] Test teardown complete
+Õ–$[DEBUG_LOG] Test teardown complete
+Õ—$[DEBUG_LOG] Test teardown complete
+Õ“$[DEBUG_LOG] Test teardown complete
+Õ”$[DEBUG_LOG] Test teardown complete
+Õ‘$[DEBUG_LOG] Test teardown complete
+Õ’$[DEBUG_LOG] Test teardown complete
+◊÷®2025-08-22 12:45:27.225 [Test worker] INFO  com.campro.v5.animation.OptimizationEngine - NSGA-II complete: gen=3, pop=16 [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+◊ÿ®2025-08-22 12:45:27.731 [Test worker] INFO  com.campro.v5.animation.OptimizationEngine - NSGA-II complete: gen=4, pop=20 [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+◊ÿ®2025-08-22 12:45:28.002 [Test worker] INFO  com.campro.v5.animation.OptimizationEngine - NSGA-II complete: gen=4, pop=20 [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]

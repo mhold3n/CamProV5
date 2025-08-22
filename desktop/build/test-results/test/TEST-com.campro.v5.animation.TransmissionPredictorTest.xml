@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.animation.TransmissionPredictorTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:13.235Z" hostname="ABED" time="0.025">
+  <properties/>
+  <testcase name="transmission_is_periodic_mean_normalized_and_finite()" classname="com.campro.v5.animation.TransmissionPredictorTest" time="0.025"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
