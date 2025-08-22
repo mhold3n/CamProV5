@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.collaboration.AnnotationManagerTest" tests="23" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:13.364Z" hostname="ABED" time="0.308">
+  <properties/>
+  <testcase name="test annotation with multiple replies()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.045"/>
+  <testcase name="test end annotation session()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.008"/>
+  <testcase name="test search annotations()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.007"/>
+  <testcase name="test delete annotation()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.006"/>
+  <testcase name="test annotation events()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.109"/>
+  <testcase name="test add different annotation types()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.011"/>
+  <testcase name="test get annotations by status()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.008"/>
+  <testcase name="test annotation filters()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.007"/>
+  <testcase name="test import annotations from JSON()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.009"/>
+  <testcase name="test archive annotation()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.006"/>
+  <testcase name="test get annotations for project()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.008"/>
+  <testcase name="test annotation position tracking()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.005"/>
+  <testcase name="test get annotations by type()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.005"/>
+  <testcase name="test resolve annotation()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.005"/>
+  <testcase name="test annotation statistics()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.006"/>
+  <testcase name="test start annotation session()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.006"/>
+  <testcase name="test export annotations to CSV()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.01"/>
+  <testcase name="test update annotation()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.005"/>
+  <testcase name="test supported annotation types()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.003"/>
+  <testcase name="test add annotation()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.005"/>
+  <testcase name="test add reply to annotation()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.007"/>
+  <testcase name="test export annotations to HTML()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.007"/>
+  <testcase name="test export annotations to JSON()" classname="com.campro.v5.collaboration.AnnotationManagerTest" time="0.007"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -9,7 +9,14 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileWriter
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * A centralized event system for the CamProV5 application.
@@ -20,6 +27,34 @@ object EventSystem {
         SupervisorJob() + Dispatchers.IO + CoroutineName("EventSystem")
     )
     private val eventFlows = ConcurrentHashMap<String, MutableSharedFlow<Event>>()
+    private val logger = LoggerFactory.getLogger("com.campro.event")
+    private val seqCounter = AtomicLong(0L)
+    private val ndjsonLock = Any()
+    @Volatile private var ndjsonWriter: BufferedWriter? = null
+
+    private fun ensureNdjsonWriter(): BufferedWriter? {
+        val testingMode = System.getProperty("testing.mode") == "true"
+        if (!testingMode) return null
+        return synchronized(ndjsonLock) {
+            if (ndjsonWriter == null) {
+                try {
+                    val dir = Paths.get("logs")
+                    if (!Files.exists(dir)) Files.createDirectories(dir)
+                    val file = dir.resolve("events-${SessionInfo.sessionId}.ndjson").toFile()
+                    ndjsonWriter = BufferedWriter(FileWriter(file, true))
+                } catch (t: Throwable) {
+                    logger.warn("Failed to open events NDJSON file: {}", t.message)
+                }
+            }
+            ndjsonWriter
+        }
+    }
+
+    private fun enrichEventJson(event: Event): String {
+        val base = event.toJson().trim()
+        val extra = "\"ts\":${System.currentTimeMillis()},\"seq\":${seqCounter.getAndIncrement()},\"sessionId\":\"${SessionInfo.sessionId}\""
+        return if (base.endsWith("}")) base.dropLast(1) + "," + extra + "}" else base
+    }
     
     /**
      * Emit an event to all listeners of the specified event type.
@@ -27,27 +62,29 @@ object EventSystem {
      * @param event The event to emit
      */
     fun emit(event: Event) {
-        // Check testing mode dynamically to ensure it reflects the current state
+        val enriched = enrichEventJson(event)
         val testingMode = System.getProperty("testing.mode") == "true"
-        
-        // Log event if in testing mode - do this synchronously to ensure it's available immediately
+
         if (testingMode) {
-            val eventJson = event.toJson()
-            println("EVENT:$eventJson")
+            println("EVENT:$enriched")
+            ensureNdjsonWriter()?.let {
+                try {
+                    it.write(enriched)
+                    it.newLine()
+                    it.flush()
+                } catch (t: Throwable) {
+                    logger.warn("Failed writing EVENT NDJSON: {}", t.message)
+                }
+            }
         }
-        
-        // Get the flow before launching the coroutine to ensure it exists
+
+        // Also log via SLF4J for unified observability
+        logger.info(enriched)
+
+        // Emit to subscribers
         val flow = getOrCreateFlow(event.type)
-        
-        // Try to emit the event synchronously first if possible (for better performance)
-        if (flow.tryEmit(event)) {
-            return
-        }
-        
-        // If synchronous emission fails (e.g., buffer is full), fall back to asynchronous emission
-        scope.launch {
-            flow.emit(event)
-        }
+        if (flow.tryEmit(event)) return
+        scope.launch { flow.emit(event) }
     }
     
     /**
@@ -83,29 +120,37 @@ object EventSystem {
      * @param events The list of events to emit
      */
     fun emitBatch(events: List<Event>) {
-        // Group events by type for more efficient processing
         val eventsByType = events.groupBy { it.type }
-        
-        // Process each group of events
+        val testingMode = System.getProperty("testing.mode") == "true"
+        val writer = if (testingMode) ensureNdjsonWriter() else null
+
         eventsByType.forEach { (type, eventsOfType) ->
             val flow = getOrCreateFlow(type)
-            
-            // Log events in testing mode
-            val testingMode = System.getProperty("testing.mode") == "true"
-            if (testingMode) {
-                eventsOfType.forEach { event ->
-                    println("EVENT:${event.toJson()}")
+
+            eventsOfType.forEach { event ->
+                val enriched = enrichEventJson(event)
+                if (testingMode) {
+                    println("EVENT:$enriched")
+                    if (writer != null) {
+                        try {
+                            writer.write(enriched)
+                            writer.newLine()
+                        } catch (t: Throwable) {
+                            logger.warn("Failed writing EVENT NDJSON (batch): {}", t.message)
+                        }
+                    }
                 }
+                logger.info(enriched)
             }
-            
-            // Emit events in a single coroutine for each type
+
             scope.launch {
                 eventsOfType.forEach { event ->
-                    // Try synchronous emission first
                     if (!flow.tryEmit(event)) {
-                        // Fall back to suspending emission if needed
                         flow.emit(event)
                     }
+                }
+                if (testingMode) {
+                    try { writer?.flush() } catch (_: Throwable) {}
                 }
             }
         }

@@ -45,22 +45,41 @@ object FeaBasedAnimationRenderer {
         parameters: Map<String, String>,
         analysisData: AnalysisData?
     ) {
-        // If no analysis data is available, draw a placeholder
-        if (analysisData == null) {
-            drawPlaceholder(drawScope, canvasWidth, canvasHeight, scale, offset)
-            return
-        }
-        
         // Extract key parameters with defaults if not present
-        val baseCircleRadius = parameters["base_circle_radius"]?.toFloatOrNull() ?: 25f
-        
+        val baseCircleRadius = ParameterResolver.float(parameters, "base_circle_radius", 25f)
+
+        // Estimate content bounds (includes mesh envelope and legend footprint)
+        val meshOuter = baseCircleRadius + 20f // base + padding for mesh/displacement
+        val legendW = 200f
+        val legendH = 20f
+        val extraPadding = 40f
+        val contentWidth = meshOuter * 2 + legendW + extraPadding
+        val contentHeight = meshOuter * 2 + legendH + extraPadding
+
+        // Auto-fit scale factor with 10% margin
+        val panelScaleFactor = minOf(
+            canvasWidth / (contentWidth * 1.1f),
+            canvasHeight / (contentHeight * 1.1f)
+        )
+        val effectiveScale = scale * panelScaleFactor
+
         drawScope.apply {
             val centerX = canvasWidth / 2
             val centerY = canvasHeight / 2
-            
-            // Apply pan and zoom transformations
-            translate(offset.x, offset.y) {
-                scale(scale) {
+
+            if (analysisData == null) {
+                // Draw placeholder using unified transform
+                scale(effectiveScale, pivot = Offset(centerX, centerY)) {
+                    translate(offset.x, offset.y) {
+                        drawPlaceholderInternal(centerX, centerY)
+                    }
+                }
+                return
+            }
+
+            // Apply unified transform for real data
+            scale(effectiveScale, pivot = Offset(centerX, centerY)) {
+                translate(offset.x, offset.y) {
                     // Draw base circle as reference
                     drawCircle(
                         color = Color.Gray.copy(alpha = 0.3f),
@@ -68,7 +87,7 @@ object FeaBasedAnimationRenderer {
                         center = Offset(centerX, centerY),
                         style = Stroke(width = 1f)
                     )
-                    
+
                     // Draw mesh with displacements and stress
                     drawMesh(
                         centerX = centerX,
@@ -76,19 +95,19 @@ object FeaBasedAnimationRenderer {
                         analysisData = analysisData,
                         angle = angle
                     )
-                    
+
                     // Draw center point
                     drawCircle(
                         color = Color.Black,
                         radius = 5f,
                         center = Offset(centerX, centerY)
                     )
-                    
+
                     // Draw angle indicator
                     val angleRad = angle * PI.toFloat() / 180f
                     val x = centerX + baseCircleRadius * 1.5f * cos(angleRad)
                     val y = centerY + baseCircleRadius * 1.5f * sin(angleRad)
-                    
+
                     drawLine(
                         color = Color.Green,
                         start = Offset(centerX, centerY),
@@ -96,13 +115,13 @@ object FeaBasedAnimationRenderer {
                         strokeWidth = 1f,
                         alpha = 0.5f
                     )
-                    
-                    // Draw legend
+
+                    // Draw legend (position relative to center)
                     drawStressLegend(
-                        x = centerX - 100f,
-                        y = centerY + 150f,
-                        width = 200f,
-                        height = 20f
+                        x = centerX - legendW / 2,
+                        y = centerY + meshOuter + 30f,
+                        width = legendW,
+                        height = legendH
                     )
                 }
             }
@@ -112,47 +131,27 @@ object FeaBasedAnimationRenderer {
     /**
      * Draw a placeholder when no analysis data is available.
      */
-    private fun drawPlaceholder(
-        drawScope: DrawScope,
-        canvasWidth: Float,
-        canvasHeight: Float,
-        scale: Float,
-        offset: Offset
-    ) {
-        drawScope.apply {
-            val centerX = canvasWidth / 2
-            val centerY = canvasHeight / 2
-            
-            // Apply pan and zoom transformations
-            translate(offset.x, offset.y) {
-                scale(scale) {
-                    // Draw placeholder text
-                    drawCircle(
-                        color = Color.Gray.copy(alpha = 0.3f),
-                        radius = 100f,
-                        center = Offset(centerX, centerY),
-                        style = Stroke(width = 2f)
-                    )
-                    
-                    // Draw cross
-                    drawLine(
-                        color = Color.Gray.copy(alpha = 0.5f),
-                        start = Offset(centerX - 70f, centerY - 70f),
-                        end = Offset(centerX + 70f, centerY + 70f),
-                        strokeWidth = 2f
-                    )
-                    
-                    drawLine(
-                        color = Color.Gray.copy(alpha = 0.5f),
-                        start = Offset(centerX + 70f, centerY - 70f),
-                        end = Offset(centerX - 70f, centerY + 70f),
-                        strokeWidth = 2f
-                    )
-                    
-                    // Draw text (not directly supported in Canvas, would need to use a Text composable)
-                }
-            }
-        }
+    private fun DrawScope.drawPlaceholderInternal(centerX: Float, centerY: Float) {
+        // Draw placeholder circle
+        drawCircle(
+            color = Color.Gray.copy(alpha = 0.3f),
+            radius = 100f,
+            center = Offset(centerX, centerY),
+            style = Stroke(width = 2f)
+        )
+        // Draw cross
+        drawLine(
+            color = Color.Gray.copy(alpha = 0.5f),
+            start = Offset(centerX - 70f, centerY - 70f),
+            end = Offset(centerX + 70f, centerY + 70f),
+            strokeWidth = 2f
+        )
+        drawLine(
+            color = Color.Gray.copy(alpha = 0.5f),
+            start = Offset(centerX + 70f, centerY - 70f),
+            end = Offset(centerX - 70f, centerY + 70f),
+            strokeWidth = 2f
+        )
     }
     
     /**

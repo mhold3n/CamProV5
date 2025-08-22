@@ -34,17 +34,113 @@ import java.io.InputStreamReader
 fun main(args: Array<String>) {
     val testingMode = args.contains("--testing-mode")
     val enableAgent = args.contains("--enable-agent")
+
+    // Basic CLI parser for key runtime config flags
+    val argMap = args.filter { it.startsWith("--") && it.contains("=") }
+        .associate {
+            val idx = it.indexOf('=')
+            it.substring(2, idx) to it.substring(idx + 1)
+        }
+    val sessionId = argMap["session-id"] ?: java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(java.time.LocalDateTime.now())
+    val logLevel = argMap["log-level"] ?: System.getProperty("campro.log.level", "INFO")
+    val defaultLogDir = java.nio.file.Paths.get(System.getProperty("user.home"), "CamProV5", "logs", sessionId).toString()
+    val logDir = argMap["log-dir"] ?: System.getProperty("campro.log.dir", defaultLogDir)
+    try { java.nio.file.Files.createDirectories(java.nio.file.Paths.get(logDir)) } catch (_: Throwable) {}
+
+    // Publish to system properties for downstream components (MotionLawEngine, diagnostics, etc.)
+    runCatching { System.setProperty("campro.log.level", logLevel) }
+    runCatching { System.setProperty("log.level", logLevel) }
+    runCatching { System.setProperty("campro.log.dir", logDir) }
+
+    // Optional RNG seed passthrough for determinism across runs
+    argMap["rng-seed"]?.let { System.setProperty("campro.rng.seed", it) }
+    // Ensure app version is visible to SessionInfo and diagnostics
+    runCatching { System.setProperty("campro.version", System.getProperty("campro.version") ?: "0.9.0-beta") }
+
+    // Initialize Rust logger early (graceful no-op if native unavailable)
+    try {
+        com.campro.v5.animation.LitvinNativeStubs.initRustLoggerNative(sessionId, logLevel, logDir)
+        println("[CamProV5] Rust logger initialized: sessionId=$sessionId level=$logLevel dir=$logDir")
+    } catch (e: Throwable) {
+        println("[CamProV5] Rust logger init failed (continuing without native logs): ${e.message}")
+    }
+
+    // One-click support bundle creation and exit
+    if (args.contains("--make-support-bundle")) {
+        val jsonDirs = (argMap["json-dirs"] ?: "")
+            .split(';', ',')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+        val out = com.campro.v5.support.SupportBundle.createSupportBundle(sessionId, logDir, jsonDirs)
+        println("[CamProV5] Support bundle created at: $out")
+        return
+    }
+
+    // Inform about native availability (do not crash UI)
+    if (!com.campro.v5.animation.LitvinNativeStubs.isNativeAvailable()) {
+        val envDir = System.getenv("FEA_ENGINE_LIB_DIR") ?: "(unset)"
+        val os = System.getProperty("os.name")
+        val arch = System.getProperty("os.arch")
+        println("[CamProV5] Native engine DLL not loaded. OS=$os ARCH=$arch FEA_ENGINE_LIB_DIR=$envDir")
+        println("[CamProV5] The app will run with limited functionality. Ensure fea_engine.dll and dependencies are accessible.")
+    }
     
     // Initialize command processor if in testing mode
     val commandProcessor = if (testingMode) CommandProcessor() else null
     commandProcessor?.start()
+
+    // Decide which windows to show at startup for multi-window mode
+    val windowsCsv = argMap["windows"]?.lowercase()?.trim()
+    val visibleSet: Set<String> = when {
+        !windowsCsv.isNullOrBlank() -> windowsCsv.split(',', ';').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+        else -> emptySet()
+    }
+
+    val initialVisibility = mapOf(
+        "parameters" to (
+            argMap["show-parameters"] == "true" ||
+            (visibleSet.isNotEmpty() && "parameters" in visibleSet) ||
+            visibleSet.isEmpty()
+        ),
+        "animation" to (argMap["show-animation"] == "true" || "animation" in visibleSet),
+        "plots" to (argMap["show-plots"] == "true" || "plots" in visibleSet),
+        "data" to (argMap["show-data"] == "true" || "data" in visibleSet),
+        "static" to (argMap["show-static"] == "true" || "static" in visibleSet || argMap["static-profiles-window"] == "true")
+    )
+
+    // Enable multi-window if explicitly requested, or if any window flags are present
+    val multiWindowEnabled = args.contains("--multi-window") ||
+        !windowsCsv.isNullOrBlank() ||
+        listOf(
+            "show-parameters",
+            "show-animation",
+            "show-plots",
+            "show-data",
+            "show-static",
+            "static-profiles-window"
+        ).any { key -> argMap[key] != null }
+
+    if (multiWindowEnabled) {
+        // Seed shared visibility and parameters before application starts
+        initialVisibility.forEach { (k, v) ->
+            com.campro.v5.SharedAppState.windowVisibility[k] = v
+        }
+        com.campro.v5.SharedAppState.parameters = emptyMap()
+    }
     
     application {
+        if (multiWindowEnabled) {
+            val layoutManager = rememberLayoutManager()
+            com.campro.v5.window.WindowsController(
+                testingMode = testingMode,
+                layoutManager = layoutManager
+            )
+        }
         val windowState = rememberWindowState(
             size = DpSize(1400.dp, 1000.dp)
         )
         
-        Window(
+        if (!multiWindowEnabled) Window(
             onCloseRequest = {
                 commandProcessor?.stop()
                 exitApplication()
@@ -53,6 +149,7 @@ fun main(args: Array<String>) {
             state = windowState
         ) {
             val layoutManager = rememberLayoutManager()
+            val density = LocalDensity.current
             
             // Update layout manager when window size changes
             LaunchedEffect(windowState.size) {
@@ -60,6 +157,12 @@ fun main(args: Array<String>) {
                     windowState.size.width,
                     windowState.size.height
                 )
+                println("[UI] window size dp=${windowState.size}")
+            }
+            // React to per-monitor DPI changes and font scale
+            LaunchedEffect(density.density, density.fontScale) {
+                layoutManager.updateDensityFactor(density.density)
+                println("[UI] density=${density.density} fontScale=${density.fontScale}")
             }
             
             CamProV5App(
@@ -71,6 +174,14 @@ fun main(args: Array<String>) {
             // Report UI initialization event if in testing mode
             if (testingMode) {
                 println("EVENT:{\"type\":\"ui_initialized\",\"component\":\"MainWindow\"}")
+                // Auto-exit shortly after initialization to support automated verification
+                LaunchedEffect(Unit) {
+                    try {
+                        kotlinx.coroutines.delay(1500)
+                    } catch (_: Throwable) {}
+                    println("EVENT:{\"type\":\"ui_exit\",\"component\":\"MainWindow\"}")
+                    exitApplication()
+                }
             }
         }
     }
@@ -131,12 +242,12 @@ private fun ResizablePanelStandardLayout(
         ResizablePanel(
             panelId = "parameter_panel",
             modifier = Modifier.fillMaxWidth(),
-            initialWidth = 1200.dp,
-            initialHeight = if (layoutManager.shouldUseCompactMode()) 300.dp else 400.dp,
-            minWidth = 600.dp,
+            initialWidth = 400.dp,
+            initialHeight = if (layoutManager.shouldUseCompactMode()) 280.dp else 360.dp,
+            minWidth = 280.dp,
             minHeight = 200.dp,
-            maxWidth = 1600.dp,
-            maxHeight = 600.dp,
+            maxWidth = 2000.dp,
+            maxHeight = 1400.dp,
             title = "Parameters"
         ) {
             ScrollableParameterInputForm(
@@ -163,12 +274,12 @@ private fun ResizablePanelStandardLayout(
                     ResizablePanel(
                         panelId = "animation_panel",
                         modifier = Modifier.weight(1f),
-                        initialWidth = 600.dp,
-                        initialHeight = 400.dp,
-                        minWidth = 300.dp,
+                        initialWidth = 400.dp,
+                        initialHeight = if (layoutManager.shouldUseCompactMode()) 280.dp else 360.dp,
+                        minWidth = 280.dp,
                         minHeight = 200.dp,
-                        maxWidth = 1000.dp,
-                        maxHeight = 800.dp,
+                        maxWidth = 2000.dp,
+                        maxHeight = 1400.dp,
                         title = "Animation"
                     ) {
                         ScrollableAnimationWidget(
@@ -181,12 +292,12 @@ private fun ResizablePanelStandardLayout(
                     ResizablePanel(
                         panelId = "plot_panel",
                         modifier = Modifier.weight(1f),
-                        initialWidth = 600.dp,
-                        initialHeight = 400.dp,
-                        minWidth = 300.dp,
+                        initialWidth = 400.dp,
+                        initialHeight = if (layoutManager.shouldUseCompactMode()) 280.dp else 360.dp,
+                        minWidth = 280.dp,
                         minHeight = 200.dp,
-                        maxWidth = 1000.dp,
-                        maxHeight = 800.dp,
+                        maxWidth = 2000.dp,
+                        maxHeight = 1400.dp,
                         title = "Plots"
                     ) {
                         ScrollablePlotCarouselWidget(

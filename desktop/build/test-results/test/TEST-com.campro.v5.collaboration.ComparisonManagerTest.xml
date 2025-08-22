@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.collaboration.ComparisonManagerTest" tests="21" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:13.673Z" hostname="ABED" time="9.205">
+  <properties/>
+  <testcase name="test comparison history tracking()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.031"/>
+  <testcase name="test comparison history limit()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.082"/>
+  <testcase name="test compare project parameters()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.003"/>
+  <testcase name="test compare simulation results()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.007"/>
+  <testcase name="test comparison events()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="3.005"/>
+  <testcase name="test performance comparison type()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.002"/>
+  <testcase name="test export with invalid format()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.002"/>
+  <testcase name="test delete comparison()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.003"/>
+  <testcase name="test export comparison to HTML()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.005"/>
+  <testcase name="test export comparison to JSON()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.004"/>
+  <testcase name="test export non-existent comparison()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.002"/>
+  <testcase name="test full project comparison()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.003"/>
+  <testcase name="test comparison with custom options()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.002"/>
+  <testcase name="test compare projects with no simulation results()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.003"/>
+  <testcase name="test comparison with missing parameters()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="6.008"/>
+  <testcase name="test export comparison to CSV()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.006"/>
+  <testcase name="test compare with unsupported type()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.018"/>
+  <testcase name="test similarity score calculation()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.004"/>
+  <testcase name="test get comparison by ID()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.002"/>
+  <testcase name="test comparison significance levels()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.002"/>
+  <testcase name="test visual comparison type()" classname="com.campro.v5.collaboration.ComparisonManagerTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

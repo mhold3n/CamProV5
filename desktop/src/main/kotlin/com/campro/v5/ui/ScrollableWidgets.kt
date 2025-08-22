@@ -156,6 +156,32 @@ fun ScrollableParameterInputForm(
     }
 }
 
+@Composable
+fun ScrollableStaticProfilesPanel(
+    parameters: Map<String, String>,
+    testingMode: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    val verticalScrollState = rememberScrollState()
+    val horizontalScrollState = rememberScrollState()
+
+    Box(modifier = modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .verticalScroll(verticalScrollState)
+                .horizontalScroll(horizontalScrollState)
+                .padding(8.dp)
+        ) {
+            Box(Modifier.fillMaxSize()) {
+                StaticProfilesPanel(
+                    parameters = parameters,
+                    testingMode = testingMode
+                )
+            }
+        }
+    }
+}
+
 /**
  * Generic scrollable content wrapper
  * Enhanced to ensure resize gestures have higher priority than scroll gestures

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.fea.FeaEngineTest" tests="5" skipped="2" failures="0" errors="0" timestamp="2025-08-22T19:45:26.691Z" hostname="ABED" time="0.051">
+  <properties/>
+  <testcase name="testDataTransfer()" classname="com.campro.v5.fea.FeaEngineTest" time="0.022"/>
+  <testcase name="testErrorHandling()" classname="com.campro.v5.fea.FeaEngineTest" time="0.025"/>
+  <testcase name="testFeaEngineAvailability()" classname="com.campro.v5.fea.FeaEngineTest" time="0.002"/>
+  <testcase name="testRunAnalysis()" classname="com.campro.v5.fea.FeaEngineTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="testComputationManager()" classname="com.campro.v5.fea.FeaEngineTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[[DEBUG_LOG] Test setup complete
+[DEBUG_LOG] Test model file: C:\Users\maxed\AppData\Local\Temp\test_model_14982104339858305710.json
+[DEBUG_LOG] Testing transferToRust...
+[DEBUG_LOG] Testing transferLargeDataToRust...
+[DEBUG_LOG] Testing caching...
+[DEBUG_LOG] Data transfer tests complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test setup complete
+[DEBUG_LOG] Test model file: C:\Users\maxed\AppData\Local\Temp\test_model_13624207720063319487.json
+[DEBUG_LOG] Creating test error...
+2025-08-22 12:45:26.726 [Test worker @coroutine#459] INFO  com.campro.event - {"type":"error","message":"Test error message", "component":"ErrorHandler","ts":1755891926726,"seq":1009,"sessionId":"2025-08-22T19:45:12.076Z-503bc7e1"} [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+[DEBUG_LOG] Testing error handling...
+2025-08-22 12:45:26.728 [DefaultDispatcher-worker-6 @coroutine#459] INFO  com.campro.event - {"type":"error","message":"Recovery failed for error: Test error message", "component":"ErrorHandler","ts":1755891926728,"seq":1010,"sessionId":"2025-08-22T19:45:12.076Z-503bc7e1"} [sessionId=]
+[DEBUG_LOG] Running diagnostics...
+2025-08-22 12:45:26.736 [DefaultDispatcher-worker-6 @coroutine#459] INFO  com.campro.event - {"type":"error","message":"Insufficient memory for FEA operations: 83 MB available, 1024 MB required", "component":"ErrorHandler","ts":1755891926736,"seq":1011,"sessionId":"2025-08-22T19:45:12.076Z-503bc7e1"} [sessionId=]
+[DEBUG_LOG] Diagnostic report:
+FEA Diagnostic Report
+--------------------
+FEA Engine Available: true
+FEA Engine Version: 1.0.0
+Memory-Mapped Files Supported: true
+Max Memory: 512 MB
+Free Memory: 83 MB
+Total Memory: 120 MB
+Used Memory: 36 MB
+Sufficient Memory: false
+System Ready for FEA: false
+
+Errors:
+- OUT_OF_MEMORY: Insufficient memory for FEA operations: 83 MB available, 1024 MB required
+
+[DEBUG_LOG] Error handling tests complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test setup complete
+[DEBUG_LOG] Test model file: C:\Users\maxed\AppData\Local\Temp\test_model_1163747277210453311.json
+[DEBUG_LOG] FEA engine available: true
+[DEBUG_LOG] Test teardown complete
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

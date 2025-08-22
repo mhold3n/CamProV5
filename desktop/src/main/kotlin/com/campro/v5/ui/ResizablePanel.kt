@@ -117,11 +117,10 @@ fun ResizablePanel(
             modifier = Modifier
                 .fillMaxSize()
                 .onSizeChanged { size ->
-                    // Update panel size when content changes
-                    with(density) {
-                        panelWidth = size.width.toDp()
-                        panelHeight = size.height.toDp()
-                    }
+                    // Notify listeners only; avoid overriding state to prevent resize feedback loops
+                    val w = with(density) { size.width.toDp() }
+                    val h = with(density) { size.height.toDp() }
+                    onSizeChanged?.invoke(w, h)
                 },
             elevation = CardDefaults.cardElevation(
                 defaultElevation = if (isResizing) 8.dp else 4.dp

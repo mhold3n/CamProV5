@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.animation.MotionLawGeneratorTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:12.326Z" hostname="ABED" time="0.003">
+  <properties/>
+  <testcase name="testConstantVelocityAllocation()" classname="com.campro.v5.animation.MotionLawGeneratorTest" time="0.0"/>
+  <testcase name="deterministic_sampling_rounding_behavior()" classname="com.campro.v5.animation.MotionLawGeneratorTest" time="0.0"/>
+  <testcase name="continuity_and_periodicity_s5_s7()" classname="com.campro.v5.animation.MotionLawGeneratorTest" time="0.0"/>
+  <testcase name="continuity_and_periodicity_cycloidal()" classname="com.campro.v5.animation.MotionLawGeneratorTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

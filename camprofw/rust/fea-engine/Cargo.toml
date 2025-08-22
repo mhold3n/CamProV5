@@ -1,6 +1,6 @@
 [package]
 name = "fea-engine"
-version = "0.1.0"
+version = "0.9.0-beta"
 edition = "2021"
 authors = ["CamPro Team"]
 description = "High-performance FEA engine for cam profile simulation"
@@ -37,7 +37,7 @@ criterion = "0.5"
 [lib]
 name = "fea_engine"
 path = "src/lib.rs"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [[bench]]
 name = "motion_law_benchmarks"

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.animation.OptimizationEngineTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:12.341Z" hostname="ABED" time="0.884">
+  <properties/>
+  <testcase name="pareto_schema_validation_and_optional_verification()" classname="com.campro.v5.animation.OptimizationEngineTest" time="0.178"/>
+  <testcase name="local_refinement_improves_objectives()" classname="com.campro.v5.animation.OptimizationEngineTest" time="0.458"/>
+  <testcase name="deterministic_pareto_small_run()" classname="com.campro.v5.animation.OptimizationEngineTest" time="0.247"/>
+  <system-out><![CDATA[2025-08-22 12:45:12.503 [Test worker] INFO  com.campro.v5.animation.OptimizationEngine - NSGA-II complete: gen=2, pop=10 [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+2025-08-22 12:45:12.643 [Test worker] INFO  com.campro.v5.animation.OptimizationEngine - NSGA-II complete: gen=2, pop=10 [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+2025-08-22 12:45:13.100 [Test worker] INFO  com.campro.v5.animation.OptimizationEngine - NSGA-II complete: gen=3, pop=12 [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+2025-08-22 12:45:13.225 [Test worker] INFO  com.campro.v5.animation.OptimizationEngine - NSGA-II complete: gen=3, pop=12 [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

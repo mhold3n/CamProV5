@@ -30,6 +30,7 @@ import com.campro.v5.fea.ComputationType
 import com.campro.v5.fea.getResultsFile
 import kotlinx.coroutines.launch
 import java.io.File
+import com.campro.v5.ui.PreviewsPanel
 
 /**
  * A widget that displays an animation based on the provided parameters.
@@ -85,10 +86,13 @@ fun AnimationWidget(
     // Animation value using proper frame timing
     var currentAnimationValue by remember { mutableStateOf(0f) }
     var lastFrameTimeNanos by remember { mutableStateOf(0L) }
+    var fpsAvg by remember { mutableStateOf(0f) }
     
     // Constants for animation timing
-    val baseRpmValue = 60f // 1 rotation per second
     val degreesPerRotation = 360f
+    // Use RPM parameter if provided (default 60 RPM = 1 rotation per second)
+    val rpmParam = com.campro.v5.animation.ParameterResolver.float(parameters, "rpm", 60f)
+    val degreesPerSecond = degreesPerRotation * (rpmParam / 60f) // = 6 * RPM
     
     // Use withFrameNanos for proper frame timing
     LaunchedEffect(isPlaying, animationSpeed) {
@@ -107,13 +111,17 @@ fun AnimationWidget(
                     
                     // Calculate angle change based on speed and elapsed time
                     // This ensures consistent speed across different devices and frame rates
-                    val angleChange = (degreesPerRotation * baseRpmValue * animationSpeed * elapsedSeconds)
+                    val angleChange = (degreesPerSecond * animationSpeed * elapsedSeconds)
                     
                     // Update the animation value
                     currentAnimationValue = (currentAnimationValue + angleChange) % degreesPerRotation
-                    
-                    // Log frame timing for debugging (uncomment if needed)
-                    // println("DEBUG: Frame time: ${elapsedSeconds * 1000}ms, Angle change: $angleChange°")
+
+                    // FPS EMA
+                    if (elapsedSeconds > 0f) {
+                        val inst = 1f / elapsedSeconds
+                        fpsAvg = if (fpsAvg == 0f) inst else (0.9f * fpsAvg + 0.1f * inst)
+                        PerfDiag.fps = fpsAvg.toDouble()
+                    }
                     
                     // Set the angle in the animation engine
                     animationManager.getCurrentEngine()?.setAngle(currentAnimationValue)
@@ -355,7 +363,9 @@ fun AnimationWidget(
         // Animation canvas
         Box(
             modifier = Modifier
-                .weight(1f)  // Use weight instead of fillMaxSize for better layout control
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .weight(1f, fill = false)  // Keep square drawing area
                 .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surface)
                 .pointerInput(Unit) {
@@ -366,6 +376,17 @@ fun AnimationWidget(
                             println("EVENT:{\"type\":\"gesture\",\"component\":\"AnimationCanvas\",\"action\":\"pan_zoom\",\"scale\":\"$scale\",\"offset\":\"$offset\"}")
                         }
                     }
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = {
+                            scale = 1f
+                            offset = Offset.Zero
+                            if (testingMode) {
+                                println("EVENT:{\"type\":\"gesture\",\"component\":\"AnimationCanvas\",\"action\":\"double_tap_reset\"}")
+                            }
+                        }
+                    )
                 }
         ) {
             // Use BoxWithConstraints to get the actual size of the container
@@ -452,6 +473,28 @@ fun AnimationWidget(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                Text(
+                    "Zoom: ${(scale * 100).toInt()}% (auto-fit)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                val diag = com.campro.v5.animation.PerfDiag.lastLitvinDiagnostics
+                if (diag != null) {
+                    val residual = diag.arcLengthResidualMax ?: 0.0
+                    val cmin = diag.clearanceMin ?: 0.0
+                    val sugg = diag.suggestedCenterDistanceInflation ?: 0.0
+                    val build = diag.buildMs ?: 0.0
+                    Text(
+                        "Litvin residual: %.3e | clearanceMin: %.3f mm".format(residual, cmin),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        "Suggest ΔC≈%.3f mm | build: %.0f ms | FPS: %.0f".format(sugg, build, com.campro.v5.animation.PerfDiag.fps),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
                 
                 // Display parameters based on animation type
                 when (selectedAnimationType) {
@@ -500,6 +543,81 @@ fun AnimationWidget(
                         )
                     }
                 }
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        val compEngine = animationManager.getCurrentEngine() as? com.campro.v5.animation.ComponentBasedAnimationEngine
+        compEngine?.let { PreviewsPanel(it.motionEngine(), Modifier.fillMaxWidth()) }
+
+        // Diagnostics panel (dev-in-the-loop)
+        Spacer(modifier = Modifier.height(8.dp))
+        Card(Modifier.fillMaxWidth().padding(4.dp)) {
+            Column(Modifier.fillMaxWidth().padding(8.dp)) {
+                Text("Diagnostics", style = MaterialTheme.typography.titleSmall)
+                val motion = compEngine?.motionEngine()?.getMotionLawSamples()
+                val preflight = com.campro.v5.animation.DiagnosticsPreflight.validateMotionLaw(motion)
+                Column(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+                    preflight.items.forEach { item ->
+                        val color = if (item.ok) MaterialTheme.colorScheme.primary else Color(0xFFC62828)
+                        Text("• ${item.name}: ${if (item.ok) "OK" else "FAIL"}${if (item.detail.isNotBlank()) " (${item.detail})" else ""}", color = color, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
+                var deterministic by remember { mutableStateOf(false) }
+                var simulate by remember { mutableStateOf(false) }
+                var lastCode by remember { mutableStateOf<Int?>(null) }
+                var lastMs by remember { mutableStateOf<Double?>(null) }
+                var lastFile by remember { mutableStateOf<java.io.File?>(null) }
+
+                Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Switch(checked = deterministic, onCheckedChange = { deterministic = it })
+                        Spacer(Modifier.width(6.dp))
+                        Text("Deterministic Mode")
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Switch(checked = simulate, onCheckedChange = { simulate = it })
+                        Spacer(Modifier.width(6.dp))
+                        Text("Simulate native result")
+                    }
+                }
+
+                val nativeAvail = com.campro.v5.animation.MotionLawEngine.isNativeAvailable()
+                if (!nativeAvail) {
+                    Text("Native library unavailable. Set FEA_ENGINE_LIB_DIR or adjust PATH.", color = Color(0xFFC62828), style = MaterialTheme.typography.bodySmall)
+                }
+
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = {
+                        if (!preflight.passed) return@Button
+                        val start = System.nanoTime()
+                        val code = if (simulate) 42 else (com.campro.v5.animation.MotionLawEngine.runNativeSmokeTest() ?: -1)
+                        val ms = (System.nanoTime() - start) / 1_000_000.0
+                        lastCode = code
+                        lastMs = ms
+                        val logDir = System.getProperty("campro.log.dir") ?: "logs"
+                        val file = com.campro.v5.animation.DiagnosticsExport.write(
+                            sessionId = com.campro.v5.SessionInfo.sessionId,
+                            logDir = logDir,
+                            deterministic = deterministic,
+                            simulate = simulate,
+                            preflight = preflight,
+                            resultCode = code,
+                            durationMs = ms
+                        )
+                        lastFile = file
+                    }, enabled = preflight.passed && (nativeAvail || simulate)) { Text("Run Diagnostics") }
+
+                    Button(onClick = {
+                        lastFile?.let { java.awt.Desktop.getDesktop()?.open(it.parentFile) }
+                    }, enabled = lastFile != null) { Text("Open Log Dir") }
+                }
+
+                if (lastCode != null) {
+                    val logDir = System.getProperty("campro.log.dir") ?: "logs"
+                    Text("Result: ${lastCode} in ${"%.1f".format(lastMs ?: 0.0)} ms | logDir: ${logDir}", style = MaterialTheme.typography.bodySmall)
+                    lastFile?.let { Text("Saved: ${it.absolutePath}", style = MaterialTheme.typography.bodySmall) }
                 }
             }
         }

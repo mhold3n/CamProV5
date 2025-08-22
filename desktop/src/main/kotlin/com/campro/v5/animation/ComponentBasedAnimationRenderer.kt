@@ -63,6 +63,31 @@ object ComponentBasedAnimationRenderer {
      * @param parameters The animation parameters
      * @param componentPositions The positions of the components
      */
+    // Enhanced bounds including optional eccentric ring envelope
+    private fun calculateComponentBoundsIncludingRing(
+        baseCircleRadius: Float,
+        maxLift: Float,
+        pistonDiameter: Float,
+        pistonHeightRatio: Float,
+        ringEnabled: Boolean,
+        ringRadius: Float,
+        ringThickness: Float,
+        eccentricity: Float
+    ): Pair<Float, Float> {
+        val camProfileRadius = baseCircleRadius + maxLift
+        val followerMargin = baseCircleRadius * 0.2f // approximate follower radius
+        val pistonHeight = pistonDiameter * pistonHeightRatio
+        val pistonWidth = pistonDiameter
+        val motionPathExtent = baseCircleRadius + maxLift
+
+        val ringOuter = if (ringEnabled) ringRadius + ringThickness / 2f + abs(eccentricity) else 0f
+        val contentRadius = max(camProfileRadius + followerMargin, ringOuter)
+
+        val totalWidth = (max(contentRadius, camProfileRadius) + pistonWidth + motionPathExtent) * 2
+        val totalHeight = (max(contentRadius, camProfileRadius) + pistonHeight + motionPathExtent) * 2
+        return totalWidth to totalHeight
+    }
+
     fun drawFrame(
         drawScope: DrawScope,
         canvasWidth: Float,
@@ -71,112 +96,170 @@ object ComponentBasedAnimationRenderer {
         offset: Offset,
         angle: Float,
         parameters: Map<String, String>,
-        componentPositions: ComponentPositions
+        assemblies: List<ComponentPositions>
     ) {
         // Extract key parameters with defaults if not present
-        val pistonDiameter = parameters["Piston Diameter"]?.toFloatOrNull() ?: 70f
-        val baseCircleRadius = parameters["base_circle_radius"]?.toFloatOrNull() ?: 25f
-        val maxLift = parameters["max_lift"]?.toFloatOrNull() ?: 10f
-        
-        // Calculate the bounds of all components
-        val (contentWidth, contentHeight) = calculateComponentBounds(
-            baseCircleRadius,
-            maxLift,
-            pistonDiameter
+        val pistonDiameter = ParameterResolver.float(parameters, "piston_diameter", 70f, "Piston Diameter")
+        val baseCircleRadius = ParameterResolver.float(parameters, "base_circle_radius", 25f)
+        val maxLift = ParameterResolver.float(parameters, "max_lift", 10f)
+
+        // Ring and replication parameters
+        val ringEnabled = ParameterResolver.bool(parameters, "ring_enabled", true, "Show Ring")
+        val stroke = ParameterResolver.float(parameters, "stroke", maxLift)
+        val ringThickness = ParameterResolver.float(parameters, "ring_thickness", 8f, "Ring Thickness")
+        val minRingRadius = baseCircleRadius + stroke + max(ringThickness, 3f)
+        val requestedRingRadius = ParameterResolver.float(parameters, "ring_radius", minRingRadius, "Ring Radius")
+        val ringRadius = max(requestedRingRadius, minRingRadius)
+        val eccentricity = ParameterResolver.float(parameters, "eccentricity", 0f, "Ring Eccentricity")
+        val ringAngle = ParameterResolver.float(parameters, "ring_angle", 0f, "Ring Angle")
+
+        // Calculate the bounds including ring envelope
+        val pistonHeightRatio = ParameterResolver.float(parameters, "piston_height_ratio", 0.8f, "Piston Height Ratio")
+
+        val (contentWidth, contentHeight) = calculateComponentBoundsIncludingRing(
+            baseCircleRadius = baseCircleRadius,
+            maxLift = maxLift,
+            pistonDiameter = pistonDiameter,
+            pistonHeightRatio = pistonHeightRatio,
+            ringEnabled = ringEnabled,
+            ringRadius = ringRadius,
+            ringThickness = ringThickness,
+            eccentricity = eccentricity
         )
-        
+
         // Calculate scale factor to fit within panel with 10% margin
         val panelScaleFactor = minOf(
             canvasWidth / (contentWidth * 1.1f),
             canvasHeight / (contentHeight * 1.1f)
         )
-        
+
         // Apply automatic scaling first, then user scaling
         val effectiveScale = scale * panelScaleFactor
-        
+
         drawScope.apply {
             val centerX = canvasWidth / 2
             val centerY = canvasHeight / 2
-            
-            // Apply pan and zoom transformations
-            // First translate to center, then apply user offset, then scale
-            translate(centerX, centerY) {
+
+            // Unified transform: scale about canvas center, then pan in screen space
+            scale(effectiveScale, pivot = Offset(centerX, centerY)) {
                 translate(offset.x, offset.y) {
-                    scale(effectiveScale) {
-                        // Move coordinate system to (0,0) for drawing
-                        translate(-centerX, -centerY) {
-                            // Calculate animation parameters
-                            val angleRad = angle * PI.toFloat() / 180f
-                            
-                            // Draw base circle (cam base)
-                            drawCircle(
-                                color = Color.Blue.copy(alpha = 0.3f),
-                                radius = baseCircleRadius,
-                                center = Offset(centerX, centerY),
-                                style = Stroke(width = 2f)
-                            )
-                            
-                            // Draw cam profile
-                            drawCamProfile(
-                                centerX = centerX,
-                                centerY = centerY,
-                                baseCircleRadius = baseCircleRadius,
-                                maxLift = maxLift,
-                                angle = angle
-                            )
-                            
-                            // Get component positions
-                            val followerX = centerX + componentPositions.rodPosition.x
-                            val followerY = centerY + componentPositions.rodPosition.y
-                            val pistonX = centerX + componentPositions.pistonPosition.x
-                            val pistonY = centerY + componentPositions.pistonPosition.y
-                            
-                            // Draw roller follower with mechanical details
-                            drawRollerFollower(
-                                centerX = followerX,
-                                centerY = followerY,
-                                radius = baseCircleRadius * 0.2f,
-                                angle = angle
-                            )
-                            
-                            // Draw connecting rod with proper mechanical details
-                            drawConnectingRod(
-                                followerX = followerX,
-                                followerY = followerY,
-                                pistonX = pistonX,
-                                pistonY = pistonY,
-                                width = baseCircleRadius * 0.15f
-                            )
-                            
-                            // Draw piston with realistic mechanical details
-                            drawPiston(
-                                centerX = pistonX,
-                                centerY = pistonY,
-                                diameter = pistonDiameter,
-                                height = pistonDiameter * 1.5f
-                            )
-                            
-                            // Draw center point
-                            drawCircle(
-                                color = Color.Black,
-                                radius = 5f,
-                                center = Offset(centerX, centerY)
-                            )
-                            
-                            // Draw motion path
-                            drawMotionPath(
-                                centerX = centerX,
-                                centerY = centerY,
-                                baseCircleRadius = baseCircleRadius,
-                                maxLift = maxLift
-                            )
-                        }
+                    // Draw ring first if enabled
+                    if (ringEnabled) {
+                        drawEccentricRing(centerX, centerY, ringRadius, ringThickness, eccentricity, ringAngle)
                     }
+
+                    // Draw base circle (cam base)
+                    drawCircle(
+                        color = Color.Blue.copy(alpha = 0.3f),
+                        radius = baseCircleRadius,
+                        center = Offset(centerX, centerY),
+                        style = Stroke(width = 2f)
+                    )
+
+                    // Draw cam profile
+                    drawCamProfile(
+                        centerX = centerX,
+                        centerY = centerY,
+                        baseCircleRadius = baseCircleRadius,
+                        maxLift = maxLift,
+                        angle = angle,
+                        parameters = parameters
+                    )
+
+                    // Draw motion path once (shared)
+                    drawMotionPath(
+                        centerX = centerX,
+                        centerY = centerY,
+                        baseCircleRadius = baseCircleRadius,
+                        maxLift = maxLift,
+                        parameters = parameters
+                    )
+
+                    // Draw assemblies
+                    assemblies.forEachIndexed { i, componentPositions ->
+                        drawAssembly(
+                            centerX = centerX,
+                            centerY = centerY,
+                            baseCircleRadius = baseCircleRadius,
+                            pistonDiameter = pistonDiameter,
+                            pistonHeightRatio = pistonHeightRatio,
+                            angle = angle,
+                            positions = componentPositions,
+                            tintIndex = i
+                        )
+                    }
+
+                    // Draw center point
+                    drawCircle(
+                        color = Color.Black,
+                        radius = 5f,
+                        center = Offset(centerX, centerY)
+                    )
                 }
             }
         }
     }
     
+    private fun DrawScope.drawEccentricRing(
+        centerX: Float,
+        centerY: Float,
+        ringRadius: Float,
+        ringThickness: Float,
+        eccentricity: Float,
+        ringAngleDeg: Float
+    ) {
+        val angRad = Math.toRadians(ringAngleDeg.toDouble()).toFloat()
+        val cx = centerX + eccentricity * cos(angRad)
+        val cy = centerY + eccentricity * sin(angRad)
+        val rOut = ringRadius + ringThickness / 2f
+        val rIn = max(1f, ringRadius - ringThickness / 2f)
+
+        val path = androidx.compose.ui.graphics.Path().apply {
+            this.fillType = androidx.compose.ui.graphics.PathFillType.EvenOdd
+            addOval(androidx.compose.ui.geometry.Rect(cx - rOut, cy - rOut, cx + rOut, cy + rOut))
+            addOval(androidx.compose.ui.geometry.Rect(cx - rIn, cy - rIn, cx + rIn, cy + rIn))
+        }
+        drawPath(path = path, color = Color(0xFF606060).copy(alpha = 0.7f))
+        drawCircle(color = Color.Black.copy(alpha = 0.5f), radius = rOut, center = Offset(cx, cy), style = Stroke(width = 0.8f))
+        drawCircle(color = Color.Black.copy(alpha = 0.4f), radius = rIn, center = Offset(cx, cy), style = Stroke(width = 0.6f))
+    }
+
+    private fun DrawScope.drawAssembly(
+        centerX: Float,
+        centerY: Float,
+        baseCircleRadius: Float,
+        pistonDiameter: Float,
+        pistonHeightRatio: Float,
+        angle: Float,
+        positions: ComponentPositions,
+        tintIndex: Int
+    ) {
+        val followerX = centerX + positions.rodPosition.x
+        val followerY = centerY + positions.rodPosition.y
+        val pistonX = centerX + positions.pistonPosition.x
+        val pistonY = centerY + positions.pistonPosition.y
+
+        drawRollerFollower(
+            centerX = followerX,
+            centerY = followerY,
+            radius = baseCircleRadius * 0.2f,
+            angle = angle
+        )
+        drawConnectingRod(
+            followerX = followerX,
+            followerY = followerY,
+            pistonX = pistonX,
+            pistonY = pistonY,
+            width = baseCircleRadius * 0.15f
+        )
+        drawPiston(
+            centerX = pistonX,
+            centerY = pistonY,
+            diameter = pistonDiameter,
+            height = pistonDiameter * pistonHeightRatio
+        )
+    }
+
     /**
      * Draw the cam profile.
      *
@@ -191,57 +274,50 @@ object ComponentBasedAnimationRenderer {
         centerY: Float,
         baseCircleRadius: Float,
         maxLift: Float,
-        angle: Float
+        angle: Float,
+        parameters: Map<String, String>
     ) {
-        // Draw cam profile using the actual motion law from the Rust implementation
+        // Draw cam profile using SHM + dwells parameterization similar to CamProV3
         val numPoints = 360
         val points = mutableListOf<Offset>()
-        
-        // Parameters for the motion law (matching the Rust implementation)
-        val riseDuration = 90.0f
-        val dwellDuration = 45.0f
-        val fallDuration = 90.0f
-        val totalDuration = riseDuration + dwellDuration + fallDuration
-        
+
+        // Read V3-style parameters with sensible defaults
+        val stroke = ParameterResolver.float(parameters, "stroke", maxLift)
+        val tdcAngle = ParameterResolver.float(parameters, "TDC_angle", 180f)
+        val bdcDwell = ParameterResolver.float(parameters, "BDC_dwell", 0f)
+        val tdcDwell = ParameterResolver.float(parameters, "TDC_dwell", 0f)
+        val halfBDC = bdcDwell * 0.5f
+        val halfTDC = tdcDwell * 0.5f
+        val riseStart = halfBDC
+        val riseEnd = (tdcAngle - halfTDC).coerceAtLeast(riseStart + 1e-4f)
+        val fallStart = tdcAngle + halfTDC
+        val fallEnd = (360f - halfBDC).coerceAtLeast(fallStart + 1e-4f)
+
+        fun shmDisp(theta: Float, startDeg: Float, endDeg: Float, s0: Float, s1: Float): Float {
+            val range = (endDeg - startDeg).coerceAtLeast(1e-6f)
+            val p = ((theta - startDeg) / range).coerceIn(0f, 1f)
+            return s0 + (s1 - s0) * (1f - cos(PI.toFloat() * p)) / 2f
+        }
+
         // Create the cam profile points
         for (i in 0 until numPoints) {
             val theta = i.toFloat() // 1 degree increments
             val thetaRad = Math.toRadians(theta.toDouble()).toFloat()
-            
-            // Calculate displacement using the same formula as in the Rust motion law
-            val thetaNorm = theta % 360.0f
-            
-            val displacement = when {
-                thetaNorm <= riseDuration -> {
-                    // Rise phase - modified sine motion law for smooth acceleration
-                    val beta = thetaNorm / riseDuration
-                    maxLift * (beta - sin(2.0f * PI.toFloat() * beta) / (2.0f * PI.toFloat()))
-                }
-                thetaNorm <= riseDuration + dwellDuration -> {
-                    // Dwell phase - constant maximum lift
-                    maxLift
-                }
-                thetaNorm <= totalDuration -> {
-                    // Fall phase - modified sine motion law for smooth deceleration
-                    val thetaFall = thetaNorm - (riseDuration + dwellDuration)
-                    val beta = thetaFall / fallDuration
-                    maxLift * (1.0f - (beta - sin(2.0f * PI.toFloat() * beta) / (2.0f * PI.toFloat())))
-                }
-                else -> {
-                    // Outside cam duration - zero displacement
-                    0f
-                }
+
+            val s = when {
+                theta < riseStart -> 0f
+                theta <= riseEnd -> shmDisp(theta, riseStart, riseEnd, 0f, stroke)
+                theta <= fallStart -> stroke
+                theta <= fallEnd -> shmDisp(theta, fallStart, fallEnd, stroke, 0f)
+                else -> 0f
             }
-            
-            // Convert to Cartesian coordinates
-            // For a radial cam, we add the displacement to the base circle radius
-            val radius = baseCircleRadius + displacement
+
+            val radius = baseCircleRadius + s
             val x = centerX + radius * cos(thetaRad)
             val y = centerY + radius * sin(thetaRad)
-            
             points.add(Offset(x, y))
         }
-        
+
         // Draw the cam profile with a filled shape and gradient for 3D effect
         val camPath = androidx.compose.ui.graphics.Path()
         
@@ -323,29 +399,16 @@ object ComponentBasedAnimationRenderer {
             )
         }
         
-        // Draw a line indicating the current angle
+        // Draw a line indicating the current angle using the same SHM+dwell law
         val currentAngleRad = angle * PI.toFloat() / 180f
-        
-        // Calculate current displacement using the same formula
-        val currentDisplacement = when {
-            angle <= riseDuration -> {
-                val beta = angle / riseDuration
-                maxLift * (beta - sin(2.0f * PI.toFloat() * beta) / (2.0f * PI.toFloat()))
-            }
-            angle <= riseDuration + dwellDuration -> {
-                maxLift
-            }
-            angle <= totalDuration -> {
-                val thetaFall = angle - (riseDuration + dwellDuration)
-                val beta = thetaFall / fallDuration
-                maxLift * (1.0f - (beta - sin(2.0f * PI.toFloat() * beta) / (2.0f * PI.toFloat())))
-            }
-            else -> {
-                0f
-            }
+        val sCurrent = when {
+            angle < riseStart -> 0f
+            angle <= riseEnd -> shmDisp(angle, riseStart, riseEnd, 0f, stroke)
+            angle <= fallStart -> stroke
+            angle <= fallEnd -> shmDisp(angle, fallStart, fallEnd, stroke, 0f)
+            else -> 0f
         }
-        
-        val currentRadius = baseCircleRadius + currentDisplacement
+        val currentRadius = baseCircleRadius + sCurrent
         val x = centerX + currentRadius * cos(currentAngleRad)
         val y = centerY + currentRadius * sin(currentAngleRad)
         
@@ -671,52 +734,46 @@ object ComponentBasedAnimationRenderer {
         centerX: Float,
         centerY: Float,
         baseCircleRadius: Float,
-        maxLift: Float
+        maxLift: Float,
+        parameters: Map<String, String>
     ) {
-        // Draw the motion path using the actual motion law
+        // Draw the motion path using SHM + dwells
         val numPoints = 360
         val points = mutableListOf<Offset>()
-        
-        // Parameters for the motion law (matching the Rust implementation)
-        val riseDuration = 90.0f
-        val dwellDuration = 45.0f
-        val fallDuration = 90.0f
-        val totalDuration = riseDuration + dwellDuration + fallDuration
-        
+
+        val stroke = ParameterResolver.float(parameters, "stroke", maxLift)
+        val tdcAngle = ParameterResolver.float(parameters, "TDC_angle", 180f)
+        val bdcDwell = ParameterResolver.float(parameters, "BDC_dwell", 0f)
+        val tdcDwell = ParameterResolver.float(parameters, "TDC_dwell", 0f)
+        val halfBDC = bdcDwell * 0.5f
+        val halfTDC = tdcDwell * 0.5f
+        val riseStart = halfBDC
+        val riseEnd = (tdcAngle - halfTDC).coerceAtLeast(riseStart + 1e-4f)
+        val fallStart = tdcAngle + halfTDC
+        val fallEnd = (360f - halfBDC).coerceAtLeast(fallStart + 1e-4f)
+
+        fun shmDisp(theta: Float, startDeg: Float, endDeg: Float, s0: Float, s1: Float): Float {
+            val range = (endDeg - startDeg).coerceAtLeast(1e-6f)
+            val p = ((theta - startDeg) / range).coerceIn(0f, 1f)
+            return s0 + (s1 - s0) * (1f - cos(PI.toFloat() * p)) / 2f
+        }
+
         for (i in 0 until numPoints) {
-            val theta = i.toFloat() // 1 degree increments
+            val theta = i.toFloat()
             val thetaRad = Math.toRadians(theta.toDouble()).toFloat()
-            
-            // Calculate displacement using the same formula as in the Rust motion law
-            val thetaNorm = theta % 360.0f
-            
-            val displacement = when {
-                thetaNorm <= riseDuration -> {
-                    // Rise phase - modified sine motion law for smooth acceleration
-                    val beta = thetaNorm / riseDuration
-                    maxLift * (beta - sin(2.0f * PI.toFloat() * beta) / (2.0f * PI.toFloat()))
-                }
-                thetaNorm <= riseDuration + dwellDuration -> {
-                    // Dwell phase - constant maximum lift
-                    maxLift
-                }
-                thetaNorm <= totalDuration -> {
-                    // Fall phase - modified sine motion law for smooth deceleration
-                    val thetaFall = thetaNorm - (riseDuration + dwellDuration)
-                    val beta = thetaFall / fallDuration
-                    maxLift * (1.0f - (beta - sin(2.0f * PI.toFloat() * beta) / (2.0f * PI.toFloat())))
-                }
-                else -> {
-                    // Outside cam duration - zero displacement
-                    0f
-                }
+
+            val s = when {
+                theta < riseStart -> 0f
+                theta <= riseEnd -> shmDisp(theta, riseStart, riseEnd, 0f, stroke)
+                theta <= fallStart -> stroke
+                theta <= fallEnd -> shmDisp(theta, fallStart, fallEnd, stroke, 0f)
+                else -> 0f
             }
-            
-            // Calculate follower position
-            // For a translating follower, the X position follows the cam rotation and Y position is the displacement
-            val x = centerX + baseCircleRadius * cos(thetaRad)
-            val y = centerY + baseCircleRadius * sin(thetaRad) + displacement
-            
+
+            // Follower path (use s as radial displacement component consistent with profile)
+            val x = centerX + (baseCircleRadius + s) * cos(thetaRad)
+            val y = centerY + (baseCircleRadius + s) * sin(thetaRad)
+
             points.add(Offset(x, y))
         }
         

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=edge"/>
+<title>Test results - FeaEngineTest</title>
+<link href="../css/base-style.css" rel="stylesheet" type="text/css"/>
+<link href="../css/style.css" rel="stylesheet" type="text/css"/>
+<script src="../js/report.js" type="text/javascript"></script>
+</head>
+<body>
+<div id="content">
+<h1>FeaEngineTest</h1>
+<div class="breadcrumbs">
+<a href="../index.html">all</a> &gt; 
+<a href="../packages/com.campro.v5.fea.html">com.campro.v5.fea</a> &gt; FeaEngineTest</div>
+<div id="summary">
+<table>
+<tr>
+<td>
+<div class="summaryGroup">
+<table>
+<tr>
+<td>
+<div class="infoBox" id="tests">
+<div class="counter">5</div>
+<p>tests</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="failures">
+<div class="counter">0</div>
+<p>failures</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="ignored">
+<div class="counter">2</div>
+<p>ignored</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="duration">
+<div class="counter">0.049s</div>
+<p>duration</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</td>
+<td>
+<div class="infoBox skipped" id="successRate">
+<div class="percent">100%</div>
+<p>successful</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="tab-container">
+<ul class="tabLinks">
+<li>
+<a href="#">Ignored tests</a>
+</li>
+<li>
+<a href="#">Tests</a>
+</li>
+<li>
+<a href="#">Standard output</a>
+</li>
+</ul>
+<div class="tab">
+<h2>Ignored tests</h2>
+<div class="test">
+<a name="testComputationManager()"></a>
+<h3 class="skipped">testComputationManager()</h3>
+</div>
+<div class="test">
+<a name="testRunAnalysis()"></a>
+<h3 class="skipped">testRunAnalysis()</h3>
+</div>
+</div>
+<div class="tab">
+<h2>Tests</h2>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Duration</th>
+<th>Result</th>
+</tr>
+</thead>
+<tr>
+<td class="skipped">testComputationManager()</td>
+<td class="skipped">-</td>
+<td class="skipped">ignored</td>
+</tr>
+<tr>
+<td class="success">testDataTransfer()</td>
+<td class="success">0.022s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">testErrorHandling()</td>
+<td class="success">0.025s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">testFeaEngineAvailability()</td>
+<td class="success">0.002s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="skipped">testRunAnalysis()</td>
+<td class="skipped">-</td>
+<td class="skipped">ignored</td>
+</tr>
+</table>
+</div>
+<div class="tab">
+<h2>Standard output</h2>
+<span class="code">
+<pre>[DEBUG_LOG] Test setup complete
+[DEBUG_LOG] Test model file: C:\Users\maxed\AppData\Local\Temp\test_model_14982104339858305710.json
+[DEBUG_LOG] Testing transferToRust...
+[DEBUG_LOG] Testing transferLargeDataToRust...
+[DEBUG_LOG] Testing caching...
+[DEBUG_LOG] Data transfer tests complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test setup complete
+[DEBUG_LOG] Test model file: C:\Users\maxed\AppData\Local\Temp\test_model_13624207720063319487.json
+[DEBUG_LOG] Creating test error...
+2025-08-22 12:45:26.726 [Test worker @coroutine#459] INFO  com.campro.event - {&quot;type&quot;:&quot;error&quot;,&quot;message&quot;:&quot;Test error message&quot;, &quot;component&quot;:&quot;ErrorHandler&quot;,&quot;ts&quot;:1755891926726,&quot;seq&quot;:1009,&quot;sessionId&quot;:&quot;2025-08-22T19:45:12.076Z-503bc7e1&quot;} [sessionId=2025-08-22T19:45:12.076Z-503bc7e1]
+[DEBUG_LOG] Testing error handling...
+2025-08-22 12:45:26.728 [DefaultDispatcher-worker-6 @coroutine#459] INFO  com.campro.event - {&quot;type&quot;:&quot;error&quot;,&quot;message&quot;:&quot;Recovery failed for error: Test error message&quot;, &quot;component&quot;:&quot;ErrorHandler&quot;,&quot;ts&quot;:1755891926728,&quot;seq&quot;:1010,&quot;sessionId&quot;:&quot;2025-08-22T19:45:12.076Z-503bc7e1&quot;} [sessionId=]
+[DEBUG_LOG] Running diagnostics...
+2025-08-22 12:45:26.736 [DefaultDispatcher-worker-6 @coroutine#459] INFO  com.campro.event - {&quot;type&quot;:&quot;error&quot;,&quot;message&quot;:&quot;Insufficient memory for FEA operations: 83 MB available, 1024 MB required&quot;, &quot;component&quot;:&quot;ErrorHandler&quot;,&quot;ts&quot;:1755891926736,&quot;seq&quot;:1011,&quot;sessionId&quot;:&quot;2025-08-22T19:45:12.076Z-503bc7e1&quot;} [sessionId=]
+[DEBUG_LOG] Diagnostic report:
+FEA Diagnostic Report
+--------------------
+FEA Engine Available: true
+FEA Engine Version: 1.0.0
+Memory-Mapped Files Supported: true
+Max Memory: 512 MB
+Free Memory: 83 MB
+Total Memory: 120 MB
+Used Memory: 36 MB
+Sufficient Memory: false
+System Ready for FEA: false
+
+Errors:
+- OUT_OF_MEMORY: Insufficient memory for FEA operations: 83 MB available, 1024 MB required
+
+[DEBUG_LOG] Error handling tests complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test setup complete
+[DEBUG_LOG] Test model file: C:\Users\maxed\AppData\Local\Temp\test_model_1163747277210453311.json
+[DEBUG_LOG] FEA engine available: true
+[DEBUG_LOG] Test teardown complete
+</pre>
+</span>
+</div>
+</div>
+<div id="footer">
+<p>
+<div>
+<label class="hidden" id="label-for-line-wrapping-toggle" for="line-wrapping-toggle">Wrap lines
+<input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
+</label>
+</div>Generated by 
+<a href="https://www.gradle.org">Gradle 8.14</a> at Aug 22, 2025, 12:45:28 PM</p>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.onboarding.OnboardingManagerTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:26.963Z" hostname="ABED" time="0.035">
+  <properties/>
+  <testcase name="testResettingOnboarding()" classname="com.campro.v5.onboarding.OnboardingManagerTest" time="0.007"/>
+  <testcase name="testCompletingTutorial()" classname="com.campro.v5.onboarding.OnboardingManagerTest" time="0.003"/>
+  <testcase name="testStartOnboardingEmitsEvents()" classname="com.campro.v5.onboarding.OnboardingManagerTest" time="0.002"/>
+  <testcase name="testOnboardingStepNavigation()" classname="com.campro.v5.onboarding.OnboardingManagerTest" time="0.006"/>
+  <testcase name="testSkippingOnboarding()" classname="com.campro.v5.onboarding.OnboardingManagerTest" time="0.003"/>
+  <testcase name="testStartingTutorial()" classname="com.campro.v5.onboarding.OnboardingManagerTest" time="0.002"/>
+  <testcase name="testCompletingOnboarding()" classname="com.campro.v5.onboarding.OnboardingManagerTest" time="0.004"/>
+  <testcase name="testGettingOnboardingResources()" classname="com.campro.v5.onboarding.OnboardingManagerTest" time="0.001"/>
+  <testcase name="testLoadingSampleProject()" classname="com.campro.v5.onboarding.OnboardingManagerTest" time="0.003"/>
+  <system-out><![CDATA[[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+[DEBUG_LOG] Test teardown complete
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

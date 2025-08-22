@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.campro.v5.animation.PerformanceBudgetTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2025-08-22T19:45:13.226Z" hostname="ABED" time="0.008">
+  <properties/>
+  <testcase name="backend_build_and_json_write_within_budget_or_skip_if_native_missing()" classname="com.campro.v5.animation.PerformanceBudgetTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
