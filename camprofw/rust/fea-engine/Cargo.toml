@@ -7,16 +7,16 @@ description = "High-performance FEA engine for cam profile simulation"
 
 [dependencies]
 # Parallel computation
-rayon = "1.7"
+rayon = "1.11"
 
 # Serialization/deserialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-toml = "0.7"
+toml = "0.9"
 
 # Numerical computation
-nalgebra = "0.32"
-nalgebra-sparse = "0.9"
+nalgebra = "0.34"
+nalgebra-sparse = "0.11"
 
 # Error handling
 thiserror = "1.0"
@@ -32,7 +32,7 @@ lazy_static = "1.4"
 [dev-dependencies]
 # Testing utilities
 approx = "0.5"
-criterion = "0.5"
+criterion = "0.7"
 
 [lib]
 name = "fea_engine"
