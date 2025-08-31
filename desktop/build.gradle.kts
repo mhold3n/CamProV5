@@ -12,7 +12,7 @@ plugins {
     kotlin("jvm") version "1.9.21"
     id("org.jetbrains.compose") version "1.5.11"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
+    id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
 }
 
 version = project.version as String
