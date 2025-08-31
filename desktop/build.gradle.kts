@@ -10,7 +10,7 @@ import java.util.Locale
 
 plugins {
     kotlin("jvm") version "1.9.21"
-    id("org.jetbrains.compose") version "1.5.11"
+    id("org.jetbrains.compose") version "1.8.2"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
 }
@@ -45,7 +45,7 @@ dependencies {
     
     // Compose for Desktop dependencies
     implementation(compose.desktop.currentOs)
-    implementation("org.jetbrains.compose.material3:material3:1.2.0")
+    implementation("org.jetbrains.compose.material3:material3:1.8.2")
     implementation(compose.material)
     implementation(compose.materialIconsExtended)
     implementation(compose.ui)
@@ -53,18 +53,18 @@ dependencies {
     implementation(compose.runtime)
     
     // JSON
-    implementation("com.google.code.gson:gson:2.11.0")
+    implementation("com.google.code.gson:gson:2.13.1")
     
     // Logging (quick wins)
-    implementation("org.slf4j:slf4j-api:2.0.13")
-    runtimeOnly("ch.qos.logback:logback-classic:1.5.9")
+    implementation("org.slf4j:slf4j-api:2.0.17")
+    runtimeOnly("ch.qos.logback:logback-classic:1.5.18")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.4")
     
     // Testing dependencies
     testImplementation(kotlin("test"))
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.3")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.3")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.13.4")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.13.4")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.13.4")
     
     // Kotest for property-based testing
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
