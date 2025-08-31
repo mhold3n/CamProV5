@@ -19,7 +19,7 @@ nalgebra = "0.32"
 nalgebra-sparse = "0.9"
 
 # Error handling
-thiserror = "1.0"
+thiserror = "2.0"
 anyhow = "1.0"
 
 # Date and time handling
