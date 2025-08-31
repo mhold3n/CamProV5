@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: read
+
+jobs:
+  jvm-desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x gradlew
+      - name: Build & Test Desktop
+        run: ./gradlew --no-daemon :desktop:build :desktop:test
+      - name: Kotlin lint (ktlint)
+        run: ./gradlew --no-daemon :desktop:ktlintCheck
+
+  rust-fea-engine:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: camprofw/rust/fea-engine
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            camprofw/rust/fea-engine/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('camprofw/rust/fea-engine/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      - name: Build (release)
+        run: cargo build --release
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Test
+        run: cargo test --all

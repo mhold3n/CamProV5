@@ -1,0 +1,41 @@
+name: Python CI
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Python Tests
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        if: hashFiles('requirements.txt') != ''
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+
+      - name: Install project (if setup.py exists)
+        if: hashFiles('setup.py') != ''
+        run: python -m pip install -e .
+
+      - name: Run pytest (if tests present)
+        if: hashFiles('tests/**') != ''
+        env:
+          PYTHONUNBUFFERED: "1"
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          python -m pip install pytest
+          pytest -q tests

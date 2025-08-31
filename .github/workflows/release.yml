@@ -1,0 +1,74 @@
+name: Release Build & Artifacts
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Ensure Gradle wrapper is executable (non-Windows)
+        if: runner.os != 'Windows'
+        run: chmod +x gradlew
+
+      - name: Verify tag matches Gradle version
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF##*/}"
+          GRADLE_VER=$(grep '^version=' gradle.properties | cut -d'=' -f2)
+          if [ "v${GRADLE_VER}" != "$TAG" ]; then
+            echo "Tag $TAG does not match gradle.properties version $GRADLE_VER" >&2
+            exit 1
+          fi
+
+      - name: Verify tag matches fea-engine Cargo version
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF##*/}"
+          CARGO_VER=$(grep -E '^version\s*=\s*"' camprofw/rust/fea-engine/Cargo.toml | head -n1 | sed -E 's/.*"([^"]+)".*/\1/')
+          if [ "v${CARGO_VER}" != "$TAG" ]; then
+            echo "Tag $TAG does not match fea-engine Cargo.toml version $CARGO_VER" >&2
+            exit 1
+          fi
+
+      - name: Build Desktop installers and Shadow JAR
+        run: |
+          ./gradlew --no-daemon :desktop:package
+          ./gradlew --no-daemon :desktop:shadowJar
+
+      - name: Prepare Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build Rust fea-engine (release)
+        working-directory: camprofw/rust/fea-engine
+        run: |
+          cargo build --release
+          tar -czf fea-engine-${{ runner.os }}-x86_64.tar.gz -C target/release .
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            desktop/build/compose/binaries/main/*/*/*
+            desktop/build/libs/*-all.jar
+            camprofw/rust/fea-engine/fea-engine-${{ runner.os }}-x86_64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

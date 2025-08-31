@@ -6,12 +6,16 @@
  * to build a desktop version of the Android UI.
  */
 
+import java.util.Locale
+
 plugins {
-    kotlin("jvm")
-    id("org.jetbrains.compose")
+    kotlin("jvm") version "1.9.21"
+    id("org.jetbrains.compose") version "1.5.11"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
 }
 
-version = "0.9.0-beta"
+version = project.version as String
 
 kotlin {
     // Ensure Gradle and IDE use JDK 17 toolchain for Kotlin
@@ -49,42 +53,28 @@ dependencies {
     implementation(compose.runtime)
     
     // JSON
-    implementation("com.google.code.gson:gson:2.10")
+    implementation("com.google.code.gson:gson:2.11.0")
     
     // Logging (quick wins)
     implementation("org.slf4j:slf4j-api:2.0.13")
-    runtimeOnly("ch.qos.logback:logback-classic:1.5.6")
+    runtimeOnly("ch.qos.logback:logback-classic:1.5.9")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.4")
     
     // Testing dependencies
     testImplementation(kotlin("test"))
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.9.2")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.3")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.3")
     
     // Kotest for property-based testing
-    testImplementation("io.kotest:kotest-runner-junit5:5.6.2")
-    testImplementation("io.kotest:kotest-assertions-core:5.6.2")
-    testImplementation("io.kotest:kotest-property:5.6.2")
+    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
+    testImplementation("io.kotest:kotest-property:5.9.1")
 }
 
-// Configure test task to use JUnit Platform with native tag control
-tasks.test {
-    useJUnitPlatform {
-        if (System.getProperty("includeNative") == "true") {
-            includeTags("native")
-        } else {
-            excludeTags("native")
-        }
-    }
-    // Provide DLL discovery for Gate B in CI/dev
-    environment("FEA_ENGINE_LIB_DIR", "${rootProject.projectDir}\\CamProV5\\camprofw\\rust\\fea-engine\\target\\release")
-    systemProperty("debug", "true")
-}
 
 // Add Rust build tasks (conditional on -DincludeNative=true)
-val includeNative = System.getProperty("includeNative") == "true"
+val includeNative = (System.getProperty("includeNative") ?: "false").toBoolean()
 if (includeNative) {
     val nativeClean = System.getProperty("nativeClean") == "true"
 
@@ -96,7 +86,7 @@ if (includeNative) {
         workingDir = crateDir
 
         // Use appropriate command based on OS
-        val isWindows = System.getProperty("os.name").lowercase().contains("win")
+        val isWindows = System.getProperty("os.name").lowercase(Locale.ROOT).contains("win")
         commandLine = if (isWindows) {
             listOf("cmd", "/c", "cargo", "build", "--release")
         } else {
@@ -143,9 +133,10 @@ if (includeNative) {
         dependsOn("buildRustLibraries")
 
         // Determine OS-specific paths and file names
-        val isWindows = System.getProperty("os.name").lowercase().contains("win")
-        val isMac = System.getProperty("os.name").lowercase().contains("mac")
-
+        val osName = System.getProperty("os.name").lowercase(Locale.ROOT)
+        val isWindows = osName.contains("win")
+        val isMac = osName.contains("mac")
+        
         val libExtension = when {
             isWindows -> "dll"
             isMac -> "dylib"
@@ -223,74 +214,25 @@ if (includeNative) {
         mainClass.set("com.campro.v5.animation.LitvinGoldenGenerator")
 
         // Match the environment setup used by the tests for consistent JNI loading
-        val isWindows = System.getProperty("os.name").lowercase().contains("win")
-        val isMac = System.getProperty("os.name").lowercase().contains("mac")
+        val osName = System.getProperty("os.name").lowercase(Locale.ROOT)
         val osDir = when {
-            isWindows -> "windows"
-            isMac -> "mac"
+            osName.contains("win") -> "windows"
+            osName.contains("mac") -> "mac"
             else -> "linux"
         }
         val archDir = "x86_64"
-        val resolvedDir = file("${project.buildDir}/resources/main/native/${osDir}/${archDir}")
+        val resolvedDir = layout.buildDirectory
+            .dir("resources/main/native/${osDir}/${archDir}")
+            .get()
+            .asFile
         environment("FEA_ENGINE_LIB_DIR", resolvedDir.absolutePath)
         doFirst {
             println("[Gradle][generateLitvinGolden] FEA_ENGINE_LIB_DIR=" + resolvedDir.absolutePath)
         }
     }
 
-    tasks.named<org.gradle.api.tasks.testing.Test>("test") {
-        dependsOn("copyRustLibraries")
-        dependsOn("processResources")
-        // Prefer the freshly copied resources directory for JNI loading
-        val isWindows = System.getProperty("os.name").lowercase().contains("win")
-        val isMac = System.getProperty("os.name").lowercase().contains("mac")
-        val osDir = when {
-            isWindows -> "windows"
-            isMac -> "mac"
-            else -> "linux"
-        }
-        val archDir = "x86_64"
-        val resolvedDir = file("${project.buildDir}/resources/main/native/${osDir}/${archDir}")
-        environment("FEA_ENGINE_LIB_DIR", resolvedDir.absolutePath)
-        doFirst {
-            println("[Gradle][test] FEA_ENGINE_LIB_DIR=" + resolvedDir.absolutePath)
-        }
-
-        // Optionally pre-generate the golden if native is included
-        if ((System.getProperty("includeNative") ?: "false").toBoolean()) {
-            dependsOn("generateLitvinGolden")
-        }
-    }
 }
 
-// Set the JAR file name to match what the bridge.py file is looking for
-// Also configure the manifest to include the Main-Class attribute
-// Create a fat JAR that includes all dependencies
-tasks.withType<Jar> {
-    archiveBaseName.set("CamProV5-desktop")
-    manifest {
-        attributes(
-            mapOf(
-                "Main-Class" to "com.campro.v5.DesktopMainKt"
-            )
-        )
-    }
-    
-    // Include all dependencies in the JAR
-    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else fileTree(it).apply {
-        include("**/*.class")
-        include("**/*.properties")
-        include("**/*.xml")
-        include("**/*.json")
-        include("**/*.kotlin_module")
-    } })
-    
-    // Exclude META-INF files from dependencies to avoid conflicts
-    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
-    
-    // Ensure duplicates are handled properly
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
 
 compose.desktop {
     application {
@@ -315,15 +257,33 @@ compose.desktop {
         }
         
         nativeDistributions {
-            targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb)
+            targetFormats(
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg,
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi,
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb
+            )
             packageName = "CamProV5"
-            packageVersion = "1.0.0"
-            
+
+            // Sanitize version for installer requirements (numeric only; MAJOR >= 1)
+            val raw = project.version.toString()
+            val match = Regex("""(\d+)\.(\d+)\.(\d+)""").find(raw)
+            val major0 = match?.groupValues?.get(1)?.toIntOrNull() ?: 1
+            val minor = match?.groupValues?.get(2)?.toIntOrNull() ?: 0
+            val patch = match?.groupValues?.get(3)?.toIntOrNull() ?: 0
+            val major = if (major0 < 1) 1 else major0
+            val pkgVer = "$major.$minor.$patch"
+            packageVersion = pkgVer
+
             windows {
                 menuGroup = "CamProV5"
                 // Generates a Windows Installer
                 upgradeUuid = "E8CF9489-0D37-4661-A1BB-3F9D73D958A7"
+                msiPackageVersion = pkgVer
             }
+            macOS {
+                dmgPackageVersion = pkgVer
+            }
+            vendor = "Your Org"
         }
     }
 }
@@ -345,15 +305,17 @@ tasks.register<org.gradle.api.tasks.testing.Test>("junieTest") {
 
     // Prefer the freshly copied resources directory for JNI loading (same as 'test') when native is included
     if (includeNative) {
-        val isWindows = System.getProperty("os.name").lowercase().contains("win")
-        val isMac = System.getProperty("os.name").lowercase().contains("mac")
+        val osName = System.getProperty("os.name").lowercase(Locale.ROOT)
         val osDir = when {
-            isWindows -> "windows"
-            isMac -> "mac"
+            osName.contains("win") -> "windows"
+            osName.contains("mac") -> "mac"
             else -> "linux"
         }
         val archDir = "x86_64"
-        val resolvedDir = file("${project.buildDir}/resources/main/native/${osDir}/${archDir}")
+        val resolvedDir = layout.buildDirectory
+            .dir("resources/main/native/${osDir}/${archDir}")
+            .get()
+            .asFile
         environment("FEA_ENGINE_LIB_DIR", resolvedDir.absolutePath)
         doFirst {
             println("[Gradle][junieTest] FEA_ENGINE_LIB_DIR=" + resolvedDir.absolutePath)
@@ -418,5 +380,51 @@ tasks.register<JavaExec>("runDesktop") {
             args = argsList
         }
         println("[Gradle][runDesktop] args=" + (if (argsList.isEmpty()) "<none>" else argsList.joinToString(" ")))
+    }
+}
+
+
+// Shadow fat JAR configuration (Shadow 8.x)
+tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    archiveBaseName.set("CamProV5-desktop")
+    manifest {
+        attributes["Main-Class"] = "com.campro.v5.DesktopMainKt"
+    }
+    // Consider enabling if you have META-INF/services providers across deps
+    mergeServiceFiles()
+    // minimize() // optional after runtime verification
+}
+
+// Ensure ktlint runs as part of check
+tasks.named("check") {
+    dependsOn("ktlintCheck")
+}
+
+// Unified test task configuration with optional native enablement via -DincludeNative=true
+tasks.test {
+    useJUnitPlatform {
+        if (includeNative) includeTags("native") else excludeTags("native")
+    }
+    if (includeNative) {
+        // Ensure native libs are copied into resources
+        dependsOn("copyRustLibraries", "processResources")
+        // Prefer the freshly copied resources directory for JNI loading
+        val osName = System.getProperty("os.name").lowercase(Locale.ROOT)
+        val osDir = when {
+            osName.contains("win") -> "windows"
+            osName.contains("mac") -> "mac"
+            else -> "linux"
+        }
+        val archDir = "x86_64"
+        val resolvedDir = layout.buildDirectory
+            .dir("resources/main/native/${osDir}/${archDir}")
+            .get()
+            .asFile
+        environment("FEA_ENGINE_LIB_DIR", resolvedDir.absolutePath)
+        doFirst {
+            println("[Gradle][test] FEA_ENGINE_LIB_DIR=" + resolvedDir.absolutePath)
+        }
+        // If the generator task exists (only when includeNative=true), run it before tests
+        dependsOn("generateLitvinGolden")
     }
 }

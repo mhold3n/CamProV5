@@ -1,0 +1,30 @@
+name: Bug report
+description: Create a report to help us improve
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: A clear and concise description of the bug.
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Java version, Kotlin, app version, commit hash
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots

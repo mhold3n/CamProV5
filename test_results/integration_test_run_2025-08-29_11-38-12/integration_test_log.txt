@@ -1,0 +1,31 @@
+CamProV5 Integration Tests - Phase 3
+========================================
+Date: Fri Aug 29 11:38:12 PDT 2025
+System Information:
+  OS: macOS 15.5
+  CPU: Intel(R) Core(TM) i9-9980HK CPU @ 2.40GHz
+  Cores: 8
+  Logical Processors: 16
+  Memory: 32.00 GB
+========================================
+
+Checking Python environment...
+  Python: Python 3.11.5
+  numpy: 1.26.4
+  matplotlib: 3.7.2
+  toml: 0.10.2
+Checking Rust environment...
+Warning: Rust not found in PATH. Native components will be skipped.
+Please install Rust from https://rustup.rs/ to enable native FEA tests.
+
+Starting integration tests...
+This may take some time. Please be patient.
+
+2025-08-29 11:38:15,019 - integration_test - INFO - Starting integration tests...
+2025-08-29 11:38:15,019 - integration_test - ERROR - Failed to create FEA simulation binary. Aborting tests.
+
+Integration tests completed!
+Results saved to: ./test_results/integration_test_run_2025-08-29_11-38-12
+Summary report created: ./test_results/integration_test_run_2025-08-29_11-38-12/integration_test_summary.md
+
+Phase 3 integration testing complete!

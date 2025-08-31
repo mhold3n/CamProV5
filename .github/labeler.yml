@@ -1,0 +1,20 @@
+# Path-based labeler configuration
+# Maps file path globs to labels applied on PRs
+
+# Desktop module
+"desktop/**": ["desktop"]
+
+# Rust crates
+"camprofw/rust/**": ["rust"]
+
+# Docs
+"docs/**": ["docs"]
+
+# Android (if PR touches android tree)
+"android/**": ["android"]
+
+# Python
+"campro/**": ["python"]
+
+# C++
+"cpp/**": ["cpp"]

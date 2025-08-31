@@ -1,0 +1,13 @@
+CamProV5 Integration Tests - Phase 3
+========================================
+Date: Fri Aug 29 11:35:39 PDT 2025
+System Information:
+  OS: macOS 15.5
+  CPU: Intel(R) Core(TM) i9-9980HK CPU @ 2.40GHz
+  Cores: 8
+  Logical Processors: 16
+  Memory: 32.00 GB
+========================================
+
+Checking Python environment...
+  Python: Python 3.11.5

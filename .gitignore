@@ -1,0 +1,65 @@
+# Polyglot .gitignore for CamProV5
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Gradle / Java / Kotlin
+.gradle/
+build/
+**/build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+.gradle/
+.gradle-cache/
+
+# Android
+local.properties
+.cxx/
+**/captures/
+**/release/
+*.keystore
+*.jks
+
+# Kotlin/Compose Desktop
+**/desktop/logs/
+
+# Rust
+**/target/
+
+# Python
+.venv/
+venv/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# C/C++
+**/cmake-build-*/
+**/build*/
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+
+# Node (if any tooling appears later)
+node_modules/
+
+# Logs
+*.log
+**/logs/
+
+# Coverage / Reports
+coverage/
+**/reports/
+
+# Misc
+*.swp
+*.swo

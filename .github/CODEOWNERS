@@ -1,0 +1,20 @@
+# CODEOWNERS
+# Maintainers team for all paths. Update as teams evolve.
+
+# Desktop (Kotlin/Compose Desktop)
+desktop/**  @HRW/maintainers
+
+# Rust crates
+camprofw/rust/**  @HRW/maintainers
+
+# Docs
+docs/**  @HRW/maintainers
+
+# Python (CamPro)
+campro/**  @HRW/maintainers
+
+# C++
+cpp/**  @HRW/maintainers
+
+# Fallback owners for everything else
+*  @HRW/maintainers
