@@ -9,7 +9,7 @@
 import java.util.Locale
 
 plugins {
-    kotlin("jvm") version "1.9.21"
+    kotlin("jvm") version "2.2.10"
     id("org.jetbrains.compose") version "1.5.11"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
