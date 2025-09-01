@@ -63,3 +63,8 @@ coverage/
 # Misc
 *.swp
 *.swo
+
+
+# Local Junie mirror caches and indexes
+.junie/state/
+.junie/index/

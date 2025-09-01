@@ -231,7 +231,9 @@ private fun TabGroupHeader(
             ) {
                 // Add tab button (placeholder for future functionality)
                 IconButton(
-                    onClick = { /* TODO: Implement add tab functionality */ },
+                    onClick = {
+                        // TODO: Implement add tab functionality (UI/Compose). Should open a new tab with default content.
+                    },
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
@@ -244,7 +246,9 @@ private fun TabGroupHeader(
                 
                 // Tab group menu
                 IconButton(
-                    onClick = { /* TODO: Implement tab group menu */ },
+                    onClick = {
+                        // TODO: Implement tab group menu (rename, delete group, move tabs between groups).
+                    },
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
@@ -314,7 +318,7 @@ private fun TabItem(
                             isDragging = false
                         },
                         onDrag = { _, _ ->
-                            // TODO: Implement tab reordering logic
+                            // TODO: Implement tab reordering logic (drag-and-drop, keyboard shortcuts). Persist order in state.
                         }
                     )
                 }

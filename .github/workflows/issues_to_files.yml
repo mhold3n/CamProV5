@@ -1,0 +1,114 @@
+name: Mirror GitHub Issues → Repo Files
+on:
+  issues:
+    types: [opened, edited, labeled, unlabeled, assigned, unassigned, reopened, closed]
+  issue_comment:
+    types: [created, edited, deleted]
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: read
+
+jobs:
+  downsync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup gh
+        uses: actions/setup-gh@v4
+
+      - name: Mirror issues/comments to .junie
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p .junie/issues .junie/comments .junie/issues/aliases
+
+          write_issue() {
+            local num="$1"
+            issue_json=$(gh api repos/$REPO/issues/$num)
+            title=$(jq -r '.title' <<<"$issue_json")
+            state=$(jq -r '.state' <<<"$issue_json")
+            body=$(jq -r '.body // ""' <<<"$issue_json")
+            labels=$(jq -r '[.labels[].name]' <<<"$issue_json")
+            assignees=$(jq -r '[.assignees[].login]' <<<"$issue_json")
+            milestone=$(jq -r '.milestone.title // empty' <<<"$issue_json")
+            created=$(jq -r '.created_at' <<<"$issue_json")
+            updated=$(jq -r '.updated_at' <<<"$issue_json")
+            url=$(jq -r '.html_url' <<<"$issue_json")
+            etag=$(gh api -i repos/$REPO/issues/$num | awk 'BEGIN{IGNORECASE=1} /^etag:/{print $2; exit}')
+
+            file=".junie/issues/${num}.md"
+            {
+              echo '---'
+              echo "issue: $num"
+              echo "repo: $REPO"
+              echo "state: $state"
+              printf 'title: "%s"\n' "$title"
+              echo "labels: $labels"
+              echo "assignees: $assignees"
+              [ -n "$milestone" ] && echo "milestone: $milestone"
+              echo "created_at: $created"
+              echo "updated_at: $updated"
+              [ -n "$etag" ] && echo "etag: $etag"
+              echo "url: $url"
+              echo '---'
+              echo
+              printf '%s\n' "$body"
+            } > "$file"
+
+            slug=$(echo "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-|-$//g')
+            printf 'See ../%s.md\n' "$num" > ".junie/issues/aliases/${num}-${slug}.md"
+
+            mkdir -p ".junie/comments/$num"
+            gh api repos/$REPO/issues/$num/comments --paginate | jq -c '.[]' | while read -r c; do
+              ccreated=$(jq -r '.created_at' <<<"$c")
+              cauthor=$(jq -r '.user.login' <<<"$c")
+              cbody=$(jq -r '.body // ""' <<<"$c")
+              cid=$(jq -r '.id' <<<"$c")
+              fname=".junie/comments/$num/${ccreated}_${cauthor}_${cid}.md"
+              {
+                echo '---'
+                echo "author: $cauthor"
+                echo "created_at: $ccreated"
+                echo "id: $cid"
+                echo '---'
+                echo
+                printf '%s\n' "$cbody"
+              } > "$fname"
+            done
+          }
+
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            page=1
+            while :; do
+              list=$(gh api repos/$REPO/issues -f state=all -f per_page=100 -f page=$page)
+              count=$(jq 'length' <<<"$list")
+              [ "$count" -eq 0 ] && break
+              jq -r '.[].number' <<<"$list" | while read num; do write_issue "$num"; done
+              page=$((page+1))
+            done
+          else
+            if [ -n "${{ github.event.issue.number }}" ]; then
+              write_issue "${{ github.event.issue.number }}"
+            elif [ -n "${{ github.event.comment.issue_url }}" ]; then
+              num=${{ github.event.comment.issue_url }}
+              num=${num##*/}
+              write_issue "$num"
+            fi
+          fi
+
+      - name: Commit mirror (with loop marker)
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(junie): sync issues → files [junie-mirror]"
+          branch: bot/issue-sync
+          file_pattern: .junie/issues/** .junie/comments/**

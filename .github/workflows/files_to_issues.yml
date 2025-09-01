@@ -1,0 +1,55 @@
+name: Mirror Repo Files → GitHub Issues
+on:
+  push:
+    paths:
+      - '.junie/issues/**'
+      - '.junie/comments/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  upsync:
+    if: >
+      github.actor != 'github-actions[bot]' &&
+      !contains(github.event.head_commit.message, '[junie-mirror]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyYAML python-frontmatter requests
+
+      - name: Determine changed files
+        id: diff
+        run: |
+          set -euo pipefail
+          BEFORE="${{ github.event.before || '' }}"
+          AFTER="${{ github.sha }}"
+          if [ -z "$BEFORE" ]; then BEFORE="${AFTER}^"; fi
+          git diff --name-only "$BEFORE" "$AFTER" -- .junie/issues .junie/comments > changed.txt || true
+          echo "count=$(wc -l < changed.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if no changes
+        if: steps.diff.outputs.count == '0'
+        run: echo "No .junie changes"
+
+      - name: Run sync shim
+        if: steps.diff.outputs.count != '0'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_BEFORE: ${{ github.event.before }}
+          GITHUB_AFTER: ${{ github.sha }}
+        run: |
+          python .github/scripts/junie_files_to_issues.py

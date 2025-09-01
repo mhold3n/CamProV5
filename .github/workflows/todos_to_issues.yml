@@ -1,0 +1,23 @@
+name: TODOs → GitHub Issues
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  todo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create issues from TODOs
+        uses: alstr/todo-to-issue-action@v4
+        with:
+          keywords: 'TODO,FIXME'
+          labels: 'todo'
+          auto-close: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
