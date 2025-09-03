@@ -21,8 +21,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup gh
-        uses: actions/setup-gh@v4
 
       - name: Mirror issues/comments to .junie
         env:
