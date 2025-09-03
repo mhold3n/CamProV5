@@ -40,12 +40,12 @@ jobs:
           git diff --name-only "$BEFORE" "$AFTER" -- .junie/issues .junie/comments > changed.txt || true
           echo "count=$(wc -l < changed.txt)" >> "$GITHUB_OUTPUT"
 
-      - name: Skip if no changes
-        if: steps.diff.outputs.count == '0'
+      - name: Skip if no changes (push only)
+        if: github.event_name == 'push' && steps.diff.outputs.count == '0'
         run: echo "No .junie changes"
 
       - name: Run sync shim
-        if: steps.diff.outputs.count != '0'
+        if: github.event_name != 'push' || steps.diff.outputs.count != '0'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
