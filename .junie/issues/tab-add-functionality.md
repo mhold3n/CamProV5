@@ -19,3 +19,6 @@ Acceptance criteria:
 Notes:
 - Consider state hoisting for tab list.
 - Wire instrumentation for analytics.
+
+
+Ping: 2025-09-03 12:28 – trigger upsync
