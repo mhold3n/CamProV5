@@ -232,7 +232,7 @@ private fun TabGroupHeader(
                 // Add tab button (placeholder for future functionality)
                 IconButton(
                     onClick = {
-                        // TODO: Implement add tab functionality (UI/Compose). Should open a new tab with default content.
+                        // TODO(#19): Implement add tab functionality (UI/Compose). Should open a new tab with default content.
                     },
                     modifier = Modifier.size(24.dp)
                 ) {
@@ -247,7 +247,7 @@ private fun TabGroupHeader(
                 // Tab group menu
                 IconButton(
                     onClick = {
-                        // TODO: Implement tab group menu (rename, delete group, move tabs between groups).
+                        // TODO(#20): Implement tab group menu (rename, delete group, move tabs between groups).
                     },
                     modifier = Modifier.size(24.dp)
                 ) {
@@ -318,7 +318,7 @@ private fun TabItem(
                             isDragging = false
                         },
                         onDrag = { _, _ ->
-                            // TODO: Implement tab reordering logic (drag-and-drop, keyboard shortcuts). Persist order in state.
+                            // TODO(#21): Implement tab reordering logic (drag-and-drop, keyboard shortcuts). Persist order in state.
                         }
                     )
                 }
@@ -451,4 +451,3 @@ fun CreateTabGroupFromPanels(
     return tabGroupId
 }
 
-// TODO: Temp: ping TODO workflow 2025-09-03T12:28 to validate TODOs → Issues trigger
