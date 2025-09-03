@@ -28,6 +28,8 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
+          sudo apt-get update -y && sudo apt-get install -y jq
+          gh --version || true
           mkdir -p .junie/issues .junie/comments .junie/issues/aliases
 
           write_issue() {
