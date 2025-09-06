@@ -60,8 +60,12 @@ jobs:
       - name: Build Rust fea-engine (release)
         working-directory: camprofw/rust/fea-engine
         run: |
+          set -euo pipefail
           cargo build --release
-          tar -czf fea-engine-${{ runner.os }}-x86_64.tar.gz -C target/release .
+          OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+          ARCH=$(uname -m)
+          TAR_NAME="fea-engine-${OS}-${ARCH}.tar.gz"
+          tar -czf "$TAR_NAME" -C target/release .
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
@@ -69,6 +73,6 @@ jobs:
           files: |
             desktop/build/compose/binaries/main/*/*/*
             desktop/build/libs/*-all.jar
-            camprofw/rust/fea-engine/fea-engine-${{ runner.os }}-x86_64.tar.gz
+            camprofw/rust/fea-engine/fea-engine-*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

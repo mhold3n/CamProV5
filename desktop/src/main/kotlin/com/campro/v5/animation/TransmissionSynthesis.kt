@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
@@ -63,10 +62,10 @@ object TransmissionSynthesis {
             }
 
             // Enforce positivity, periodic endpoints equality, and normalize mean to 1.0
-            var minPos = 1e-3
+            val MIN_I = 1e-3
             for (k in 0 until n) {
                 if (!iSm[k].isFinite()) iSm[k] = 1.0
-                iSm[k] = max(minPos, iSm[k])
+                iSm[k] = max(MIN_I, iSm[k])
             }
             // exact periodic endpoint (θ=0 vs θ=360−Δ)
             iSm[n - 1] = iSm[0]
@@ -123,6 +122,73 @@ object TransmissionSynthesis {
             // Final renormalization and periodicity enforcement
             val meanFinal = iCal.average().let { if (it == 0.0) 1.0 else it }
             for (k in 0 until n) iCal[k] /= meanFinal
+            iCal[n - 1] = iCal[0]
+
+            // Enforce sign pattern w.r.t velocity: sign(i-1) should match sign(v)
+            val vList = DoubleArray(n) { motion.samples[it].vMmPerOmega }
+            for (k in 0 until n) {
+                val v = vList[k]
+                if (k != n - 1) { // we'll set periodicity again after this loop
+                    if (v > 0.0) {
+                        iCal[k] = 1.0 + kotlin.math.abs(iCal[k] - 1.0)
+                    } else if (v < 0.0) {
+                        iCal[k] = 1.0 - kotlin.math.abs(iCal[k] - 1.0)
+                    }
+                }
+                if (!iCal[k].isFinite()) iCal[k] = 1.0
+                if (iCal[k] < MIN_I) iCal[k] = MIN_I
+            }
+            // Periodic endpoint equality and piecewise scaling to keep mean≈1 while preserving sign pattern
+            // Compute deviations and signs
+            val dev = DoubleArray(n) { kotlin.math.abs(iCal[it] - 1.0) }
+            val sgn = IntArray(n) { val v = vList[it]; if (v > 0.0) 1 else if (v < 0.0) -1 else 0 }
+            // Enforce periodic parity in contribution space to avoid bias when matching endpoints
+            dev[n - 1] = dev[0]
+            sgn[n - 1] = sgn[0]
+            // Initial sign-enforced i
+            for (k in 0 until n) {
+                iCal[k] = when (sgn[k]) {
+                    1 -> 1.0 + dev[k]
+                    -1 -> 1.0 - dev[k]
+                    else -> 1.0
+                }
+                if (!iCal[k].isFinite()) iCal[k] = 1.0
+                if (iCal[k] < MIN_I) iCal[k] = MIN_I
+            }
+            // Compute total contributions (averaged over n for simple balance)
+            var DpTot = 0.0
+            var DnTot = 0.0
+            for (k in 0 until n) {
+                if (sgn[k] > 0) DpTot += dev[k] else if (sgn[k] < 0) DnTot += dev[k]
+            }
+            // Scale negative deviations to balance mean around 1: choose a=1, b=DpTot/DnTot
+            val b = if (DnTot > 0.0) (DpTot / DnTot) else 1.0
+            for (k in 0 until n) {
+                if (sgn[k] < 0) {
+                    iCal[k] = 1.0 - b * dev[k]
+                } else if (sgn[k] > 0) {
+                    iCal[k] = 1.0 + dev[k]
+                } else {
+                    iCal[k] = 1.0
+                }
+                if (!iCal[k].isFinite()) iCal[k] = 1.0
+                if (iCal[k] < MIN_I) iCal[k] = MIN_I
+            }
+            // Enforce periodic endpoint equality last
+            iCal[n - 1] = iCal[0]
+            // Exact mean normalization to 1.0 via constant offset (preserves sign in practice)
+            val meanStrict = iCal.average()
+            val dOff = meanStrict - 1.0
+            if (dOff != 0.0 && meanStrict.isFinite()) {
+                for (k in 0 until n) iCal[k] -= dOff
+                // Re-enforce periodic endpoint equality after offset
+                iCal[n - 1] = iCal[0]
+            }
+            // Post-offset safety: enforce finite and MIN_I clamp and periodic equality
+            for (k in 0 until n) {
+                if (!iCal[k].isFinite()) iCal[k] = 1.0
+                if (iCal[k] < MIN_I) iCal[k] = MIN_I
+            }
             iCal[n - 1] = iCal[0]
 
             val iOfTheta = motion.samples.mapIndexed { idx, s -> s.thetaDeg to iCal[idx] }

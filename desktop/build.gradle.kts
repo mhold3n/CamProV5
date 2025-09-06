@@ -9,7 +9,7 @@
 import java.util.Locale
 
 plugins {
-    kotlin("jvm") version "1.9.21"
+    kotlin("jvm")
     id("org.jetbrains.compose") version "1.5.11"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
@@ -40,12 +40,12 @@ repositories {
 }
 
 dependencies {
-    // This would reference a shared module containing code common to both Android and desktop
-    // implementation(project(":shared"))
+    // Add the data-litvin shared module for DTOs and helpers
+    implementation(project(":data-litvin"))
     
     // Compose for Desktop dependencies
     implementation(compose.desktop.currentOs)
-    implementation("org.jetbrains.compose.material3:material3:1.2.0")
+    implementation(compose.material3)
     implementation(compose.material)
     implementation(compose.materialIconsExtended)
     implementation(compose.ui)
@@ -82,7 +82,7 @@ if (includeNative) {
         group = "build"
         description = "Builds the Rust native libraries"
 
-        val crateDir = file("${project.rootDir}/CamProV5/camprofw/rust/fea-engine")
+        val crateDir = file("${project.rootDir}/camprofw/rust/fea-engine")
         workingDir = crateDir
 
         // Use appropriate command based on OS
@@ -102,11 +102,11 @@ if (includeNative) {
         }.standardOutput.asText
 
         // Only run if Rust code or toolchain has changed
-        inputs.dir(file("${project.rootDir}/CamProV5/camprofw/rust/fea-engine/src"))
-        inputs.file(file("${project.rootDir}/CamProV5/camprofw/rust/fea-engine/Cargo.toml"))
+        inputs.dir(file("${project.rootDir}/camprofw/rust/fea-engine/src"))
+        inputs.file(file("${project.rootDir}/camprofw/rust/fea-engine/Cargo.toml"))
         inputs.property("cargoVersion", cargoVersionProvider)
         inputs.property("rustcVersion", rustcVersionProvider)
-        outputs.dir(file("${project.rootDir}/CamProV5/camprofw/rust/fea-engine/target/release"))
+        outputs.dir(file("${project.rootDir}/camprofw/rust/fea-engine/target/release"))
 
         // Optional clean to avoid stale artifacts
         doFirst {
@@ -149,9 +149,13 @@ if (includeNative) {
             else -> "linux"
         }
 
-        val archDir = "x86_64"
+        val archDir = when (System.getProperty("os.arch").lowercase(Locale.ROOT)) {
+            "x86_64", "amd64" -> "x86_64"
+            "aarch64", "arm64" -> "aarch64"
+            else -> "x86_64"
+        }
 
-        val crateDir = file("${project.rootDir}/CamProV5/camprofw/rust/fea-engine")
+        val crateDir = file("${project.rootDir}/camprofw/rust/fea-engine")
         // Cargo artifact name differs by platform: Windows has no 'lib' prefix, Unix-like do.
         val cargoArtifactBaseName = if (isWindows) "fea_engine" else "libfea_engine"
         val builtArtifact = file("${crateDir.path}/target/release/${cargoArtifactBaseName}.${libExtension}")
@@ -220,7 +224,11 @@ if (includeNative) {
             osName.contains("mac") -> "mac"
             else -> "linux"
         }
-        val archDir = "x86_64"
+        val archDir = when (System.getProperty("os.arch").lowercase(Locale.ROOT)) {
+            "x86_64", "amd64" -> "x86_64"
+            "aarch64", "arm64" -> "aarch64"
+            else -> "x86_64"
+        }
         val resolvedDir = layout.buildDirectory
             .dir("resources/main/native/${osDir}/${archDir}")
             .get()
@@ -303,6 +311,9 @@ tasks.register<org.gradle.api.tasks.testing.Test>("junieTest") {
 
     useJUnitPlatform()
 
+    // Disable Kotest autoscan to speed startup and silence warning
+    systemProperty("kotest.framework.classpath.scanning.autoscan.disable", "true")
+
     // Prefer the freshly copied resources directory for JNI loading (same as 'test') when native is included
     if (includeNative) {
         val osName = System.getProperty("os.name").lowercase(Locale.ROOT)
@@ -311,7 +322,11 @@ tasks.register<org.gradle.api.tasks.testing.Test>("junieTest") {
             osName.contains("mac") -> "mac"
             else -> "linux"
         }
-        val archDir = "x86_64"
+        val archDir = when (System.getProperty("os.arch").lowercase(Locale.ROOT)) {
+            "x86_64", "amd64" -> "x86_64"
+            "aarch64", "arm64" -> "aarch64"
+            else -> "x86_64"
+        }
         val resolvedDir = layout.buildDirectory
             .dir("resources/main/native/${osDir}/${archDir}")
             .get()
@@ -405,6 +420,8 @@ tasks.test {
     useJUnitPlatform {
         if (includeNative) includeTags("native") else excludeTags("native")
     }
+    // Disable Kotest autoscan to speed startup and silence warning
+    systemProperty("kotest.framework.classpath.scanning.autoscan.disable", "true")
     if (includeNative) {
         // Ensure native libs are copied into resources
         dependsOn("copyRustLibraries", "processResources")
@@ -415,7 +432,11 @@ tasks.test {
             osName.contains("mac") -> "mac"
             else -> "linux"
         }
-        val archDir = "x86_64"
+        val archDir = when (System.getProperty("os.arch").lowercase(Locale.ROOT)) {
+            "x86_64", "amd64" -> "x86_64"
+            "aarch64", "arm64" -> "aarch64"
+            else -> "x86_64"
+        }
         val resolvedDir = layout.buildDirectory
             .dir("resources/main/native/${osDir}/${archDir}")
             .get()

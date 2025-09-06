@@ -33,6 +33,36 @@ def ensure_list(v):
         return []
     return v if isinstance(v, list) else [v]
 
+# Cache for assignee validation to avoid repeated API calls (repo-scoped)
+_ASSIGNABLE_CACHE = {}
+
+def is_assignable(username: str) -> bool:
+    """Return True if the user can be assigned in this repo.
+    Uses GET /repos/{owner}/{repo}/assignees/{assignee} which returns 204 if assignable, 404 otherwise.
+    Cache is keyed by (REPO, username) to avoid cross-repo contamination.
+    """
+    if not username:
+        return False
+    key = (REPO, username)
+    cached = _ASSIGNABLE_CACHE.get(key)
+    if cached is not None:
+        return cached
+    r = requests.get(f"{API}/assignees/{username}", headers=HEADERS)
+    ok = (r.status_code == 204)
+    _ASSIGNABLE_CACHE[key] = ok
+    return ok
+
+def filter_assignable(users: list):
+    """Split into (valid, invalid) assignees for this repo."""
+    valid = []
+    invalid = []
+    for u in users or []:
+        if is_assignable(u):
+            valid.append(u)
+        else:
+            invalid.append(u)
+    return valid, invalid
+
 def upsert_issue(md_path: str):
     post = parse_front_matter(md_path)
     fm = post.metadata
@@ -52,9 +82,32 @@ def upsert_issue(md_path: str):
         if title: payload["title"] = title
         if body is not None: payload["body"] = body
         if labels: payload["labels"] = labels
-        if assignees: payload["assignees"] = assignees
-        if milestone: payload["milestone"] = milestone
-        issue = req("POST", "/issues", json=payload).json()
+        # optional parity: resolve milestone title -> number on create
+        if milestone:
+            try:
+                mlist = req("GET", "/milestones").json()
+                found = next((m for m in mlist if m["title"] == milestone), None)
+                if found:
+                    payload["milestone"] = found["number"]
+                else:
+                    payload["milestone"] = milestone
+            except Exception:
+                payload["milestone"] = milestone
+        valid_assignees, invalid_assignees = filter_assignable(assignees)
+        if invalid_assignees:
+            print(f"::warning file={md_path}::Skipping invalid assignees on create: {', '.join(invalid_assignees)}")
+        if valid_assignees:
+            payload["assignees"] = valid_assignees
+        try:
+            issue = req("POST", "/issues", json=payload).json()
+        except requests.HTTPError as e:
+            msg = str(e)
+            if "POST /issues" in msg and "422" in msg and '"field":"assignees"' in msg:
+                print(f"::warning file={md_path}::Create failed due to assignees; retrying without assignees")
+                payload.pop("assignees", None)
+                issue = req("POST", "/issues", json=payload).json()
+            else:
+                raise
         print(f"Created issue #{issue['number']} from {md_path}")
         return
 
@@ -70,14 +123,25 @@ def upsert_issue(md_path: str):
     if state in ("open", "closed"): payload["state"] = state
 
     if milestone:
-        # Resolve milestone title -> number
+        # Resolve milestone title -> number; if not found, pass the title as-is for parity
         mlist = req("GET", "/milestones").json()
         found = next((m for m in mlist if m["title"] == milestone), None)
         if found:
             payload["milestone"] = found["number"]
+        else:
+            payload["milestone"] = milestone
 
     if payload:
-        req("PATCH", f"/issues/{number}", json=payload)
+        try:
+            req("PATCH", f"/issues/{number}", json=payload)
+        except requests.HTTPError as e:
+            msg = str(e)
+            if "PATCH /issues/" in msg and "422" in msg and '"field":"milestone"' in msg:
+                # Retry without milestone if server rejects it
+                payload.pop("milestone", None)
+                req("PATCH", f"/issues/{number}", json=payload)
+            else:
+                raise
 
     # Labels
     if labels:
@@ -92,7 +156,18 @@ def upsert_issue(md_path: str):
 
     # Assignees (merge behavior)
     if assignees:
-        req("POST", f"/issues/{number}/assignees", json={"assignees": assignees})
+        valid_assignees, invalid_assignees = filter_assignable(assignees)
+        if invalid_assignees:
+            print(f"::warning file={md_path}::Skipping invalid assignees on update: {', '.join(invalid_assignees)}")
+        if valid_assignees:
+            try:
+                req("POST", f"/issues/{number}/assignees", json={"assignees": valid_assignees})
+            except requests.HTTPError as e:
+                msg = str(e)
+                if "422" in msg and '"field":"assignees"' in msg:
+                    print(f"::warning file={md_path}::Update assignees rejected; continuing without changes")
+                else:
+                    raise
 
     print(f"Updated issue #{number} from {md_path}")
 

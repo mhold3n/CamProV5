@@ -6,8 +6,7 @@
 
 plugins {
     base
+    kotlin("jvm") version "1.9.21" apply false
 }
 
 description = "CamProV5 aggregator module (no build logic)"
-
-// Intentionally empty: subprojects (e.g., :CamProV5:desktop) configure their own plugins and repositories.

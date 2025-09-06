@@ -1,0 +1,3 @@
+/Users/maxholden/Applications/IntelliJ IDEA Ultimate.app/Contents/MacOS/idea
+warmup
+--project-dir=/Users/maxholden/Documents/GitHub/CamProV5

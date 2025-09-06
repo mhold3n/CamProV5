@@ -1,0 +1,4 @@
+/Users/maxholden/Applications/IntelliJ IDEA Ultimate.app/Contents/MacOS/idea
+dump-shared-index
+version
+--output=/Users/maxholden/Documents/GitHub/CamProV5/ij-shared-indexes-tool-data/temp/ij-version-1756964551002/IU-252.25557.131/version.json
