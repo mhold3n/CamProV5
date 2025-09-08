@@ -139,3 +139,62 @@ pip3 install -r requirements.txt         # macOS/Linux
 - gradle.properties has been updated to remove hardcoded Windows paths and now relies on Gradle auto-detection or JAVA_HOME.
 - A Bash version of the integration test runner is available as `run_integration_tests.sh`.
 - A universal runner `run_integration_tests` auto-detects platform and chooses the appropriate script.
+
+
+## JetBrains Shared Indexes (Option A: repository-local symlinks)
+
+Goal: keep large JetBrains Shared Indexes outside the repo under a stable install root named "github", and expose them inside the repo via links so IDEs/scripts work unchanged.
+
+Managed directories (created outside the repo, linked inside):
+- .shared-indexes
+- ij-shared-indexes-tool-data
+- ij-shared-indexes-tool-cli
+
+Post-clone setup (one-time per machine):
+- macOS/Linux:
+  - Populate and link via manifest: `bash scripts/setup-shared-indexes.sh --download-manifest .junie/config/shared-indexes.yaml --yes`
+  - Override root or create missing targets:
+    - `bash scripts/setup-shared-indexes.sh --install-root "/absolute/path/to/github" --create-missing --yes`
+- Windows (PowerShell):
+  - Populate and link via manifest: `pwsh -File scripts/setup-shared-indexes.ps1 -DownloadManifest .junie/config/shared-indexes.yaml -Yes`
+  - With override: `pwsh -File scripts/setup-shared-indexes.ps1 -InstallRoot "C:\\path\\to\\github" -CreateMissing -Yes`
+
+Useful flags (bash/PowerShell equivalents):
+- `--install-root` / `-InstallRoot` — override INSTALL_ROOT
+- `--create-missing` / `-CreateMissing` — create empty targets
+- `--download-manifest` / `-DownloadManifest` — YAML/JSON manifest with assets and checksums
+- `--verify` / `-Verify` — dereference probe after linking
+- `--yes` / `-Yes`, `--quiet` / `-Quiet` — non-interactive, reduced output
+- `--untrack` / `-Untrack` — remove any accidentally tracked protected dirs
+
+Updating to a new version (atomic switch):
+- macOS/Linux: `bash scripts/update-shared-indexes.sh --version v2025.09.08 --manifest .junie/config/shared-indexes.yaml --set-current --yes`
+- Windows: `pwsh -File scripts/update-shared-indexes.ps1 -Version v2025.09.08 -Manifest .junie/config/shared-indexes.yaml -SetCurrent -Yes`
+
+Assumptions and behavior:
+- By default, the repo directory CamProV5 should be under a parent folder named github (e.g., .../Documents/github/CamProV5). The scripts detect INSTALL_ROOT as that parent and validate the name.
+- Any real directories with these names inside the repo are moved to INSTALL_ROOT, then replaced by symlinks (macOS/Linux) or symlinks/junctions (Windows).
+- Links use relative targets so the repo can be moved within the INSTALL_ROOT without breaking.
+- If targets are missing, the scripts still create links and print a warning; you can populate the folders later.
+
+Untracking (only if these folders were previously committed):
+```bash
+git rm -r --cached .shared-indexes ij-shared-indexes-tool-data ij-shared-indexes-tool-cli
+git commit -m "chore(shared-indexes): move to INSTALL_ROOT and link from repo"
+```
+
+Guardrails:
+- CI workflow `.github/workflows/guard-shared-indexes.yml` prevents adding shared-index content to the repo.
+- Optional pre-commit hooks: set `git config core.hooksPath .githooks` to enable.
+
+Notes:
+- Windows symbolic links require Developer Mode or admin privileges; the script falls back to directory junctions automatically.
+- If IntelliJ cached old paths, use File > Invalidate Caches / Restart once after switching.
+- See `docs/SharedIndexes.md` for a deeper guide, manifest example, and troubleshooting.
+
+Advanced options:
+- Rollback: add `--rollback-on-fail` (bash) / `-RollbackOnFail` (ps1) when switching aliases to restore previous state on errors.
+- Integrity: checksum precedence is CLI > manifest > sidecar .sha256; optional GPG verification if `.asc` signature is present and `gpg` is installed.
+- Manifest templating: URLs may contain `{{channel}}` and `{{version}}`; channel defaults to `$SHARED_INDEXES_CHANNEL` or `stable`, version defaults to `--version` or `$SHARED_INDEXES_VERSION`.
+- CI: workflow `shared-indexes-smoke.yml` runs tiny end-to-end checks on Ubuntu and Windows.
+- Helpers: run `scripts/dev/check-idea-shared-indexes.sh|ps1` to see alias targets and scan IDEA logs.

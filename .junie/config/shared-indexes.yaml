@@ -1,0 +1,56 @@
+# Shared Indexes configuration for CamProV5
+# This is a sample manifest used by setup/update scripts.
+# Replace the URLs and checksums with your team-provided artifacts.
+
+installRootName: github
+
+# Optional expected marker files to validate extraction
+expectedFiles:
+  .shared-indexes:
+    - index.info
+  ij-shared-indexes-tool-cli:
+    - bin/ijSharedIndexesTool
+
+# Channels and versions (templating)
+channels:
+  stable:
+    version: "v2025.09.08"
+  nightly:
+    version: "v2025.09.08-nightly"
+
+# Platform-aware assets with templated URLs
+platforms:
+  darwin-x64:
+    assets:
+      - dir: .shared-indexes
+        url: "https://example.com/shared/{{channel}}/{{version}}/darwin-x64/shared-indexes.tar.zst"
+      - dir: ij-shared-indexes-tool-data
+        url: "https://example.com/shared/{{channel}}/{{version}}/darwin-x64/tool-data.zip"
+      - dir: ij-shared-indexes-tool-cli
+        url: "https://example.com/shared/{{channel}}/{{version}}/darwin-x64/cli.zip"
+  linux-x64:
+    assets:
+      - dir: .shared-indexes
+        url: "https://example.com/shared/{{channel}}/{{version}}/linux-x64/shared-indexes.tar.zst"
+      - dir: ij-shared-indexes-tool-cli
+        url: "https://example.com/shared/{{channel}}/{{version}}/linux-x64/cli.zip"
+  windows-x64:
+    assets:
+      - dir: .shared-indexes
+        url: "https://example.com/shared/{{channel}}/{{version}}/windows-x64/shared-indexes.zip"
+      - dir: ij-shared-indexes-tool-data
+        url: "https://example.com/shared/{{channel}}/{{version}}/windows-x64/tool-data.zip"
+      - dir: ij-shared-indexes-tool-cli
+        url: "https://example.com/shared/{{channel}}/{{version}}/windows-x64/cli.zip"
+
+# Fallback flat assets (used if platforms section is not processed)
+assets:
+  - dir: .shared-indexes
+    url: https://example.com/shared-indexes/sample-linux-x64.zip
+    sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+  - dir: ij-shared-indexes-tool-data
+    url: https://example.com/shared-indexes/tool-data.zip
+    sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+  - dir: ij-shared-indexes-tool-cli
+    url: https://example.com/shared-indexes/cli.zip
+    sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
