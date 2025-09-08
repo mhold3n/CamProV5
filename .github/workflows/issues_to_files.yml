@@ -107,7 +107,7 @@ jobs:
           fi
 
       - name: Commit mirror (with loop marker)
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v6
         with:
           commit_message: "chore(junie): sync issues → files [junie-mirror]"
           branch: bot/issue-sync
