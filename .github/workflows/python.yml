@@ -1,12 +1,12 @@
 name: Python CI
 
 on:
-  push:
-    branches: [ main, master ]
+  # Disabled from automatic runs; keep for manual use only
+  workflow_dispatch:
 
 jobs:
   test:
-    name: Python Tests
+    name: Python Tests (manual only)
     strategy:
       fail-fast: false
       matrix:
@@ -37,5 +37,6 @@ jobs:
           PYTHONUNBUFFERED: "1"
           PYTHONDONTWRITEBYTECODE: "1"
         run: |
+          set -euo pipefail
           python -m pip install pytest
           pytest -q tests

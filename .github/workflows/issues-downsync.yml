@@ -20,11 +20,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-
+          fetch-depth: 0
+      - name: Ensure bot branch exists and checkout
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --heads origin bot/issue-sync >/dev/null 2>&1; then
+            git fetch origin bot/issue-sync:bot/issue-sync
+            git switch bot/issue-sync
+          else
+            git switch -c bot/issue-sync
+            git push -u origin bot/issue-sync
+          fi
 
       - name: Mirror issues/comments to .junie
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
@@ -107,7 +117,7 @@ jobs:
           fi
 
       - name: Commit mirror (with loop marker)
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v6
         with:
           commit_message: "chore(junie): sync issues → files [junie-mirror]"
           branch: bot/issue-sync

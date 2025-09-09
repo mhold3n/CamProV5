@@ -1,9 +1,6 @@
 name: Mirror Repo Files → GitHub Issues
 on:
-  push:
-    paths:
-      - '.junie/issues/**'
-      - '.junie/comments/**'
+  # Disable automatic triggers; run only via manual dispatch if needed
   workflow_dispatch:
 
 permissions:
@@ -27,6 +24,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           pip install PyYAML python-frontmatter requests
 
@@ -47,9 +45,10 @@ jobs:
       - name: Run sync shim
         if: github.event_name != 'push' || steps.diff.outputs.count != '0'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_BEFORE: ${{ github.event.before }}
           GITHUB_AFTER: ${{ github.sha }}
         run: |
+          set -euo pipefail
           python .github/scripts/junie_files_to_issues.py

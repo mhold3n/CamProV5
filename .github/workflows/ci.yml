@@ -1,56 +1,70 @@
 name: CI
 
 on:
-  push:
-    branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+    paths-ignore:
+      - '.junie/**'
+      - 'docs/**'
+      - '**/*.md'
+  merge_group: {}
+  push:
+    branches:
+      - 'feature/**'
+      - 'fix/**'
+      # - 'chore/**'       # optional
+      # - 'experiment/**' # optional
+    paths-ignore:
+      - '.junie/**'
+      - 'docs/**'
+      - '**/*.md'
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   jvm-desktop:
+    name: CI / jvm-desktop
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+      - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
-          cache: 'gradle'
-      - name: Grant execute permission for Gradle wrapper
-        run: chmod +x gradlew
-      - name: Build & Test Desktop
-        run: ./gradlew --no-daemon :desktop:build :desktop:test
-      - name: Kotlin lint (ktlint)
-        run: ./gradlew --no-daemon :desktop:ktlintCheck
+      - uses: gradle/actions/setup-gradle@v3
+      - run: ./gradlew test --stacktrace
+      - run: ./gradlew :desktop:ktlintCheck
 
   rust-fea-engine:
+    name: CI / rust-fea-engine
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: camprofw/rust/fea-engine
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install Rust (stable)
-        uses: dtolnay/rust-toolchain@stable
-      - name: Cache cargo
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cache Cargo registry + target
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             camprofw/rust/fea-engine/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('camprofw/rust/fea-engine/Cargo.lock') }}
+          key: cargo-${{ runner.os }}-${{ hashFiles('camprofw/rust/fea-engine/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-
-      - name: Build (release)
-        run: cargo build --release
-      - name: Clippy
-        run: cargo clippy --all-targets -- -D warnings
-      - name: Test
-        run: cargo test --all
+            cargo-${{ runner.os }}-
+      - run: cargo build --locked --all-targets
+      - run: cargo test  --locked --all
+      - run: cargo clippy -- -D warnings

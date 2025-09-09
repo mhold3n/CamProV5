@@ -1,0 +1,35 @@
+name: Mirror Repo Files → GitHub Issues
+
+on:
+  push:
+    branches-ignore: [ main, bot/issue-sync ]
+    paths:
+      - '.junie/issues/**'
+      - '.junie/comments/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  upsync:
+    name: Files → Issues
+    if: github.actor != 'github-actions[bot]' && (github.event_name != 'push' || !contains(github.event.head_commit.message, '[junie-mirror]'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies for upsync
+        run: |
+          set -euo pipefail
+          python -m pip install -U pip
+          pip install requests python-frontmatter
+      - name: Upsert Issues/Comments from .junie
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python .github/scripts/junie_files_to_issues.py

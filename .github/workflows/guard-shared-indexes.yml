@@ -1,19 +1,24 @@
 name: Guard Shared Indexes
-
 on:
   pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'shared-index/**'
+      - 'scripts/shared-index/**'
+      - 'scripts/ci/**'
   push:
-    branches:
-      - main
-      - master
-  workflow_call:
+    branches: [ main, master ]
+    paths:
+      - 'shared-index/**'
+      - 'scripts/shared-index/**'
+      - 'scripts/ci/**'
+
+permissions: { contents: read }
 
 jobs:
   guard:
-    name: Prevent tracking shared-indexes directories
+    name: Guard Shared Indexes
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Run guard script
-        run: bash scripts/ci/check-shared-indexes.sh
+      - uses: actions/checkout@v4
+      - run: ./scripts/ci/check-shared-indexes.sh
