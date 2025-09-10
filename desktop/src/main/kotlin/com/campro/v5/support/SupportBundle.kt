@@ -30,7 +30,7 @@ object SupportBundle {
         sessionId: String,
         logDir: String?,
         jsonDirs: List<String> = emptyList(),
-        maxFileSizeBytes: Long = 20L * 1024 * 1024
+        maxFileSizeBytes: Long = 20L * 1024 * 1024,
     ): String {
         val logsPath: Path? = logDir?.let { Paths.get(it) }?.takeIf { Files.isDirectory(it) }
         val jsonPaths: List<Path> = jsonDirs.map { Paths.get(it) }.filter { Files.isDirectory(it) }
@@ -38,10 +38,13 @@ object SupportBundle {
         val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val outDir = (logsPath?.parent ?: Paths.get(System.getProperty("user.home"), "CamProV5", "support_bundles"))
         Files.createDirectories(outDir)
-        val outZip = outDir.resolve("support_${ts}_${sessionId}.zip").toAbsolutePath()
+        val outZip = outDir.resolve("support_${ts}_$sessionId.zip").toAbsolutePath()
 
         ZipOutputStream(BufferedOutputStream(FileOutputStream(outZip.toFile()))).use { zos ->
-            fun addDir(dir: Path, rootName: String) {
+            fun addDir(
+                dir: Path,
+                rootName: String,
+            ) {
                 Files.walk(dir).use { stream ->
                     stream.filter { Files.isRegularFile(it) }.forEach { p ->
                         val name = p.fileName.toString()
@@ -51,7 +54,7 @@ object SupportBundle {
                         val size = Files.size(p)
                         if (size > maxFileSizeBytes) return@forEach
                         val rel = dir.relativize(p).toString().replace('\\', '/')
-                        val entryName = "${rootName}/${rel}"
+                        val entryName = "$rootName/$rel"
                         zos.putNextEntry(ZipEntry(entryName))
                         BufferedInputStream(FileInputStream(p.toFile())).use { bis ->
                             bis.copyTo(zos)
@@ -64,13 +67,14 @@ object SupportBundle {
             jsonPaths.forEach { addDir(it, "json") }
 
             // Write a small manifest
-            val manifest = buildString {
-                appendLine("CamProV5 Support Bundle")
-                appendLine("sessionId=" + sessionId)
-                appendLine("created=" + ts)
-                appendLine("logDir=" + (logsPath?.toAbsolutePath()?.toString() ?: "(none)"))
-                appendLine("jsonDirs=" + jsonPaths.joinToString { it.toAbsolutePath().toString() })
-            }
+            val manifest =
+                buildString {
+                    appendLine("CamProV5 Support Bundle")
+                    appendLine("sessionId=" + sessionId)
+                    appendLine("created=" + ts)
+                    appendLine("logDir=" + (logsPath?.toAbsolutePath()?.toString() ?: "(none)"))
+                    appendLine("jsonDirs=" + jsonPaths.joinToString { it.toAbsolutePath().toString() })
+                }
             val tmp = File.createTempFile("bundle_manifest", ".txt")
             tmp.writeText(manifest)
             zos.putNextEntry(ZipEntry("manifest.txt"))

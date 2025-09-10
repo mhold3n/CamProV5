@@ -7,51 +7,70 @@ package com.campro.v5.animation
  * Keep signatures aligned with JNI.
  */
 object LitvinNativeStubs {
-    private fun <T> tryCall(default: T, call: () -> T): T {
-        return try { call() } catch (_: UnsatisfiedLinkError) { default } catch (_: Throwable) { default }
+    private fun <T> tryCall(
+        default: T,
+        call: () -> T,
+    ): T =
+        try {
+            call()
+        } catch (_: UnsatisfiedLinkError) {
+            default
+        } catch (_: Throwable) {
+            default
+        }
+
+    fun createLitvinLawNative(parameters: Array<String>): Long = tryCall(0L) { LitvinNative.createLitvinLawNative(parameters) }
+
+    fun updateLitvinLawParametersNative(
+        id: Long,
+        parameters: Array<String>,
+    ) {
+        tryCall(Unit) {
+            LitvinNative.updateLitvinLawParametersNative(id, parameters)
+            Unit
+        }
     }
 
-    fun createLitvinLawNative(parameters: Array<String>): Long {
-        return tryCall(0L) { LitvinNative.createLitvinLawNative(parameters) }
-    }
+    fun getLitvinPitchCurvesNative(id: Long): String = tryCall("") { LitvinNative.getLitvinPitchCurvesNative(id) }
 
-    fun updateLitvinLawParametersNative(id: Long, parameters: Array<String>) {
-        tryCall(Unit) { LitvinNative.updateLitvinLawParametersNative(id, parameters); Unit }
-    }
+    fun getLitvinSystemStateNative(
+        id: Long,
+        alphaDeg: Double,
+    ): String = tryCall("") { LitvinNative.getLitvinSystemStateNative(id, alphaDeg) }
 
-    fun getLitvinPitchCurvesNative(id: Long): String {
-        return tryCall("") { LitvinNative.getLitvinPitchCurvesNative(id) }
-    }
+    fun getLitvinKinematicsTablesNative(id: Long): String = tryCall("") { LitvinNative.getLitvinKinematicsTablesNative(id) }
 
-    fun getLitvinSystemStateNative(id: Long, alphaDeg: Double): String {
-        return tryCall("") { LitvinNative.getLitvinSystemStateNative(id, alphaDeg) }
-    }
-
-    fun getLitvinKinematicsTablesNative(id: Long): String {
-        return tryCall("") { LitvinNative.getLitvinKinematicsTablesNative(id) }
-    }
-
-    fun getLitvinFeaBoundaryNative(id: Long): String {
-        return tryCall("") { LitvinNative.getLitvinFeaBoundaryNative(id) }
-    }
+    fun getLitvinFeaBoundaryNative(id: Long): String = tryCall("") { LitvinNative.getLitvinFeaBoundaryNative(id) }
 
     fun disposeLitvinLawNative(id: Long) {
-        tryCall(Unit) { LitvinNative.disposeLitvinLawNative(id); Unit }
+        tryCall(Unit) {
+            LitvinNative.disposeLitvinLawNative(id)
+            Unit
+        }
     }
 
     /** Initialize Rust logger if native is available; otherwise no-op. */
-    fun initRustLoggerNative(sessionId: String, level: String?, logDir: String?) {
-        tryCall(Unit) { LitvinNative.initRustLoggerNative(sessionId, level, logDir); Unit }
+    fun initRustLoggerNative(
+        sessionId: String,
+        level: String?,
+        logDir: String?,
+    ) {
+        tryCall(Unit) {
+            LitvinNative.initRustLoggerNative(sessionId, level, logDir)
+            Unit
+        }
     }
 
     /** Run diagnostics if native is available; returns empty JSON string on failure. */
-    fun runDiagnosticsNative(id: Long, sessionId: String, paramHash: String?): String {
-        return tryCall("") { LitvinNative.runDiagnosticsNative(id, sessionId, paramHash) }
-    }
+    fun runDiagnosticsNative(
+        id: Long,
+        sessionId: String,
+        paramHash: String?,
+    ): String = tryCall("") { LitvinNative.runDiagnosticsNative(id, sessionId, paramHash) }
 
     /** Probe if the native library is actually loadable on this system. */
-    fun isNativeAvailable(): Boolean {
-        return try {
+    fun isNativeAvailable(): Boolean =
+        try {
             // Call a lightweight native method to verify linkage
             LitvinNative.initRustLoggerNative("probe", null, null)
             true
@@ -61,7 +80,6 @@ object LitvinNativeStubs {
             // Any other exception during init should still indicate native linkage exists
             true
         }
-    }
 }
 
 // Minimal DTO for per-angle system state; retained for compatibility
@@ -72,5 +90,5 @@ data class LitvinSystemStateDTO(
     val spinPsiDeg: List<Double>,
     val journalX: List<Double>,
     val journalY: List<Double>,
-    val pistonS: List<Double>
+    val pistonS: List<Double>,
 )

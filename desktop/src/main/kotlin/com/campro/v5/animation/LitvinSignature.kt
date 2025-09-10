@@ -9,7 +9,11 @@ object LitvinSignature {
     fun compute(params: Map<String, Any?>): String {
         val sb = StringBuilder()
         params.toSortedMap(compareBy<String> { it }).forEach { (k, v) ->
-            sb.append(k).append('=').append(v?.toString() ?: "null").append('\n')
+            sb
+                .append(k)
+                .append('=')
+                .append(v?.toString() ?: "null")
+                .append('\n')
         }
         val bytes = sb.toString().toByteArray(Charsets.UTF_8)
         val md = MessageDigest.getInstance("SHA-256")

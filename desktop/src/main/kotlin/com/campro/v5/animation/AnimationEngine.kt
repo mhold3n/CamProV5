@@ -1,9 +1,7 @@
 package com.campro.v5.animation
 
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import kotlinx.coroutines.flow.StateFlow
 import java.io.File
 
 /**
@@ -15,24 +13,24 @@ interface AnimationEngine {
      * Get the current animation angle in degrees.
      */
     fun getCurrentAngle(): Float
-    
+
     /**
      * Set the animation angle in degrees.
-     * 
+     *
      * @param angle The angle in degrees
      */
     fun setAngle(angle: Float)
-    
+
     /**
      * Update the animation parameters.
-     * 
+     *
      * @param parameters The new parameters
      */
     fun updateParameters(parameters: Map<String, String>)
-    
+
     /**
      * Draw the animation frame.
-     * 
+     *
      * @param drawScope The draw scope to use for drawing
      * @param canvasWidth The width of the canvas
      * @param canvasHeight The height of the canvas
@@ -44,23 +42,23 @@ interface AnimationEngine {
         canvasWidth: Float,
         canvasHeight: Float,
         scale: Float,
-        offset: Offset
+        offset: Offset,
     )
-    
+
     /**
      * Get the animation parameters.
-     * 
+     *
      * @return The animation parameters
      */
     fun getParameters(): Map<String, String>
-    
+
     /**
      * Get the animation type.
-     * 
+     *
      * @return The animation type
      */
     fun getType(): AnimationType
-    
+
     /**
      * Clean up resources when the engine is no longer needed.
      */
@@ -72,7 +70,7 @@ interface AnimationEngine {
  */
 enum class AnimationType {
     COMPONENT_BASED,
-    FEA_BASED
+    FEA_BASED,
 }
 
 /**
@@ -81,25 +79,28 @@ enum class AnimationType {
 object AnimationEngineFactory {
     /**
      * Create an animation engine of the specified type.
-     * 
+     *
      * @param type The type of animation engine to create
      * @param parameters The initial parameters for the animation
      * @return The created animation engine
      */
-    fun createEngine(type: AnimationType, parameters: Map<String, String>): AnimationEngine {
-        return when (type) {
+    fun createEngine(
+        type: AnimationType,
+        parameters: Map<String, String>,
+    ): AnimationEngine =
+        when (type) {
             AnimationType.COMPONENT_BASED -> ComponentBasedAnimationEngine(parameters)
             AnimationType.FEA_BASED -> FeaBasedAnimationEngine(parameters)
         }
-    }
 }
-
 
 /**
  * Animation engine for component-based animation.
  * This engine uses the motion law implementation from the Rust FEA engine.
  */
-class ComponentBasedAnimationEngine(private var parameters: Map<String, String>) : AnimationEngine {
+class ComponentBasedAnimationEngine(
+    private var parameters: Map<String, String>,
+) : AnimationEngine {
     private var currentAngle: Float = 0f
     private val motionLawEngine = MotionLawEngine()
     private var lastDrawnAngle: Float = -1f
@@ -107,14 +108,14 @@ class ComponentBasedAnimationEngine(private var parameters: Map<String, String>)
 
     // Expose MotionLawEngine for UI previews (Week 1 preview panel)
     fun motionEngine(): MotionLawEngine = motionLawEngine
-    
+
     init {
         // Initialize the motion law engine with the parameters
         motionLawEngine.updateParameters(parameters)
     }
-    
+
     override fun getCurrentAngle(): Float = currentAngle
-    
+
     override fun setAngle(angle: Float) {
         currentAngle = angle % 360f
         // Clear cached positions when angle changes
@@ -122,20 +123,20 @@ class ComponentBasedAnimationEngine(private var parameters: Map<String, String>)
             cachedComponentPositions = null
         }
     }
-    
+
     override fun updateParameters(parameters: Map<String, String>) {
         this.parameters = parameters
         motionLawEngine.updateParameters(parameters)
         // Clear cached positions when parameters change
         cachedComponentPositions = null
     }
-    
+
     override fun drawFrame(
         drawScope: DrawScope,
         canvasWidth: Float,
         canvasHeight: Float,
         scale: Float,
-        offset: Offset
+        offset: Offset,
     ) {
         // Litvin rendering path (if enabled and data available)
         if (motionLawEngine.isLitvinActive() && motionLawEngine.getLitvinTables() != null && motionLawEngine.getLitvinCurves() != null) {
@@ -147,7 +148,7 @@ class ComponentBasedAnimationEngine(private var parameters: Map<String, String>)
                 offset = offset,
                 angleDeg = currentAngle,
                 parameters = parameters,
-                motion = motionLawEngine
+                motion = motionLawEngine,
             )
             return
         }
@@ -165,22 +166,23 @@ class ComponentBasedAnimationEngine(private var parameters: Map<String, String>)
         val positionsList = ArrayList<ComponentPositions>(n)
         for (i in 0 until n) {
             val phaseAngle = (currentAngle + i * step) % 360f
-            val pos = if (i == 0) {
-                // Cache for the base angle to avoid recomputation within small delta
-                if (cachedComponentPositions != null && Math.abs(currentAngle - lastDrawnAngle) < 0.1f) {
-                    cachedComponentPositions!!
+            val pos =
+                if (i == 0) {
+                    // Cache for the base angle to avoid recomputation within small delta
+                    if (cachedComponentPositions != null && Math.abs(currentAngle - lastDrawnAngle) < 0.1f) {
+                        cachedComponentPositions!!
+                    } else {
+                        val p = motionLawEngine.getComponentPositions(phaseAngle.toDouble())
+                        cachedComponentPositions = p
+                        lastDrawnAngle = currentAngle
+                        p
+                    }
                 } else {
-                    val p = motionLawEngine.getComponentPositions(phaseAngle.toDouble())
-                    cachedComponentPositions = p
-                    lastDrawnAngle = currentAngle
-                    p
+                    motionLawEngine.getComponentPositions(phaseAngle.toDouble())
                 }
-            } else {
-                motionLawEngine.getComponentPositions(phaseAngle.toDouble())
-            }
             positionsList.add(pos)
         }
-        
+
         // Draw the components (ring + multiple assemblies)
         ComponentBasedAnimationRenderer.drawFrame(
             drawScope,
@@ -190,14 +192,14 @@ class ComponentBasedAnimationEngine(private var parameters: Map<String, String>)
             offset,
             currentAngle,
             parameters,
-            positionsList
+            positionsList,
         )
     }
-    
+
     override fun getParameters(): Map<String, String> = parameters
-    
+
     override fun getType(): AnimationType = AnimationType.COMPONENT_BASED
-    
+
     override fun dispose() {
         motionLawEngine.dispose()
     }
@@ -207,24 +209,26 @@ class ComponentBasedAnimationEngine(private var parameters: Map<String, String>)
  * Animation engine for FEA-based animation.
  * This engine uses the results of the FEA engine to generate the animation.
  */
-class FeaBasedAnimationEngine(private var parameters: Map<String, String>) : AnimationEngine {
+class FeaBasedAnimationEngine(
+    private var parameters: Map<String, String>,
+) : AnimationEngine {
     private var currentAngle: Float = 0f
     private var feaResults: File? = null
     private var analysisData: AnalysisData? = null
-    
+
     override fun getCurrentAngle(): Float = currentAngle
-    
+
     override fun setAngle(angle: Float) {
         currentAngle = angle % 360f
     }
-    
+
     override fun updateParameters(parameters: Map<String, String>) {
         this.parameters = parameters
     }
-    
+
     /**
      * Set the FEA results file.
-     * 
+     *
      * @param resultsFile The FEA results file
      */
     fun setFeaResults(resultsFile: File) {
@@ -232,13 +236,13 @@ class FeaBasedAnimationEngine(private var parameters: Map<String, String>) : Ani
         // Load the FEA results
         analysisData = FeaResultsLoader.loadResults(resultsFile)
     }
-    
+
     override fun drawFrame(
         drawScope: DrawScope,
         canvasWidth: Float,
         canvasHeight: Float,
         scale: Float,
-        offset: Offset
+        offset: Offset,
     ) {
         // Draw the FEA results
         FeaBasedAnimationRenderer.drawFrame(
@@ -249,14 +253,14 @@ class FeaBasedAnimationEngine(private var parameters: Map<String, String>) : Ani
             offset,
             currentAngle,
             parameters,
-            analysisData
+            analysisData,
         )
     }
-    
+
     override fun getParameters(): Map<String, String> = parameters
-    
+
     override fun getType(): AnimationType = AnimationType.FEA_BASED
-    
+
     override fun dispose() {
         // Clean up resources
         analysisData = null
@@ -269,37 +273,40 @@ class FeaBasedAnimationEngine(private var parameters: Map<String, String>) : Ani
  */
 class AnimationManager {
     private var currentEngine: AnimationEngine? = null
-    
+
     /**
      * Set the current animation engine.
-     * 
+     *
      * @param engine The animation engine to set as current
      */
     fun setCurrentEngine(engine: AnimationEngine) {
         currentEngine?.dispose()
         currentEngine = engine
     }
-    
+
     /**
      * Get the current animation engine.
-     * 
+     *
      * @return The current animation engine, or null if none is set
      */
     fun getCurrentEngine(): AnimationEngine? = currentEngine
-    
+
     /**
      * Create a new animation engine and set it as current.
-     * 
+     *
      * @param type The type of animation engine to create
      * @param parameters The initial parameters for the animation
      * @return The created animation engine
      */
-    fun createAndSetEngine(type: AnimationType, parameters: Map<String, String>): AnimationEngine {
+    fun createAndSetEngine(
+        type: AnimationType,
+        parameters: Map<String, String>,
+    ): AnimationEngine {
         val engine = AnimationEngineFactory.createEngine(type, parameters)
         setCurrentEngine(engine)
         return engine
     }
-    
+
     /**
      * Clean up resources when the manager is no longer needed.
      */
@@ -317,7 +324,7 @@ class AnimationManager {
 data class ComponentPositions(
     val pistonPosition: Offset,
     val rodPosition: Offset,
-    val camPosition: Offset
+    val camPosition: Offset,
 )
 
 /**
@@ -326,7 +333,7 @@ data class ComponentPositions(
 object FeaResultsLoader {
     /**
      * Load FEA results from a file.
-     * 
+     *
      * @param resultsFile The FEA results file
      * @return The loaded analysis data
      */
@@ -336,7 +343,7 @@ object FeaResultsLoader {
         return AnalysisData(
             displacements = emptyMap(),
             stresses = emptyMap(),
-            timeSteps = emptyList()
+            timeSteps = emptyList(),
         )
     }
 }
@@ -347,7 +354,7 @@ object FeaResultsLoader {
 data class AnalysisData(
     val displacements: Map<Int, Offset>,
     val stresses: Map<Int, Float>,
-    val timeSteps: List<Float>
+    val timeSteps: List<Float>,
 )
 
 // Renderer classes are now defined in their own files:

@@ -1,6 +1,6 @@
 /**
  * Build configuration for the CamProV5 desktop module.
- * 
+ *
  * This file is a placeholder for the actual implementation.
  * The actual implementation would use the Compose for Desktop plugin
  * to build a desktop version of the Android UI.
@@ -13,6 +13,15 @@ plugins {
     id("org.jetbrains.compose") version "1.5.11"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
+}
+
+ktlint {
+    // Ensure a modern ktlint engine compatible with Kotlin 2.1
+    version.set("1.3.1")
+    // Defensive: disable the problematic rule that crashes with some engines
+    disabledRules.set(listOf("argument-list-wrapping"))
+    // Do not fail fast on style issues elsewhere (we still want failures, just not parser crash)
+    // ignoreFailures.set(false) // default
 }
 
 version = project.version as String
@@ -42,7 +51,7 @@ repositories {
 dependencies {
     // Add the data-litvin shared module for DTOs and helpers
     implementation(project(":data-litvin"))
-    
+
     // Compose for Desktop dependencies
     implementation(compose.desktop.currentOs)
     implementation(compose.material3)
@@ -51,27 +60,26 @@ dependencies {
     implementation(compose.ui)
     implementation(compose.foundation)
     implementation(compose.runtime)
-    
+
     // JSON
     implementation("com.google.code.gson:gson:2.11.0")
-    
+
     // Logging (quick wins)
     implementation("org.slf4j:slf4j-api:2.0.13")
     runtimeOnly("ch.qos.logback:logback-classic:1.5.9")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.4")
-    
+
     // Testing dependencies
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.3")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.3")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.3")
-    
+
     // Kotest for property-based testing
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
     testImplementation("io.kotest:kotest-assertions-core:5.9.1")
     testImplementation("io.kotest:kotest-property:5.9.1")
 }
-
 
 // Add Rust build tasks (conditional on -DincludeNative=true)
 val includeNative = (System.getProperty("includeNative") ?: "false").toBoolean()
@@ -87,19 +95,24 @@ if (includeNative) {
 
         // Use appropriate command based on OS
         val isWindows = System.getProperty("os.name").lowercase(Locale.ROOT).contains("win")
-        commandLine = if (isWindows) {
-            listOf("cmd", "/c", "cargo", "build", "--release")
-        } else {
-            listOf("cargo", "build", "--release")
-        }
+        commandLine =
+            if (isWindows) {
+                listOf("cmd", "/c", "cargo", "build", "--release")
+            } else {
+                listOf("cargo", "build", "--release")
+            }
 
         // Break cache when toolchain changes (cargo/rustc version)
-        val cargoVersionProvider = providers.exec {
-            commandLine("cargo", "--version")
-        }.standardOutput.asText
-        val rustcVersionProvider = providers.exec {
-            commandLine("rustc", "--version")
-        }.standardOutput.asText
+        val cargoVersionProvider =
+            providers
+                .exec {
+                    commandLine("cargo", "--version")
+                }.standardOutput.asText
+        val rustcVersionProvider =
+            providers
+                .exec {
+                    commandLine("rustc", "--version")
+                }.standardOutput.asText
 
         // Only run if Rust code or toolchain has changed
         inputs.dir(file("${project.rootDir}/camprofw/rust/fea-engine/src"))
@@ -136,65 +149,70 @@ if (includeNative) {
         val osName = System.getProperty("os.name").lowercase(Locale.ROOT)
         val isWindows = osName.contains("win")
         val isMac = osName.contains("mac")
-        
-        val libExtension = when {
-            isWindows -> "dll"
-            isMac -> "dylib"
-            else -> "so"
-        }
 
-        val osDir = when {
-            isWindows -> "windows"
-            isMac -> "mac"
-            else -> "linux"
-        }
+        val libExtension =
+            when {
+                isWindows -> "dll"
+                isMac -> "dylib"
+                else -> "so"
+            }
 
-        val archDir = when (System.getProperty("os.arch").lowercase(Locale.ROOT)) {
-            "x86_64", "amd64" -> "x86_64"
-            "aarch64", "arm64" -> "aarch64"
-            else -> "x86_64"
-        }
+        val osDir =
+            when {
+                isWindows -> "windows"
+                isMac -> "mac"
+                else -> "linux"
+            }
+
+        val archDir =
+            when (System.getProperty("os.arch").lowercase(Locale.ROOT)) {
+                "x86_64", "amd64" -> "x86_64"
+                "aarch64", "arm64" -> "aarch64"
+                else -> "x86_64"
+            }
 
         val crateDir = file("${project.rootDir}/camprofw/rust/fea-engine")
         // Cargo artifact name differs by platform: Windows has no 'lib' prefix, Unix-like do.
         val cargoArtifactBaseName = if (isWindows) "fea_engine" else "libfea_engine"
-        val builtArtifact = file("${crateDir.path}/target/release/${cargoArtifactBaseName}.${libExtension}")
+        val builtArtifact = file("${crateDir.path}/target/release/$cargoArtifactBaseName.$libExtension")
 
-        val resourcesOsArchDir = file("${project.projectDir}/src/main/resources/native/${osDir}/${archDir}")
+        val resourcesOsArchDir = file("${project.projectDir}/src/main/resources/native/$osDir/$archDir")
 
         // Declare inputs/outputs for up-to-date checks
         inputs.file(builtArtifact)
         outputs.files(
-            file("${resourcesOsArchDir.path}/${if (isWindows) "" else "lib"}campro_motion.${libExtension}"),
-            file("${resourcesOsArchDir.path}/${if (isWindows) "" else "lib"}campro_fea.${libExtension}"),
-            file("${resourcesOsArchDir.path}/${cargoArtifactBaseName}.${libExtension}")
+            file("${resourcesOsArchDir.path}/${if (isWindows) "" else "lib"}campro_motion.$libExtension"),
+            file("${resourcesOsArchDir.path}/${if (isWindows) "" else "lib"}campro_fea.$libExtension"),
+            file("${resourcesOsArchDir.path}/$cargoArtifactBaseName.$libExtension"),
         )
 
         // Create resource directories if they don't exist and verify artifact exists
         doFirst {
             mkdir(resourcesOsArchDir)
             if (!builtArtifact.exists()) {
-                throw GradleException("Rust artifact not found: ${builtArtifact}. Ensure cargo build --release produced the cdylib. Expected crate name 'fea_engine'.")
+                throw GradleException(
+                    "Rust artifact not found: $builtArtifact. Ensure cargo build --release produced the cdylib. Expected crate name 'fea_engine'.",
+                )
             }
         }
 
         // Copy and rename to the names the JVM loader expects
         from(builtArtifact)
         into(resourcesOsArchDir)
-        rename("${cargoArtifactBaseName}.${libExtension}", "${if (isWindows) "" else "lib"}campro_motion.${libExtension}")
+        rename("$cargoArtifactBaseName.$libExtension", "${if (isWindows) "" else "lib"}campro_motion.$libExtension")
 
         doLast {
             // Also copy a second copy as campro_fea for FEA entry points (same library for now)
             copy {
                 from(builtArtifact)
                 into(resourcesOsArchDir)
-                rename("${cargoArtifactBaseName}.${libExtension}", "${if (isWindows) "" else "lib"}campro_fea.${libExtension}")
+                rename("$cargoArtifactBaseName.$libExtension", "${if (isWindows) "" else "lib"}campro_fea.$libExtension")
             }
             // Keep original cargo artifact name for deterministic loading (fea_engine/libfea_engine)
             copy {
                 from(builtArtifact)
                 into(resourcesOsArchDir)
-                rename("${cargoArtifactBaseName}.${libExtension}", "${cargoArtifactBaseName}.${libExtension}")
+                rename("$cargoArtifactBaseName.$libExtension", "$cargoArtifactBaseName.$libExtension")
             }
         }
     }
@@ -219,33 +237,34 @@ if (includeNative) {
 
         // Match the environment setup used by the tests for consistent JNI loading
         val osName = System.getProperty("os.name").lowercase(Locale.ROOT)
-        val osDir = when {
-            osName.contains("win") -> "windows"
-            osName.contains("mac") -> "mac"
-            else -> "linux"
-        }
-        val archDir = when (System.getProperty("os.arch").lowercase(Locale.ROOT)) {
-            "x86_64", "amd64" -> "x86_64"
-            "aarch64", "arm64" -> "aarch64"
-            else -> "x86_64"
-        }
-        val resolvedDir = layout.buildDirectory
-            .dir("resources/main/native/${osDir}/${archDir}")
-            .get()
-            .asFile
+        val osDir =
+            when {
+                osName.contains("win") -> "windows"
+                osName.contains("mac") -> "mac"
+                else -> "linux"
+            }
+        val archDir =
+            when (System.getProperty("os.arch").lowercase(Locale.ROOT)) {
+                "x86_64", "amd64" -> "x86_64"
+                "aarch64", "arm64" -> "aarch64"
+                else -> "x86_64"
+            }
+        val resolvedDir =
+            layout.buildDirectory
+                .dir("resources/main/native/$osDir/$archDir")
+                .get()
+                .asFile
         environment("FEA_ENGINE_LIB_DIR", resolvedDir.absolutePath)
         doFirst {
             println("[Gradle][generateLitvinGolden] FEA_ENGINE_LIB_DIR=" + resolvedDir.absolutePath)
         }
     }
-
 }
-
 
 compose.desktop {
     application {
         mainClass = "com.campro.v5.DesktopMainKt"
-        
+
         // Allow passing args via -PappArgs / -PappArgsJson when using the standard ':desktop:run' task
         val appArgsProp = (project.findProperty("appArgs") as String?)?.trim()
         val appArgsJsonProp = (project.findProperty("appArgsJson") as String?)?.trim()
@@ -254,21 +273,22 @@ compose.desktop {
                 val regex = Regex("\"([^\"]*)\"")
                 return regex.findAll(input).map { it.groupValues[1] }.toList()
             }
-            val argsList: List<String> = when {
-                !appArgsJsonProp.isNullOrBlank() -> parseJsonArray(appArgsJsonProp)
-                !appArgsProp.isNullOrBlank() -> appArgsProp.split(Regex("\\s+")).filter { it.isNotBlank() }
-                else -> emptyList()
-            }
+            val argsList: List<String> =
+                when {
+                    !appArgsJsonProp.isNullOrBlank() -> parseJsonArray(appArgsJsonProp)
+                    !appArgsProp.isNullOrBlank() -> appArgsProp.split(Regex("\\s+")).filter { it.isNotBlank() }
+                    else -> emptyList()
+                }
             if (argsList.isNotEmpty()) {
                 args += argsList
             }
         }
-        
+
         nativeDistributions {
             targetFormats(
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg,
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi,
-                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb,
             )
             packageName = "CamProV5"
 
@@ -296,7 +316,6 @@ compose.desktop {
     }
 }
 
-
 // Fast, non-interactive subset test task for Junie/CI to avoid long-running suites
 // Does not modify the default 'test' task behavior.
 tasks.register<org.gradle.api.tasks.testing.Test>("junieTest") {
@@ -317,20 +336,23 @@ tasks.register<org.gradle.api.tasks.testing.Test>("junieTest") {
     // Prefer the freshly copied resources directory for JNI loading (same as 'test') when native is included
     if (includeNative) {
         val osName = System.getProperty("os.name").lowercase(Locale.ROOT)
-        val osDir = when {
-            osName.contains("win") -> "windows"
-            osName.contains("mac") -> "mac"
-            else -> "linux"
-        }
-        val archDir = when (System.getProperty("os.arch").lowercase(Locale.ROOT)) {
-            "x86_64", "amd64" -> "x86_64"
-            "aarch64", "arm64" -> "aarch64"
-            else -> "x86_64"
-        }
-        val resolvedDir = layout.buildDirectory
-            .dir("resources/main/native/${osDir}/${archDir}")
-            .get()
-            .asFile
+        val osDir =
+            when {
+                osName.contains("win") -> "windows"
+                osName.contains("mac") -> "mac"
+                else -> "linux"
+            }
+        val archDir =
+            when (System.getProperty("os.arch").lowercase(Locale.ROOT)) {
+                "x86_64", "amd64" -> "x86_64"
+                "aarch64", "arm64" -> "aarch64"
+                else -> "x86_64"
+            }
+        val resolvedDir =
+            layout.buildDirectory
+                .dir("resources/main/native/$osDir/$archDir")
+                .get()
+                .asFile
         environment("FEA_ENGINE_LIB_DIR", resolvedDir.absolutePath)
         doFirst {
             println("[Gradle][junieTest] FEA_ENGINE_LIB_DIR=" + resolvedDir.absolutePath)
@@ -364,7 +386,6 @@ tasks.register<org.gradle.api.tasks.testing.Test>("junieTest") {
     }
 }
 
-
 // Convenience run task that accepts application arguments via -PappArgs or -PappArgsJson
 // Usage examples (PowerShell):
 //   .\gradlew :CamProV5:desktop:runDesktop -PappArgs="--testing-mode --session-id=beta --log-level=INFO"
@@ -386,18 +407,18 @@ tasks.register<JavaExec>("runDesktop") {
         }
         val appArgsProp = (project.findProperty("appArgs") as String?)?.trim()
         val appArgsJsonProp = (project.findProperty("appArgsJson") as String?)?.trim()
-        val argsList: List<String> = when {
-            !appArgsJsonProp.isNullOrBlank() -> parseJsonArray(appArgsJsonProp)
-            !appArgsProp.isNullOrBlank() -> appArgsProp.split(Regex("\\s+")).filter { it.isNotBlank() }
-            else -> emptyList()
-        }
+        val argsList: List<String> =
+            when {
+                !appArgsJsonProp.isNullOrBlank() -> parseJsonArray(appArgsJsonProp)
+                !appArgsProp.isNullOrBlank() -> appArgsProp.split(Regex("\\s+")).filter { it.isNotBlank() }
+                else -> emptyList()
+            }
         if (argsList.isNotEmpty()) {
             args = argsList
         }
         println("[Gradle][runDesktop] args=" + (if (argsList.isEmpty()) "<none>" else argsList.joinToString(" ")))
     }
 }
-
 
 // Shadow fat JAR configuration (Shadow 8.x)
 tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
@@ -427,20 +448,23 @@ tasks.test {
         dependsOn("copyRustLibraries", "processResources")
         // Prefer the freshly copied resources directory for JNI loading
         val osName = System.getProperty("os.name").lowercase(Locale.ROOT)
-        val osDir = when {
-            osName.contains("win") -> "windows"
-            osName.contains("mac") -> "mac"
-            else -> "linux"
-        }
-        val archDir = when (System.getProperty("os.arch").lowercase(Locale.ROOT)) {
-            "x86_64", "amd64" -> "x86_64"
-            "aarch64", "arm64" -> "aarch64"
-            else -> "x86_64"
-        }
-        val resolvedDir = layout.buildDirectory
-            .dir("resources/main/native/${osDir}/${archDir}")
-            .get()
-            .asFile
+        val osDir =
+            when {
+                osName.contains("win") -> "windows"
+                osName.contains("mac") -> "mac"
+                else -> "linux"
+            }
+        val archDir =
+            when (System.getProperty("os.arch").lowercase(Locale.ROOT)) {
+                "x86_64", "amd64" -> "x86_64"
+                "aarch64", "arm64" -> "aarch64"
+                else -> "x86_64"
+            }
+        val resolvedDir =
+            layout.buildDirectory
+                .dir("resources/main/native/$osDir/$archDir")
+                .get()
+                .asFile
         environment("FEA_ENGINE_LIB_DIR", resolvedDir.absolutePath)
         doFirst {
             println("[Gradle][test] FEA_ENGINE_LIB_DIR=" + resolvedDir.absolutePath)

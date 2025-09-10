@@ -3,37 +3,20 @@
 package com.campro.v5.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
-import java.awt.Cursor
-import kotlin.math.max
-import kotlin.math.min
 
 /**
  * Enhanced resizable panel component with drag-to-resize functionality and scrollable content.
- * 
+ *
  * Features:
  * - Comprehensive drag handles on all edges and corners
  * - Integration with PanelLayoutCoordinator for multi-panel management
@@ -61,7 +44,7 @@ fun ResizablePanel(
     showVisualIndicators: Boolean = true,
     onSizeChanged: ((Dp, Dp) -> Unit)? = null,
     onPositionChanged: ((Dp, Dp) -> Unit)? = null,
-    content: @Composable BoxScope.() -> Unit
+    content: @Composable BoxScope.() -> Unit,
 ) {
     var panelWidth by remember { mutableStateOf(initialWidth) }
     var panelHeight by remember { mutableStateOf(initialHeight) }
@@ -70,31 +53,32 @@ fun ResizablePanel(
     var isHovered by remember { mutableStateOf(false) }
     var isResizing by remember { mutableStateOf(false) }
     var currentResizeHandle by remember { mutableStateOf<ResizeHandleType?>(null) }
-    
+
     val density = LocalDensity.current
     val interactionSource = remember { MutableInteractionSource() }
-    
+
     // Register panel with layout coordinator
     LaunchedEffect(panelId, layoutCoordinator) {
         layoutCoordinator?.registerPanel(
             id = panelId,
-            initialState = PanelState(
-                x = panelX,
-                y = panelY,
-                width = panelWidth,
-                height = panelHeight,
-                minWidth = minWidth,
-                minHeight = minHeight,
-                maxWidth = maxWidth,
-                maxHeight = maxHeight
-            )
+            initialState =
+                PanelState(
+                    x = panelX,
+                    y = panelY,
+                    width = panelWidth,
+                    height = panelHeight,
+                    minWidth = minWidth,
+                    minHeight = minHeight,
+                    maxWidth = maxWidth,
+                    maxHeight = maxHeight,
+                ),
         )
     }
-    
+
     // Handle size and position change callbacks
     LaunchedEffect(panelWidth, panelHeight) {
         onSizeChanged?.invoke(panelWidth, panelHeight)
-        
+
         // Update layout coordinator
         layoutCoordinator?.let { coordinator ->
             val adjustments = coordinator.updatePanelSize(panelId, panelWidth, panelHeight)
@@ -102,59 +86,63 @@ fun ResizablePanel(
             // This would typically be handled by a parent composable
         }
     }
-    
+
     LaunchedEffect(panelX, panelY) {
         onPositionChanged?.invoke(panelX, panelY)
     }
-    
+
     Box(
-        modifier = modifier
-            .size(panelWidth, panelHeight)
-            .hoverable(interactionSource)
+        modifier =
+            modifier
+                .size(panelWidth, panelHeight)
+                .hoverable(interactionSource),
     ) {
         // Main panel content
         Card(
-            modifier = Modifier
-                .fillMaxSize()
-                .onSizeChanged { size ->
-                    // Notify listeners only; avoid overriding state to prevent resize feedback loops
-                    val w = with(density) { size.width.toDp() }
-                    val h = with(density) { size.height.toDp() }
-                    onSizeChanged?.invoke(w, h)
-                },
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = if (isResizing) 8.dp else 4.dp
-            ),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .onSizeChanged { size ->
+                        // Notify listeners only; avoid overriding state to prevent resize feedback loops
+                        val w = with(density) { size.width.toDp() }
+                        val h = with(density) { size.height.toDp() }
+                        onSizeChanged?.invoke(w, h)
+                    },
+            elevation =
+                CardDefaults.cardElevation(
+                    defaultElevation = if (isResizing) 8.dp else 4.dp,
+                ),
+            colors =
+                CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
         ) {
             Column(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             ) {
                 // Title bar if provided
                 if (title.isNotEmpty()) {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.primaryContainer
+                        color = MaterialTheme.colorScheme.primaryContainer,
                     ) {
                         Text(
                             text = title,
                             modifier = Modifier.padding(12.dp),
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
                     }
                 }
-                
+
                 // Scrollable content area - using standardized EnhancedScrollableContent
                 EnhancedScrollableContent(
                     modifier = Modifier.weight(1f),
-                    content = content
+                    content = content,
                 )
             }
         }
-        
+
         // Enhanced resize handles
         ResizeHandles(
             panelWidth = panelWidth,
@@ -176,9 +164,7 @@ fun ResizablePanel(
             onResizeEnd = {
                 isResizing = false
                 currentResizeHandle = null
-            }
+            },
         )
     }
 }
-
-

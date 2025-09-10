@@ -13,16 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.launch
 
@@ -44,31 +41,31 @@ fun DockablePanel(
     enableDocking: Boolean = true,
     enableFloating: Boolean = true,
     enableMinimization: Boolean = true,
-    content: @Composable BoxScope.() -> Unit
+    content: @Composable BoxScope.() -> Unit,
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
-    
+
     // Panel state from docking manager
     val panels by dockingManager.panels.collectAsState()
     val dragState by dockingManager.dragState.collectAsState()
     val dockZones by dockingManager.dockZones.collectAsState()
-    
+
     val panel = panels[panelId]
     var isDragging by remember { mutableStateOf(false) }
     var dragOffset by remember { mutableStateOf(Offset.Zero) }
-    
+
     // Animation states
     val elevation by animateDpAsState(
         targetValue = if (isDragging) 16.dp else 4.dp,
-        animationSpec = tween(200)
+        animationSpec = tween(200),
     )
-    
+
     val alpha by animateFloatAsState(
         targetValue = if (panel?.isMinimized == true) 0.7f else 1f,
-        animationSpec = tween(300)
+        animationSpec = tween(300),
     )
-    
+
     // Register panel with docking manager
     LaunchedEffect(panelId) {
         dockingManager.registerPanel(
@@ -76,46 +73,48 @@ fun DockablePanel(
             title = title,
             initialPosition = DpOffset.Zero,
             initialSize = initialWidth to initialHeight,
-            initialState = PanelDockState.DOCKED
+            initialState = PanelDockState.DOCKED,
         )
     }
-    
+
     // Cleanup on disposal
     DisposableEffect(panelId) {
         onDispose {
             dockingManager.unregisterPanel(panelId)
         }
     }
-    
+
     if (panel == null) return
-    
+
     Box(
-        modifier = modifier
-            .size(
-                width = with(density) { panel.size.first },
-                height = with(density) { panel.size.second }
-            )
-            .offset(
-                x = if (isDragging) with(density) { dragOffset.x.toDp() } else panel.position.x,
-                y = if (isDragging) with(density) { dragOffset.y.toDp() } else panel.position.y
-            )
-            .zIndex(if (isDragging) 10f else panel.zIndex)
-            .alpha(alpha)
+        modifier =
+            modifier
+                .size(
+                    width = with(density) { panel.size.first },
+                    height = with(density) { panel.size.second },
+                ).offset(
+                    x = if (isDragging) with(density) { dragOffset.x.toDp() } else panel.position.x,
+                    y = if (isDragging) with(density) { dragOffset.y.toDp() } else panel.position.y,
+                ).zIndex(if (isDragging) 10f else panel.zIndex)
+                .alpha(alpha),
     ) {
         // Main panel card
         Card(
-            modifier = Modifier
-                .fillMaxSize()
-                .shadow(elevation, RoundedCornerShape(8.dp)),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .shadow(elevation, RoundedCornerShape(8.dp)),
             elevation = CardDefaults.cardElevation(defaultElevation = elevation),
-            colors = CardDefaults.cardColors(
-                containerColor = when (panel.state) {
-                    PanelDockState.FLOATING -> MaterialTheme.colorScheme.surfaceVariant
-                    PanelDockState.DOCKED -> MaterialTheme.colorScheme.surface
-                    PanelDockState.TABBED -> MaterialTheme.colorScheme.secondaryContainer
-                    PanelDockState.MINIMIZED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
-                }
-            )
+            colors =
+                CardDefaults.cardColors(
+                    containerColor =
+                        when (panel.state) {
+                            PanelDockState.FLOATING -> MaterialTheme.colorScheme.surfaceVariant
+                            PanelDockState.DOCKED -> MaterialTheme.colorScheme.surface
+                            PanelDockState.TABBED -> MaterialTheme.colorScheme.secondaryContainer
+                            PanelDockState.MINIMIZED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                        },
+                ),
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Title bar with controls
@@ -162,28 +161,29 @@ fun DockablePanel(
                     },
                     onClose = {
                         dockingManager.unregisterPanel(panelId)
-                    }
+                    },
                 )
-                
+
                 // Panel content (hidden when minimized)
                 if (!panel.isMinimized) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(8.dp)
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(8.dp),
                     ) {
                         content()
                     }
                 }
             }
         }
-        
+
         // Docking indicators overlay
         if (isDragging && enableDocking) {
             DockingIndicators(
                 dockZones = dockZones,
                 currentDragState = dragState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             )
         }
     }
@@ -204,44 +204,46 @@ private fun DockablePanelTitleBar(
     onDragEnd: () -> Unit,
     onMinimize: () -> Unit,
     onFloat: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
 ) {
     var dragStartPosition by remember { mutableStateOf(Offset.Zero) }
-    
+
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(40.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(40.dp),
         color = MaterialTheme.colorScheme.primaryContainer,
-        tonalElevation = 2.dp
+        tonalElevation = 2.dp,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 8.dp)
-                .pointerInput(Unit) {
-                    if (enableDocking) {
-                        detectDragGestures(
-                            onDragStart = { offset ->
-                                dragStartPosition = offset
-                                onDragStart(offset)
-                            },
-                            onDrag = { _, dragAmount ->
-                                onDrag(dragAmount)
-                            },
-                            onDragEnd = {
-                                onDragEnd()
-                            }
-                        )
-                    }
-                },
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp)
+                    .pointerInput(Unit) {
+                        if (enableDocking) {
+                            detectDragGestures(
+                                onDragStart = { offset ->
+                                    dragStartPosition = offset
+                                    onDragStart(offset)
+                                },
+                                onDrag = { _, dragAmount ->
+                                    onDrag(dragAmount)
+                                },
+                                onDragEnd = {
+                                    onDragEnd()
+                                },
+                            )
+                        }
+                    },
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             // Title and state indicator
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 // Drag handle indicator
                 if (enableDocking) {
@@ -249,77 +251,78 @@ private fun DockablePanelTitleBar(
                         imageVector = Icons.Default.DragHandle,
                         contentDescription = "Drag to move panel",
                         tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
                     )
                 }
-                
+
                 // Panel state indicator
-                val stateIcon = when (panelState) {
-                    PanelDockState.FLOATING -> Icons.Default.OpenInNew
-                    PanelDockState.DOCKED -> Icons.Default.Dock
-                    PanelDockState.TABBED -> Icons.Default.Tab
-                    PanelDockState.MINIMIZED -> Icons.Default.Minimize
-                }
-                
+                val stateIcon =
+                    when (panelState) {
+                        PanelDockState.FLOATING -> Icons.Default.OpenInNew
+                        PanelDockState.DOCKED -> Icons.Default.Dock
+                        PanelDockState.TABBED -> Icons.Default.Tab
+                        PanelDockState.MINIMIZED -> Icons.Default.Minimize
+                    }
+
                 Icon(
                     imageVector = stateIcon,
                     contentDescription = "Panel state: ${panelState.name}",
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(14.dp)
+                    modifier = Modifier.size(14.dp),
                 )
-                
+
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    maxLines = 1
+                    maxLines = 1,
                 )
             }
-            
+
             // Control buttons
             Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 // Minimize button
                 if (enableMinimization) {
                     IconButton(
                         onClick = onMinimize,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Minimize,
                             contentDescription = "Minimize panel",
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(12.dp)
+                            modifier = Modifier.size(12.dp),
                         )
                     }
                 }
-                
+
                 // Float button
                 if (enableFloating && panelState != PanelDockState.FLOATING) {
                     IconButton(
                         onClick = onFloat,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.OpenInNew,
                             contentDescription = "Float panel",
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(12.dp)
+                            modifier = Modifier.size(12.dp),
                         )
                     }
                 }
-                
+
                 // Close button
                 IconButton(
                     onClick = onClose,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close panel",
                         tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(12.dp)
+                        modifier = Modifier.size(12.dp),
                     )
                 }
             }
@@ -334,58 +337,56 @@ private fun DockablePanelTitleBar(
 private fun DockingIndicators(
     dockZones: Map<DockZone, androidx.compose.ui.geometry.Rect>,
     currentDragState: DragState?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
-    
+
     Box(modifier = modifier) {
         dockZones.forEach { (zone, rect) ->
             val isHovered = currentDragState?.hoveredZone == zone
-            
+
             val indicatorAlpha by animateFloatAsState(
                 targetValue = if (isHovered) 0.6f else 0.2f,
-                animationSpec = tween(200)
+                animationSpec = tween(200),
             )
-            
-            val indicatorColor = when (zone) {
-                DockZone.LEFT, DockZone.RIGHT, DockZone.TOP, DockZone.BOTTOM -> 
-                    MaterialTheme.colorScheme.primary
-                DockZone.CENTER -> MaterialTheme.colorScheme.secondary
-                DockZone.TAB_GROUP -> MaterialTheme.colorScheme.tertiary
-                DockZone.NONE -> Color.Transparent
-            }
-            
+
+            val indicatorColor =
+                when (zone) {
+                    DockZone.LEFT, DockZone.RIGHT, DockZone.TOP, DockZone.BOTTOM ->
+                        MaterialTheme.colorScheme.primary
+                    DockZone.CENTER -> MaterialTheme.colorScheme.secondary
+                    DockZone.TAB_GROUP -> MaterialTheme.colorScheme.tertiary
+                    DockZone.NONE -> Color.Transparent
+                }
+
             if (zone != DockZone.NONE) {
                 Box(
-                    modifier = Modifier
-                        .offset(
-                            x = with(density) { rect.left.toDp() },
-                            y = with(density) { rect.top.toDp() }
-                        )
-                        .size(
-                            width = with(density) { rect.width.toDp() },
-                            height = with(density) { rect.height.toDp() }
-                        )
-                        .background(
-                            color = indicatorColor.copy(alpha = indicatorAlpha),
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .border(
-                            width = if (isHovered) 2.dp else 1.dp,
-                            color = indicatorColor,
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .alpha(indicatorAlpha)
+                    modifier =
+                        Modifier
+                            .offset(
+                                x = with(density) { rect.left.toDp() },
+                                y = with(density) { rect.top.toDp() },
+                            ).size(
+                                width = with(density) { rect.width.toDp() },
+                                height = with(density) { rect.height.toDp() },
+                            ).background(
+                                color = indicatorColor.copy(alpha = indicatorAlpha),
+                                shape = RoundedCornerShape(4.dp),
+                            ).border(
+                                width = if (isHovered) 2.dp else 1.dp,
+                                color = indicatorColor,
+                                shape = RoundedCornerShape(4.dp),
+                            ).alpha(indicatorAlpha),
                 ) {
                     // Zone label
                     Box(
                         modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = zone.name.replace("_", " "),
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimary
+                            color = MaterialTheme.colorScheme.onPrimary,
                         )
                     }
                 }
@@ -403,19 +404,20 @@ fun FloatingPanel(
     title: String,
     dockingManager: DockingManager,
     onClose: () -> Unit = {},
-    content: @Composable BoxScope.() -> Unit
+    content: @Composable BoxScope.() -> Unit,
 ) {
     val panels by dockingManager.panels.collectAsState()
     val panel = panels[panelId]
-    
+
     if (panel?.state == PanelDockState.FLOATING) {
         // This would typically be rendered in a separate window
         // For now, we'll render it as an overlay
         Box(
-            modifier = Modifier
-                .offset(panel.position.x, panel.position.y)
-                .size(panel.size.first, panel.size.second)
-                .zIndex(20f)
+            modifier =
+                Modifier
+                    .offset(panel.position.x, panel.position.y)
+                    .size(panel.size.first, panel.size.second)
+                    .zIndex(20f),
         ) {
             DockablePanel(
                 panelId = panelId,
@@ -423,7 +425,7 @@ fun FloatingPanel(
                 dockingManager = dockingManager,
                 enableDocking = true,
                 enableFloating = false, // Already floating
-                content = content
+                content = content,
             )
         }
     }

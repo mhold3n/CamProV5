@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 fun StaticProfilesPanel(
     parameters: Map<String, String>,
     testingMode: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxWidth()) {
         Text("Static Profiles (placeholder)")

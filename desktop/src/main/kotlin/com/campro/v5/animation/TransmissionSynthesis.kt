@@ -1,9 +1,9 @@
 package com.campro.v5.animation
 
+import com.campro.v5.data.litvin.LitvinJsonLoader
 import com.campro.v5.data.litvin.LitvinUserParams
 import com.campro.v5.data.litvin.MotionLawSamples
 import com.campro.v5.data.litvin.TransmissionAndPitch
-import com.campro.v5.data.litvin.LitvinJsonLoader
 import com.campro.v5.data.litvin.toJniArgs
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -22,7 +22,10 @@ object TransmissionSynthesis {
      * Uses motion-law velocity v(θ)=dx/dθ and simple kinematics to estimate dψ/dα and i(θ)=1+dψ/dα.
      * Also produces prototype pitch curves and computes an arc-length residual metric.
      */
-    fun computeTransmissionAndPitch(motion: MotionLawSamples, params: LitvinUserParams): TransmissionAndPitch {
+    fun computeTransmissionAndPitch(
+        motion: MotionLawSamples,
+        params: LitvinUserParams,
+    ): TransmissionAndPitch {
         return try {
             val n = motion.samples.size
             if (n == 0) return TransmissionAndPitch(emptyList(), emptyList(), emptyList(), 0.0)
@@ -77,7 +80,12 @@ object TransmissionSynthesis {
             var iCal = iSm.copyOf()
             try {
                 val args = params.toJniArgs()
-                val id = try { LitvinNative.createLitvinLawNative(args) } catch (e: UnsatisfiedLinkError) { 0L }
+                val id =
+                    try {
+                        LitvinNative.createLitvinLawNative(args)
+                    } catch (e: UnsatisfiedLinkError) {
+                        0L
+                    }
                 if (id != 0L) {
                     try {
                         val tablesPath = LitvinNative.getLitvinKinematicsTablesNative(id)
@@ -85,10 +93,11 @@ object TransmissionSynthesis {
                         if (file.exists()) {
                             val tables = LitvinJsonLoader.loadTables(file)
                             val alpha = tables.alphaDeg
-                            val phiList = tables.curves?.phiOfTheta ?: run {
-                                val planet = tables.planets.firstOrNull()
-                                planet?.spinPsiDeg ?: emptyList()
-                            }
+                            val phiList =
+                                tables.curves?.phiOfTheta ?: run {
+                                    val planet = tables.planets.firstOrNull()
+                                    planet?.spinPsiDeg ?: emptyList()
+                                }
                             val m = min(n, min(alpha.size, phiList.size))
                             if (m > 3) {
                                 val step = if (alpha.size > 1) alpha[1] - alpha[0] else stepDeg
@@ -98,7 +107,11 @@ object TransmissionSynthesis {
                                     val prev = (i - 1 + m) % m
                                     val next = (i + 1) % m
                                     var d = phiList[next] - phiList[prev]
-                                    if (d < -180.0) d += 360.0 else if (d > 180.0) d -= 360.0
+                                    if (d < -180.0) {
+                                        d += 360.0
+                                    } else if (d > 180.0) {
+                                        d -= 360.0
+                                    }
                                     rustI[i] = d / denom
                                 }
                                 // Use Rust-derived i directly for parity preview when available
@@ -112,7 +125,10 @@ object TransmissionSynthesis {
                             }
                         }
                     } finally {
-                        try { LitvinNative.disposeLitvinLawNative(id) } catch (_: Throwable) {}
+                        try {
+                            LitvinNative.disposeLitvinLawNative(id)
+                        } catch (_: Throwable) {
+                        }
                     }
                 }
             } catch (_: Throwable) {
@@ -141,17 +157,28 @@ object TransmissionSynthesis {
             // Periodic endpoint equality and piecewise scaling to keep mean≈1 while preserving sign pattern
             // Compute deviations and signs
             val dev = DoubleArray(n) { kotlin.math.abs(iCal[it] - 1.0) }
-            val sgn = IntArray(n) { val v = vList[it]; if (v > 0.0) 1 else if (v < 0.0) -1 else 0 }
+            val sgn =
+                IntArray(n) {
+                    val v = vList[it]
+                    if (v > 0.0) {
+                        1
+                    } else if (v < 0.0) {
+                        -1
+                    } else {
+                        0
+                    }
+                }
             // Enforce periodic parity in contribution space to avoid bias when matching endpoints
             dev[n - 1] = dev[0]
             sgn[n - 1] = sgn[0]
             // Initial sign-enforced i
             for (k in 0 until n) {
-                iCal[k] = when (sgn[k]) {
-                    1 -> 1.0 + dev[k]
-                    -1 -> 1.0 - dev[k]
-                    else -> 1.0
-                }
+                iCal[k] =
+                    when (sgn[k]) {
+                        1 -> 1.0 + dev[k]
+                        -1 -> 1.0 - dev[k]
+                        else -> 1.0
+                    }
                 if (!iCal[k].isFinite()) iCal[k] = 1.0
                 if (iCal[k] < MIN_I) iCal[k] = MIN_I
             }
@@ -159,7 +186,11 @@ object TransmissionSynthesis {
             var DpTot = 0.0
             var DnTot = 0.0
             for (k in 0 until n) {
-                if (sgn[k] > 0) DpTot += dev[k] else if (sgn[k] < 0) DnTot += dev[k]
+                if (sgn[k] > 0) {
+                    DpTot += dev[k]
+                } else if (sgn[k] < 0) {
+                    DnTot += dev[k]
+                }
             }
             // Scale negative deviations to balance mean around 1: choose a=1, b=DpTot/DnTot
             val b = if (DnTot > 0.0) (DpTot / DnTot) else 1.0
@@ -232,7 +263,7 @@ object TransmissionSynthesis {
                 iOfTheta = iOfTheta,
                 pitchRing = pitchRing,
                 pitchPlanet = pitchPlanet,
-                residualArcLenRms = residualArcLenRms
+                residualArcLenRms = residualArcLenRms,
             )
         } catch (t: Throwable) {
             logger.warn("Transmission synthesis fallback due to error: ${t.message}")

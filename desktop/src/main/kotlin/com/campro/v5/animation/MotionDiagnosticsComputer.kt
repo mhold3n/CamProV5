@@ -7,7 +7,7 @@ import kotlin.math.abs
 object MotionDiagnosticsComputer {
     data class Result(
         val accelMaxAbsPerOmega2: Double,
-        val jerkMaxAbsPerOmega3: Double
+        val jerkMaxAbsPerOmega3: Double,
     )
 
     fun compute(m: MotionLawSamples): Result {

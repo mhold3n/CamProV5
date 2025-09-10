@@ -2,7 +2,6 @@ package com.campro.v5.animation
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
@@ -15,14 +14,15 @@ import kotlin.math.*
  */
 object FeaBasedAnimationRenderer {
     // Color gradient for stress visualization
-    private val stressColors = listOf(
-        Color(0xFF0000FF), // Blue (low stress)
-        Color(0xFF00FFFF), // Cyan
-        Color(0xFF00FF00), // Green
-        Color(0xFFFFFF00), // Yellow
-        Color(0xFFFF0000)  // Red (high stress)
-    )
-    
+    private val stressColors =
+        listOf(
+            Color(0xFF0000FF), // Blue (low stress)
+            Color(0xFF00FFFF), // Cyan
+            Color(0xFF00FF00), // Green
+            Color(0xFFFFFF00), // Yellow
+            Color(0xFFFF0000), // Red (high stress)
+        )
+
     /**
      * Draw a frame of the FEA-based animation.
      *
@@ -43,7 +43,7 @@ object FeaBasedAnimationRenderer {
         offset: Offset,
         angle: Float,
         parameters: Map<String, String>,
-        analysisData: AnalysisData?
+        analysisData: AnalysisData?,
     ) {
         // Extract key parameters with defaults if not present
         val baseCircleRadius = ParameterResolver.float(parameters, "base_circle_radius", 25f)
@@ -57,10 +57,11 @@ object FeaBasedAnimationRenderer {
         val contentHeight = meshOuter * 2 + legendH + extraPadding
 
         // Auto-fit scale factor with 10% margin
-        val panelScaleFactor = minOf(
-            canvasWidth / (contentWidth * 1.1f),
-            canvasHeight / (contentHeight * 1.1f)
-        )
+        val panelScaleFactor =
+            minOf(
+                canvasWidth / (contentWidth * 1.1f),
+                canvasHeight / (contentHeight * 1.1f),
+            )
         val effectiveScale = scale * panelScaleFactor
 
         drawScope.apply {
@@ -85,7 +86,7 @@ object FeaBasedAnimationRenderer {
                         color = Color.Gray.copy(alpha = 0.3f),
                         radius = baseCircleRadius,
                         center = Offset(centerX, centerY),
-                        style = Stroke(width = 1f)
+                        style = Stroke(width = 1f),
                     )
 
                     // Draw mesh with displacements and stress
@@ -93,14 +94,14 @@ object FeaBasedAnimationRenderer {
                         centerX = centerX,
                         centerY = centerY,
                         analysisData = analysisData,
-                        angle = angle
+                        angle = angle,
                     )
 
                     // Draw center point
                     drawCircle(
                         color = Color.Black,
                         radius = 5f,
-                        center = Offset(centerX, centerY)
+                        center = Offset(centerX, centerY),
                     )
 
                     // Draw angle indicator
@@ -113,7 +114,7 @@ object FeaBasedAnimationRenderer {
                         start = Offset(centerX, centerY),
                         end = Offset(x, y),
                         strokeWidth = 1f,
-                        alpha = 0.5f
+                        alpha = 0.5f,
                     )
 
                     // Draw legend (position relative to center)
@@ -121,39 +122,42 @@ object FeaBasedAnimationRenderer {
                         x = centerX - legendW / 2,
                         y = centerY + meshOuter + 30f,
                         width = legendW,
-                        height = legendH
+                        height = legendH,
                     )
                 }
             }
         }
     }
-    
+
     /**
      * Draw a placeholder when no analysis data is available.
      */
-    private fun DrawScope.drawPlaceholderInternal(centerX: Float, centerY: Float) {
+    private fun DrawScope.drawPlaceholderInternal(
+        centerX: Float,
+        centerY: Float,
+    ) {
         // Draw placeholder circle
         drawCircle(
             color = Color.Gray.copy(alpha = 0.3f),
             radius = 100f,
             center = Offset(centerX, centerY),
-            style = Stroke(width = 2f)
+            style = Stroke(width = 2f),
         )
         // Draw cross
         drawLine(
             color = Color.Gray.copy(alpha = 0.5f),
             start = Offset(centerX - 70f, centerY - 70f),
             end = Offset(centerX + 70f, centerY + 70f),
-            strokeWidth = 2f
+            strokeWidth = 2f,
         )
         drawLine(
             color = Color.Gray.copy(alpha = 0.5f),
             start = Offset(centerX + 70f, centerY - 70f),
             end = Offset(centerX - 70f, centerY + 70f),
-            strokeWidth = 2f
+            strokeWidth = 2f,
         )
     }
-    
+
     /**
      * Draw the mesh with displacements and stress.
      *
@@ -166,34 +170,36 @@ object FeaBasedAnimationRenderer {
         centerX: Float,
         centerY: Float,
         analysisData: AnalysisData,
-        angle: Float
+        angle: Float,
     ) {
         // Find the time step closest to the current angle
-        val timeStepIndex = if (analysisData.timeSteps.isNotEmpty()) {
-            val normalizedAngle = angle / 360f
-            val closestTimeStep = analysisData.timeSteps.minByOrNull { 
-                abs(it - normalizedAngle) 
-            } ?: 0f
-            analysisData.timeSteps.indexOf(closestTimeStep).coerceAtLeast(0)
-        } else {
-            0
-        }
-        
+        val timeStepIndex =
+            if (analysisData.timeSteps.isNotEmpty()) {
+                val normalizedAngle = angle / 360f
+                val closestTimeStep =
+                    analysisData.timeSteps.minByOrNull {
+                        abs(it - normalizedAngle)
+                    } ?: 0f
+                analysisData.timeSteps.indexOf(closestTimeStep).coerceAtLeast(0)
+            } else {
+                0
+            }
+
         // Draw elements with stress coloring
         val maxStress = analysisData.stresses.values.maxOrNull() ?: 1f
-        
+
         // Create a mesh of triangles (simplified for visualization)
         val numRadialSegments = 16
         val numCircumferentialSegments = 32
-        
+
         for (i in 0 until numRadialSegments) {
             val innerRadius = 25f + 10f * i / numRadialSegments
             val outerRadius = 25f + 10f * (i + 1) / numRadialSegments
-            
+
             for (j in 0 until numCircumferentialSegments) {
                 val startAngle = j * 2 * PI.toFloat() / numCircumferentialSegments
                 val endAngle = (j + 1) * 2 * PI.toFloat() / numCircumferentialSegments
-                
+
                 val innerStartX = centerX + innerRadius * cos(startAngle)
                 val innerStartY = centerY + innerRadius * sin(startAngle)
                 val innerEndX = centerX + innerRadius * cos(endAngle)
@@ -202,90 +208,91 @@ object FeaBasedAnimationRenderer {
                 val outerStartY = centerY + outerRadius * sin(startAngle)
                 val outerEndX = centerX + outerRadius * cos(endAngle)
                 val outerEndY = centerY + outerRadius * sin(endAngle)
-                
+
                 // Calculate a pseudo-stress value for visualization
                 val elementId = i * numCircumferentialSegments + j
                 val stress = analysisData.stresses[elementId] ?: (0.5f * maxStress)
                 val normalizedStress = (stress / maxStress).coerceIn(0f, 1f)
-                
+
                 // Get color based on stress
                 val color = getStressColor(normalizedStress)
-                
+
                 // Draw the quad as two triangles
                 drawPath(
-                    path = androidx.compose.ui.graphics.Path().apply {
-                        moveTo(innerStartX, innerStartY)
-                        lineTo(innerEndX, innerEndY)
-                        lineTo(outerEndX, outerEndY)
-                        lineTo(outerStartX, outerStartY)
-                        close()
-                    },
+                    path =
+                        androidx.compose.ui.graphics.Path().apply {
+                            moveTo(innerStartX, innerStartY)
+                            lineTo(innerEndX, innerEndY)
+                            lineTo(outerEndX, outerEndY)
+                            lineTo(outerStartX, outerStartY)
+                            close()
+                        },
                     color = color,
-                    alpha = 0.7f
+                    alpha = 0.7f,
                 )
-                
+
                 // Draw element outline
                 drawLine(
                     color = Color.Black.copy(alpha = 0.2f),
                     start = Offset(innerStartX, innerStartY),
                     end = Offset(innerEndX, innerEndY),
-                    strokeWidth = 0.5f
+                    strokeWidth = 0.5f,
                 )
-                
+
                 drawLine(
                     color = Color.Black.copy(alpha = 0.2f),
                     start = Offset(outerStartX, outerStartY),
                     end = Offset(outerEndX, outerEndY),
-                    strokeWidth = 0.5f
+                    strokeWidth = 0.5f,
                 )
-                
+
                 drawLine(
                     color = Color.Black.copy(alpha = 0.2f),
                     start = Offset(innerStartX, innerStartY),
                     end = Offset(outerStartX, outerStartY),
-                    strokeWidth = 0.5f
+                    strokeWidth = 0.5f,
                 )
-                
+
                 drawLine(
                     color = Color.Black.copy(alpha = 0.2f),
                     start = Offset(innerEndX, innerEndY),
                     end = Offset(outerEndX, outerEndY),
-                    strokeWidth = 0.5f
+                    strokeWidth = 0.5f,
                 )
             }
         }
-        
+
         // Draw nodes with displacements
         for ((nodeId, displacement) in analysisData.displacements) {
             // Calculate original node position (simplified)
             val theta = nodeId % numCircumferentialSegments * 2 * PI.toFloat() / numCircumferentialSegments
             val radius = 25f + 10f * (nodeId / numCircumferentialSegments) / numRadialSegments
-            
+
             val originalX = centerX + radius * cos(theta)
             val originalY = centerY + radius * sin(theta)
-            
+
             // Apply displacement (scaled for visibility)
             val displacementScale = 10f // Scale factor for displacements
             val displacedX = originalX + displacement.x * displacementScale
             val displacedY = originalY + displacement.y * displacementScale
-            
+
             // Draw displacement vector
             drawLine(
                 color = Color.Black.copy(alpha = 0.5f),
                 start = Offset(originalX, originalY),
                 end = Offset(displacedX, displacedY),
-                strokeWidth = 0.5f
+                strokeWidth = 0.5f,
             )
-            
+
             // Draw node
             drawCircle(
                 color = Color.Black,
                 radius = 1f,
-                center = Offset(displacedX, displacedY)
+                center = Offset(displacedX, displacedY),
             )
         }
     }
-    
+
     /**
      * Draw a legend for the stress colors.
      */
@@ -293,47 +300,51 @@ object FeaBasedAnimationRenderer {
         x: Float,
         y: Float,
         width: Float,
-        height: Float
+        height: Float,
     ) {
         // Draw gradient bar
         val segmentWidth = width / (stressColors.size - 1)
-        
+
         for (i in 0 until stressColors.size - 1) {
             val startX = x + i * segmentWidth
             val endX = x + (i + 1) * segmentWidth
-            
+
             // Draw gradient segment
             drawRect(
                 color = stressColors[i],
                 topLeft = Offset(startX, y),
-                size = androidx.compose.ui.geometry.Size(segmentWidth, height)
+                size =
+                    androidx.compose.ui.geometry
+                        .Size(segmentWidth, height),
             )
         }
-        
+
         // Draw border
         drawRect(
             color = Color.Black,
             topLeft = Offset(x, y),
-            size = androidx.compose.ui.geometry.Size(width, height),
-            style = Stroke(width = 1f)
+            size =
+                androidx.compose.ui.geometry
+                    .Size(width, height),
+            style = Stroke(width = 1f),
         )
-        
+
         // Draw labels (would need Text composables for actual text)
         drawLine(
             color = Color.Black,
             start = Offset(x, y + height + 5f),
             end = Offset(x, y + height + 10f),
-            strokeWidth = 1f
+            strokeWidth = 1f,
         )
-        
+
         drawLine(
             color = Color.Black,
             start = Offset(x + width, y + height + 5f),
             end = Offset(x + width, y + height + 10f),
-            strokeWidth = 1f
+            strokeWidth = 1f,
         )
     }
-    
+
     /**
      * Get a color based on the normalized stress value.
      *
@@ -343,26 +354,28 @@ object FeaBasedAnimationRenderer {
     private fun getStressColor(normalizedStress: Float): Color {
         if (normalizedStress <= 0f) return stressColors.first()
         if (normalizedStress >= 1f) return stressColors.last()
-        
+
         val segmentCount = stressColors.size - 1
         val segment = (normalizedStress * segmentCount).toInt()
         val segmentFraction = (normalizedStress * segmentCount) - segment
-        
+
         val startColor = stressColors[segment]
         val endColor = stressColors[segment + 1]
-        
+
         return Color(
             red = lerp(startColor.red, endColor.red, segmentFraction),
             green = lerp(startColor.green, endColor.green, segmentFraction),
             blue = lerp(startColor.blue, endColor.blue, segmentFraction),
-            alpha = 1f
+            alpha = 1f,
         )
     }
-    
+
     /**
      * Linear interpolation between two values.
      */
-    private fun lerp(start: Float, end: Float, fraction: Float): Float {
-        return start + (end - start) * fraction
-    }
+    private fun lerp(
+        start: Float,
+        end: Float,
+        fraction: Float,
+    ): Float = start + (end - start) * fraction
 }

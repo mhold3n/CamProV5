@@ -5,8 +5,15 @@ import kotlin.math.abs
 
 /** Simple preflight checks to gate native diagnostics per ADR Gate A/B. */
 object DiagnosticsPreflight {
-    data class Item(val name: String, val ok: Boolean, val detail: String = "")
-    data class Result(val items: List<Item>) {
+    data class Item(
+        val name: String,
+        val ok: Boolean,
+        val detail: String = "",
+    )
+
+    data class Result(
+        val items: List<Item>,
+    ) {
         val passed: Boolean get() = items.all { it.ok }
     }
 
@@ -21,7 +28,10 @@ object DiagnosticsPreflight {
         var last = Double.NEGATIVE_INFINITY
         var lastStep = 0.0
         for (s in m.samples) {
-            if (!(s.thetaDeg >= last)) { mono = false; break }
+            if (!(s.thetaDeg >= last)) {
+                mono = false
+                break
+            }
             lastStep = s.thetaDeg - last
             last = s.thetaDeg
         }
@@ -37,9 +47,10 @@ object DiagnosticsPreflight {
 
         // No NaN/Inf
         fun finite(x: Double) = x.isFinite()
-        val hasBad = m.samples.any { s ->
-            !(finite(s.thetaDeg) && finite(s.xMm) && finite(s.vMmPerOmega) && finite(s.aMmPerOmega2))
-        }
+        val hasBad =
+            m.samples.any { s ->
+                !(finite(s.thetaDeg) && finite(s.xMm) && finite(s.vMmPerOmega) && finite(s.aMmPerOmega2))
+            }
         items += Item("no_nan_inf", !hasBad)
 
         // Wrap continuity via extrapolated-360 for x/v/a (aligns with MotionLawAssertions)
@@ -63,36 +74,63 @@ object DiagnosticsPreflight {
                 val ta = kotlin.math.max(1e-9, 1e-8 * maxA)
 
                 wrapOk = (abs(first.xMm - x360) <= tx) &&
-                        (abs(first.vMmPerOmega - v360) <= tv) &&
-                        (abs(first.aMmPerOmega2 - a360) <= ta)
+                    (abs(first.vMmPerOmega - v360) <= tv) &&
+                    (abs(first.aMmPerOmega2 - a360) <= ta)
             }
         }
         // Provide details for debug/observability of wrap mismatches
-        val dx = if (n >= 2) kotlin.run {
-            val last = m.samples[n - 1]; val prev = m.samples[n - 2]; val stepDeg2 = last.thetaDeg - prev.thetaDeg
-            if (stepDeg2 > 0.0) {
-                val ratio2 = (360.0 - last.thetaDeg) / stepDeg2
-                val x360_2 = last.xMm + ratio2 * (last.xMm - prev.xMm)
-                abs(m.samples[0].xMm - x360_2)
-            } else 0.0
-        } else 0.0
-        val dv = if (n >= 2) kotlin.run {
-            val last = m.samples[n - 1]; val prev = m.samples[n - 2]; val stepDeg2 = last.thetaDeg - prev.thetaDeg
-            if (stepDeg2 > 0.0) {
-                val ratio2 = (360.0 - last.thetaDeg) / stepDeg2
-                val v360_2 = last.vMmPerOmega + ratio2 * (last.vMmPerOmega - prev.vMmPerOmega)
-                abs(m.samples[0].vMmPerOmega - v360_2)
-            } else 0.0
-        } else 0.0
-        val da = if (n >= 2) kotlin.run {
-            val last = m.samples[n - 1]; val prev = m.samples[n - 2]; val stepDeg2 = last.thetaDeg - prev.thetaDeg
-            if (stepDeg2 > 0.0) {
-                val ratio2 = (360.0 - last.thetaDeg) / stepDeg2
-                val a360_2 = last.aMmPerOmega2 + ratio2 * (last.aMmPerOmega2 - prev.aMmPerOmega2)
-                abs(m.samples[0].aMmPerOmega2 - a360_2)
-            } else 0.0
-        } else 0.0
-        items += Item("wrap_continuity", wrapOk, "dx=${dx}, dv=${dv}, da=${da}")
+        val dx =
+            if (n >= 2) {
+                kotlin.run {
+                    val last = m.samples[n - 1]
+                    val prev = m.samples[n - 2]
+                    val stepDeg2 = last.thetaDeg - prev.thetaDeg
+                    if (stepDeg2 > 0.0) {
+                        val ratio2 = (360.0 - last.thetaDeg) / stepDeg2
+                        val x360_2 = last.xMm + ratio2 * (last.xMm - prev.xMm)
+                        abs(m.samples[0].xMm - x360_2)
+                    } else {
+                        0.0
+                    }
+                }
+            } else {
+                0.0
+            }
+        val dv =
+            if (n >= 2) {
+                kotlin.run {
+                    val last = m.samples[n - 1]
+                    val prev = m.samples[n - 2]
+                    val stepDeg2 = last.thetaDeg - prev.thetaDeg
+                    if (stepDeg2 > 0.0) {
+                        val ratio2 = (360.0 - last.thetaDeg) / stepDeg2
+                        val v360_2 = last.vMmPerOmega + ratio2 * (last.vMmPerOmega - prev.vMmPerOmega)
+                        abs(m.samples[0].vMmPerOmega - v360_2)
+                    } else {
+                        0.0
+                    }
+                }
+            } else {
+                0.0
+            }
+        val da =
+            if (n >= 2) {
+                kotlin.run {
+                    val last = m.samples[n - 1]
+                    val prev = m.samples[n - 2]
+                    val stepDeg2 = last.thetaDeg - prev.thetaDeg
+                    if (stepDeg2 > 0.0) {
+                        val ratio2 = (360.0 - last.thetaDeg) / stepDeg2
+                        val a360_2 = last.aMmPerOmega2 + ratio2 * (last.aMmPerOmega2 - prev.aMmPerOmega2)
+                        abs(m.samples[0].aMmPerOmega2 - a360_2)
+                    } else {
+                        0.0
+                    }
+                }
+            } else {
+                0.0
+            }
+        items += Item("wrap_continuity", wrapOk, "dx=$dx, dv=$dv, da=$da")
 
         return Result(items)
     }

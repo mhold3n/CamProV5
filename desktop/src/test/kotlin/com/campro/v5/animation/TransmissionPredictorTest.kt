@@ -2,22 +2,23 @@ package com.campro.v5.animation
 
 import com.campro.v5.data.litvin.LitvinUserParams
 import com.campro.v5.data.litvin.RampProfile
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.math.abs
 import kotlin.math.max
 
 class TransmissionPredictorTest {
-
     @Test
     fun transmission_is_periodic_mean_normalized_and_finite() {
         val profiles = listOf(RampProfile.Cycloidal, RampProfile.S5, RampProfile.S7)
         for (profile in profiles) {
-            val p = LitvinUserParams(
-                rampProfile = profile,
-                samplingStepDeg = 2.0,
-                camKPerUnit = 1.0
-            )
+            val p =
+                LitvinUserParams(
+                    rampProfile = profile,
+                    samplingStepDeg = 2.0,
+                    camKPerUnit = 1.0,
+                )
             val motion = MotionLawGenerator.generateMotion(p)
             val trans = TransmissionSynthesis.computeTransmissionAndPitch(motion, p)
 

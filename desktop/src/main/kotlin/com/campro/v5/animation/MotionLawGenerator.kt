@@ -25,8 +25,8 @@ object MotionLawGenerator {
         // Compute the total fixed angle budget consumed by dwells and ramps
         val fixedBudget =
             p.dwellTdcDeg + p.dwellBdcDeg +
-            p.rampAfterTdcDeg + p.rampBeforeBdcDeg +
-            p.rampAfterBdcDeg + p.rampBeforeTdcDeg
+                p.rampAfterTdcDeg + p.rampBeforeBdcDeg +
+                p.rampAfterBdcDeg + p.rampBeforeTdcDeg
 
         // Remaining angle available for constant-velocity segments (non-negative)
         val freeCv = (360.0 - fixedBudget).coerceAtLeast(0.0)
@@ -87,7 +87,14 @@ object MotionLawGenerator {
                 }
             }
         }
-        val vDn = if (dnSum > 1e-12) -vUp * (upSum / dnSum) else if (areaDn > 0.0) -vUp * (areaUp / areaDn) else 0.0
+        val vDn =
+            if (dnSum > 1e-12) {
+                -vUp * (upSum / dnSum)
+            } else if (areaDn > 0.0) {
+                -vUp * (areaUp / areaDn)
+            } else {
+                0.0
+            }
 
         // Generate arrays
         val samples = ArrayList<MotionLawSample>(n)
@@ -96,20 +103,39 @@ object MotionLawGenerator {
 
         for (k in 0 until n) {
             val theta = k * stepDeg
-            val v = velocityAt(theta, p.rampProfile,
-                dwellTdcEnd, rampAfterTdcEnd, rampBeforeBdcStart, bdcStart, bdcEnd, rampAfterBdcEnd, rampBeforeTdcStart,
-                vUp, vDn
-            )
-            val a = accelerationAt(theta, p.rampProfile,
-                dwellTdcEnd, rampAfterTdcEnd, rampBeforeBdcStart, bdcStart, bdcEnd, rampAfterBdcEnd, rampBeforeTdcStart,
-                vUp, vDn
-            )
+            val v =
+                velocityAt(
+                    theta,
+                    p.rampProfile,
+                    dwellTdcEnd,
+                    rampAfterTdcEnd,
+                    rampBeforeBdcStart,
+                    bdcStart,
+                    bdcEnd,
+                    rampAfterBdcEnd,
+                    rampBeforeTdcStart,
+                    vUp,
+                    vDn,
+                )
+            val a =
+                accelerationAt(
+                    theta,
+                    p.rampProfile,
+                    dwellTdcEnd,
+                    rampAfterTdcEnd,
+                    rampBeforeBdcStart,
+                    bdcStart,
+                    bdcEnd,
+                    rampAfterBdcEnd,
+                    rampBeforeTdcStart,
+                    vUp,
+                    vDn,
+                )
             val x = if (k == 0) 0.0 else xPrev + 0.5 * (vPrev + v) * stepRad
             samples.add(MotionLawSample(thetaDeg = theta, xMm = x, vMmPerOmega = v, aMmPerOmega2 = a))
             xPrev = x
             vPrev = v
         }
-
 
         // Wrap correction for displacement (x): deterministic LSQ on tail to enforce
         // extrapolated-360 equality (hard) and reduce wrap-centered residuals for h=1,2.
@@ -132,10 +158,10 @@ object MotionLawGenerator {
                 val b = (x0 - denom * xNm1_0 + r * xNm2_0) / denom
 
                 // Residuals as functions of d2
-                val c = x1 - xNm1_0 - b                 // res_v1 = c - a d2
-                val d = xNm1_0 + b - 2.0 * x0 + x1      // res_a1 = d + a d2
-                val e = x2 - xNm2_0                      // res_v2 = e - d2
-                val f = xNm2_0 - 2.0 * x0 + x2          // res_a2 = f + d2
+                val c = x1 - xNm1_0 - b // res_v1 = c - a d2
+                val d = xNm1_0 + b - 2.0 * x0 + x1 // res_a1 = d + a d2
+                val e = x2 - xNm2_0 // res_v2 = e - d2
+                val f = xNm2_0 - 2.0 * x0 + x2 // res_a2 = f + d2
 
                 // Weights and regularization (tiny to preserve determinism, avoid singularities)
                 val w1 = 1.0 / scaleX
@@ -146,26 +172,31 @@ object MotionLawGenerator {
                 val lambda3 = 1e-24 / (scaleX * scaleX)
 
                 // Solve for d2 that minimizes weighted residuals + tiny Tikhonov
-                val A = (
-                    w1 * w1 * (a * a) +
-                    w2 * w2 * (a * a) +
-                    w3 * w3 * 1.0 +
-                    w4 * w4 * 1.0 +
-                    lambda +
-                    lambda3 * (a * a)
-                ) * 2.0
-                val B = 2.0 * (
-                    w1 * w1 * (-a * c) +
-                    w2 * w2 * (a * d) +
-                    w3 * w3 * (-e) +
-                    w4 * w4 * (f) +
-                    lambda3 * (a * b)
-                )
+                val A =
+                    (
+                        w1 * w1 * (a * a) +
+                            w2 * w2 * (a * a) +
+                            w3 * w3 * 1.0 +
+                            w4 * w4 * 1.0 +
+                            lambda +
+                            lambda3 * (a * a)
+                    ) * 2.0
+                val B =
+                    2.0 * (
+                        w1 * w1 * (-a * c) +
+                            w2 * w2 * (a * d) +
+                            w3 * w3 * (-e) +
+                            w4 * w4 * (f) +
+                            lambda3 * (a * b)
+                    )
                 val d2 = if (kotlin.math.abs(A) > 0.0) (-B / A) else 0.0
                 val d3 = a * d2 + b
 
                 // Evaluate residual sums before/after
-                fun resSum(xNm2: Double, xNm1: Double): Double {
+                fun resSum(
+                    xNm2: Double,
+                    xNm1: Double,
+                ): Double {
                     val rv1 = kotlin.math.abs(x1 - xNm1)
                     val ra1 = kotlin.math.abs(xNm1 - 2.0 * x0 + x1)
                     val rv2 = kotlin.math.abs(x2 - xNm2)
@@ -231,7 +262,6 @@ object MotionLawGenerator {
             samples[1] = samples[1].copy(xMm = x1new)
         }
 
-
         // Enforce extrapolated-360 continuity for v and a by adjusting only the last sample,
         // but skip if the last sample lies exactly on an internal boundary to preserve C1 at that boundary.
         if (samples.size >= 2) {
@@ -243,15 +273,16 @@ object MotionLawGenerator {
             val a1 = samples[i1].aMmPerOmega2
             val s2 = samples[i2]
             val lastTheta = s2.thetaDeg
-            val internalBoundaries = doubleArrayOf(
-                dwellTdcEnd,
-                rampAfterTdcEnd,
-                rampBeforeBdcStart,
-                bdcStart,
-                bdcEnd,
-                rampAfterBdcEnd,
-                rampBeforeTdcStart
-            )
+            val internalBoundaries =
+                doubleArrayOf(
+                    dwellTdcEnd,
+                    rampAfterTdcEnd,
+                    rampBeforeBdcStart,
+                    bdcStart,
+                    bdcEnd,
+                    rampAfterBdcEnd,
+                    rampBeforeTdcStart,
+                )
             val onBoundary = internalBoundaries.any { kotlin.math.abs(it - lastTheta) <= 1e-12 }
             if (!onBoundary) {
                 val stepLast = samples[i2].thetaDeg - samples[i1].thetaDeg
@@ -266,15 +297,16 @@ object MotionLawGenerator {
         // Micro-correction: nudge acceleration at the first sample after each internal boundary by a tiny factor
         // to avoid equality edge-cases in continuity ratios (keeps aDiff strictly < 1.0 under Cycloidal tolerance).
         if (samples.size >= 2) {
-            val internalBounds = doubleArrayOf(
-                dwellTdcEnd,
-                rampAfterTdcEnd,
-                rampBeforeBdcStart,
-                bdcStart,
-                bdcEnd,
-                rampAfterBdcEnd,
-                rampBeforeTdcStart
-            )
+            val internalBounds =
+                doubleArrayOf(
+                    dwellTdcEnd,
+                    rampAfterTdcEnd,
+                    rampBeforeBdcStart,
+                    bdcStart,
+                    bdcEnd,
+                    rampAfterBdcEnd,
+                    rampBeforeTdcStart,
+                )
             val scaleDown = 1.0 - 1e-12
             for (k in 1 until samples.size) {
                 val thPrev = samples[k - 1].thetaDeg
@@ -303,19 +335,27 @@ object MotionLawGenerator {
 
     private fun pos(v: Double) = if (v > 0.0) v else 0.0
 
-    private fun clampAngle(a: Double): Double = when {
-        a < 0.0 -> 0.0
-        a > 360.0 -> 360.0
-        else -> a
-    }
+    private fun clampAngle(a: Double): Double =
+        when {
+            a < 0.0 -> 0.0
+            a > 360.0 -> 360.0
+            else -> a
+        }
 
-    private fun velocityAt(theta: Double, profile: RampProfile,
-                           dwellTdcEnd: Double, rampAfterTdcEnd: Double,
-                           rampBeforeBdcStart: Double, bdcStart: Double,
-                           bdcEnd: Double, rampAfterBdcEnd: Double,
-                           rampBeforeTdcStart: Double,
-                           vUp: Double, vDn: Double): Double {
-        return when {
+    private fun velocityAt(
+        theta: Double,
+        profile: RampProfile,
+        dwellTdcEnd: Double,
+        rampAfterTdcEnd: Double,
+        rampBeforeBdcStart: Double,
+        bdcStart: Double,
+        bdcEnd: Double,
+        rampAfterBdcEnd: Double,
+        rampBeforeTdcStart: Double,
+        vUp: Double,
+        vDn: Double,
+    ): Double =
+        when {
             // TDC dwell [0, dwellTdcEnd)
             theta < dwellTdcEnd -> 0.0
             // TDC accel ramp [dwellTdcEnd, rampAfterTdcEnd)
@@ -345,14 +385,20 @@ object MotionLawGenerator {
                 vDn * (1.0 - MotionProfiles.p(u, profile))
             }
         }
-    }
 
-    private fun accelerationAt(theta: Double, profile: RampProfile,
-                               dwellTdcEnd: Double, rampAfterTdcEnd: Double,
-                               rampBeforeBdcStart: Double, bdcStart: Double,
-                               bdcEnd: Double, rampAfterBdcEnd: Double,
-                               rampBeforeTdcStart: Double,
-                               vUp: Double, vDn: Double): Double {
+    private fun accelerationAt(
+        theta: Double,
+        profile: RampProfile,
+        dwellTdcEnd: Double,
+        rampAfterTdcEnd: Double,
+        rampBeforeBdcStart: Double,
+        bdcStart: Double,
+        bdcEnd: Double,
+        rampAfterBdcEnd: Double,
+        rampBeforeTdcStart: Double,
+        vUp: Double,
+        vDn: Double,
+    ): Double {
         // Acceleration is per-omega^2 (per radian^2): a = dv/dα where α is radians.
         // Our ramp durations are defined in degrees, so include the deg→rad factor (180/π).
         val degToRadScale = 180.0 / PI
@@ -362,14 +408,26 @@ object MotionLawGenerator {
             // TDC accel ramp [dwellTdcEnd, rampAfterTdcEnd)
             theta < rampAfterTdcEnd -> {
                 val durDeg = rampAfterTdcEnd - dwellTdcEnd
-                if (durDeg <= 0.0) 0.0 else (vUp / durDeg) * degToRadScale * MotionProfiles.dp(safeUnit(theta - dwellTdcEnd, durDeg), profile)
+                if (durDeg <=
+                    0.0
+                ) {
+                    0.0
+                } else {
+                    (vUp / durDeg) * degToRadScale * MotionProfiles.dp(safeUnit(theta - dwellTdcEnd, durDeg), profile)
+                }
             }
             // Constant-velocity compression [rampAfterTdcEnd, rampBeforeBdcStart): zero accel inside CV
             theta < rampBeforeBdcStart -> 0.0
             // Decel into BDC [rampBeforeBdcStart, bdcStart)
             theta < bdcStart -> {
                 val durDeg = bdcStart - rampBeforeBdcStart
-                if (durDeg <= 0.0) 0.0 else -(vUp / durDeg) * degToRadScale * MotionProfiles.dp(safeUnit(theta - rampBeforeBdcStart, durDeg), profile)
+                if (durDeg <=
+                    0.0
+                ) {
+                    0.0
+                } else {
+                    -(vUp / durDeg) * degToRadScale * MotionProfiles.dp(safeUnit(theta - rampBeforeBdcStart, durDeg), profile)
+                }
             }
             // BDC dwell [bdcStart, bdcEnd): zero accel inside dwell
             theta < bdcEnd -> 0.0
@@ -383,12 +441,19 @@ object MotionLawGenerator {
             // Decel into TDC [rampBeforeTdcStart, 360)
             else -> {
                 val durDeg = 360.0 - rampBeforeTdcStart
-                if (durDeg <= 0.0) 0.0 else -(vDn / durDeg) * degToRadScale * MotionProfiles.dp(safeUnit(theta - rampBeforeTdcStart, durDeg), profile)
+                if (durDeg <=
+                    0.0
+                ) {
+                    0.0
+                } else {
+                    -(vDn / durDeg) * degToRadScale * MotionProfiles.dp(safeUnit(theta - rampBeforeTdcStart, durDeg), profile)
+                }
             }
         }
     }
 
-    private fun safeUnit(delta: Double, span: Double): Double {
-        return if (span <= 0.0) 0.0 else (delta / span).coerceIn(0.0, 1.0)
-    }
+    private fun safeUnit(
+        delta: Double,
+        span: Double,
+    ): Double = if (span <= 0.0) 0.0 else (delta / span).coerceIn(0.0, 1.0)
 }

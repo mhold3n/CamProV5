@@ -3,7 +3,6 @@ package com.campro.v5.animation
 import com.campro.v5.data.litvin.RampProfile
 import kotlin.math.PI
 import kotlin.math.cos
-import kotlin.math.pow
 import kotlin.math.sin
 
 /**
@@ -13,7 +12,10 @@ import kotlin.math.sin
  */
 object MotionProfiles {
     /** Fraction p(u) for given profile. */
-    fun p(uRaw: Double, profile: RampProfile): Double {
+    fun p(
+        uRaw: Double,
+        profile: RampProfile,
+    ): Double {
         val u = uRaw.coerceIn(0.0, 1.0)
         return when (profile) {
             RampProfile.Cycloidal -> 0.5 * (1.0 - cos(PI * u))
@@ -39,7 +41,10 @@ object MotionProfiles {
     }
 
     /** First derivative dp/du for given profile. */
-    fun dp(uRaw: Double, profile: RampProfile): Double {
+    fun dp(
+        uRaw: Double,
+        profile: RampProfile,
+    ): Double {
         val u = uRaw.coerceIn(0.0, 1.0)
         return when (profile) {
             RampProfile.Cycloidal -> 0.5 * PI * sin(PI * u)

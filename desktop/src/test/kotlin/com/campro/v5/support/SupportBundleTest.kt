@@ -22,17 +22,23 @@ class SupportBundleTest {
         val big = logsDir.resolve("big.log").toFile().apply { writeBytes(ByteArray(21 * 1024 * 1024)) }
 
         val sessionId = "testsession"
-        val zipPath = SupportBundle.createSupportBundle(
-            sessionId = sessionId,
-            logDir = logsDir.toString(),
-            jsonDirs = listOf(jsonDir.toString()),
-            maxFileSizeBytes = 20L * 1024 * 1024
-        )
+        val zipPath =
+            SupportBundle.createSupportBundle(
+                sessionId = sessionId,
+                logDir = logsDir.toString(),
+                jsonDirs = listOf(jsonDir.toString()),
+                maxFileSizeBytes = 20L * 1024 * 1024,
+            )
 
         assertTrue(Files.exists(Path.of(zipPath)), "Zip should exist: $zipPath")
 
         ZipFile(zipPath).use { zf ->
-            val names = zf.entries().asSequence().map { it.name }.toList()
+            val names =
+                zf
+                    .entries()
+                    .asSequence()
+                    .map { it.name }
+                    .toList()
             assertTrue(names.any { it.endsWith("logs/app.log") }, "logs/app.log present")
             assertTrue(names.any { it.endsWith("logs/trace.txt") }, "logs/trace.txt present")
             assertTrue(names.any { it.endsWith("json/out.json") }, "json/out.json present")

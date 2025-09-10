@@ -19,26 +19,28 @@ object DiagnosticsExport {
         simulate: Boolean,
         preflight: DiagnosticsPreflight.Result,
         resultCode: Int,
-        durationMs: Double
+        durationMs: Double,
     ): File {
         val dir = Paths.get(logDir)
         if (!Files.exists(dir)) Files.createDirectories(dir)
         val ts = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
-        val file = dir.resolve("diagnostics-${sessionId}-${ts.replace(':','-')}.json").toFile()
-        val itemsJson = preflight.items.joinToString(prefix = "[", postfix = "]") { item ->
-            "{" + "\"name\":\"${item.name}\",\"ok\":${item.ok},\"detail\":\"${item.detail}\"}"
-        }
-        val json = buildString {
-            append('{')
-            append("\"sessionId\":\"$sessionId\",")
-            append("\"deterministic\":$deterministic,")
-            append("\"simulate\":$simulate,")
-            append("\"preflightPassed\":${preflight.passed},")
-            append("\"preflightItems\":$itemsJson,")
-            append("\"resultCode\":$resultCode,")
-            append("\"durationMs\":${"%.3f".format(durationMs)}")
-            append('}')
-        }
+        val file = dir.resolve("diagnostics-$sessionId-${ts.replace(':','-')}.json").toFile()
+        val itemsJson =
+            preflight.items.joinToString(prefix = "[", postfix = "]") { item ->
+                "{" + "\"name\":\"${item.name}\",\"ok\":${item.ok},\"detail\":\"${item.detail}\"}"
+            }
+        val json =
+            buildString {
+                append('{')
+                append("\"sessionId\":\"$sessionId\",")
+                append("\"deterministic\":$deterministic,")
+                append("\"simulate\":$simulate,")
+                append("\"preflightPassed\":${preflight.passed},")
+                append("\"preflightItems\":$itemsJson,")
+                append("\"resultCode\":$resultCode,")
+                append("\"durationMs\":${"%.3f".format(durationMs)}")
+                append('}')
+            }
         file.writeText(json)
         return file
     }

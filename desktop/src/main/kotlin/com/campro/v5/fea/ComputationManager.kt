@@ -19,7 +19,7 @@ class ComputationManager {
     private val jobs = ConcurrentHashMap<String, Job>()
     private val progressMap = ConcurrentHashMap<String, MutableStateFlow<Float>>()
     private val resultMap = ConcurrentHashMap<String, MutableStateFlow<ComputationResult?>>()
-    
+
     /**
      * Start a new FEA computation.
      *
@@ -31,73 +31,71 @@ class ComputationManager {
     fun startComputation(
         modelFile: File,
         parameters: Map<String, String>,
-        type: ComputationType
+        type: ComputationType,
     ): String {
         val jobId = UUID.randomUUID().toString()
         val progressFlow = MutableStateFlow(0f)
         val resultFlow = MutableStateFlow<ComputationResult?>(null)
-        
+
         progressMap[jobId] = progressFlow
         resultMap[jobId] = resultFlow
-        
-        val job = scope.launch {
-            try {
-                // Update progress to indicate job has started
-                progressFlow.value = 0.1f
-                
-                // Run the appropriate analysis based on the type
-                val resultsFile = when (type) {
-                    ComputationType.GENERAL -> feaEngine.runAnalysis(modelFile, parameters)
-                    ComputationType.STRESS -> feaEngine.runStressAnalysis(modelFile, parameters)
-                    ComputationType.VIBRATION -> feaEngine.runVibrationAnalysis(modelFile, parameters)
-                    ComputationType.MESH_GENERATION -> feaEngine.generateMesh(modelFile, parameters)
+
+        val job =
+            scope.launch {
+                try {
+                    // Update progress to indicate job has started
+                    progressFlow.value = 0.1f
+
+                    // Run the appropriate analysis based on the type
+                    val resultsFile =
+                        when (type) {
+                            ComputationType.GENERAL -> feaEngine.runAnalysis(modelFile, parameters)
+                            ComputationType.STRESS -> feaEngine.runStressAnalysis(modelFile, parameters)
+                            ComputationType.VIBRATION -> feaEngine.runVibrationAnalysis(modelFile, parameters)
+                            ComputationType.MESH_GENERATION -> feaEngine.generateMesh(modelFile, parameters)
+                        }
+
+                    // Update progress to indicate job has completed
+                    progressFlow.value = 1.0f
+
+                    // Set the result
+                    resultFlow.value = ComputationResult.Success(resultsFile)
+                } catch (e: CancellationException) {
+                    // Job was cancelled
+                    progressFlow.value = 0f
+                    resultFlow.value = ComputationResult.Cancelled
+                    throw e
+                } catch (e: Exception) {
+                    // Job failed
+                    progressFlow.value = 0f
+                    resultFlow.value = ComputationResult.Error(e.message ?: "Unknown error")
+                    emitError("Computation failed: ${e.message}", "ComputationManager")
+                } finally {
+                    // Clean up
+                    jobs.remove(jobId)
                 }
-                
-                // Update progress to indicate job has completed
-                progressFlow.value = 1.0f
-                
-                // Set the result
-                resultFlow.value = ComputationResult.Success(resultsFile)
-            } catch (e: CancellationException) {
-                // Job was cancelled
-                progressFlow.value = 0f
-                resultFlow.value = ComputationResult.Cancelled
-                throw e
-            } catch (e: Exception) {
-                // Job failed
-                progressFlow.value = 0f
-                resultFlow.value = ComputationResult.Error(e.message ?: "Unknown error")
-                emitError("Computation failed: ${e.message}", "ComputationManager")
-            } finally {
-                // Clean up
-                jobs.remove(jobId)
             }
-        }
-        
+
         jobs[jobId] = job
         return jobId
     }
-    
+
     /**
      * Get the progress of a computation.
      *
      * @param jobId The ID of the computation job
      * @return A flow of progress values from 0.0 to 1.0, or null if the job doesn't exist
      */
-    fun getProgress(jobId: String): StateFlow<Float>? {
-        return progressMap[jobId]?.asStateFlow()
-    }
-    
+    fun getProgress(jobId: String): StateFlow<Float>? = progressMap[jobId]?.asStateFlow()
+
     /**
      * Get the result of a computation.
      *
      * @param jobId The ID of the computation job
      * @return A flow of the computation result, or null if the job doesn't exist
      */
-    fun getResult(jobId: String): StateFlow<ComputationResult?>? {
-        return resultMap[jobId]?.asStateFlow()
-    }
-    
+    fun getResult(jobId: String): StateFlow<ComputationResult?>? = resultMap[jobId]?.asStateFlow()
+
     /**
      * Cancel a computation.
      *
@@ -107,18 +105,18 @@ class ComputationManager {
     fun cancelComputation(jobId: String): Boolean {
         val job = jobs[jobId] ?: return false
         if (job.isCompleted) return false
-        
+
         job.cancel()
         return true
     }
-    
+
     /**
      * Cancel all computations.
      */
     fun cancelAll() {
         jobs.forEach { (_, job) -> job.cancel() }
     }
-    
+
     /**
      * Check if a computation is running.
      *
@@ -129,16 +127,14 @@ class ComputationManager {
         val job = jobs[jobId] ?: return false
         return job.isActive
     }
-    
+
     /**
      * Get all running computation job IDs.
      *
      * @return A list of job IDs for all running computations
      */
-    fun getRunningJobs(): List<String> {
-        return jobs.filter { (_, job) -> job.isActive }.keys.toList()
-    }
-    
+    fun getRunningJobs(): List<String> = jobs.filter { (_, job) -> job.isActive }.keys.toList()
+
     /**
      * Clean up resources when the manager is no longer needed.
      */
@@ -155,7 +151,7 @@ enum class ComputationType {
     GENERAL,
     STRESS,
     VIBRATION,
-    MESH_GENERATION
+    MESH_GENERATION,
 }
 
 /**
@@ -167,15 +163,19 @@ sealed class ComputationResult {
      *
      * @param resultsFile The file containing the computation results
      */
-    data class Success(val resultsFile: File) : ComputationResult()
-    
+    data class Success(
+        val resultsFile: File,
+    ) : ComputationResult()
+
     /**
      * Computation failed with an error.
      *
      * @param message The error message
      */
-    data class Error(val message: String) : ComputationResult()
-    
+    data class Error(
+        val message: String,
+    ) : ComputationResult()
+
     /**
      * Computation was cancelled.
      */
@@ -187,33 +187,25 @@ sealed class ComputationResult {
  *
  * @return True if the result is a Success, false otherwise
  */
-fun ComputationResult?.isSuccess(): Boolean {
-    return this is ComputationResult.Success
-}
+fun ComputationResult?.isSuccess(): Boolean = this is ComputationResult.Success
 
 /**
  * Extension function to get the results file from a successful computation.
  *
  * @return The results file, or null if the computation was not successful
  */
-fun ComputationResult?.getResultsFile(): File? {
-    return (this as? ComputationResult.Success)?.resultsFile
-}
+fun ComputationResult?.getResultsFile(): File? = (this as? ComputationResult.Success)?.resultsFile
 
 /**
  * Extension function to get the error message from a failed computation.
  *
  * @return The error message, or null if the computation did not fail
  */
-fun ComputationResult?.getErrorMessage(): String? {
-    return (this as? ComputationResult.Error)?.message
-}
+fun ComputationResult?.getErrorMessage(): String? = (this as? ComputationResult.Error)?.message
 
 /**
  * Extension function to check if a computation was cancelled.
  *
  * @return True if the computation was cancelled, false otherwise
  */
-fun ComputationResult?.isCancelled(): Boolean {
-    return this is ComputationResult.Cancelled
-}
+fun ComputationResult?.isCancelled(): Boolean = this is ComputationResult.Cancelled

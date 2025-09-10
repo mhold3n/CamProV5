@@ -17,7 +17,7 @@ object LitvinRenderer {
         offset: Offset,
         angleDeg: Float,
         parameters: Map<String, String>,
-        motion: MotionLawEngine
+        motion: MotionLawEngine,
     ) {
         // No-op placeholder. Full implementation can be added later.
     }

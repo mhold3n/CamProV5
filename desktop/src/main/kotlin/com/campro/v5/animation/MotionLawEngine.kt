@@ -1,24 +1,24 @@
 package com.campro.v5.animation
 
 import androidx.compose.ui.geometry.Offset
+import com.campro.v5.SessionInfo
+import com.campro.v5.data.litvin.jniArgsToMap
+import com.campro.v5.data.litvin.litvinParamsFromMap
+import com.campro.v5.data.litvin.toJniArgs
+import com.campro.v5.data.litvin.validate
 import com.campro.v5.emitError
 import com.campro.v5.fea.DataTransfer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.math.cos
-import kotlin.math.sin
 import kotlin.math.roundToInt
-import com.campro.v5.data.litvin.validate
-import com.campro.v5.data.litvin.toJniArgs
-import com.campro.v5.data.litvin.litvinParamsFromMap
-import com.campro.v5.data.litvin.jniArgsToMap
-import org.slf4j.LoggerFactory
-import com.campro.v5.SessionInfo
+import kotlin.math.sin
 
 /**
  * Engine for interfacing with the Rust motion law implementation.
@@ -27,8 +27,11 @@ import com.campro.v5.SessionInfo
  */
 object PerfDiag {
     @Volatile var lastLitvinDiagnostics: com.campro.v5.data.litvin.DiagnosticsDTO? = null
+
     @Volatile var fps: Double = 0.0
+
     @Volatile var accelMaxAbs: Double? = null
+
     @Volatile var jerkMaxAbs: Double? = null
 }
 
@@ -42,6 +45,7 @@ class MotionLawEngine {
     private var litvinCurves: com.campro.v5.data.litvin.PitchCurvesDTO? = null
     private var litvinTables: com.campro.v5.data.litvin.LitvinTablesDTO? = null
     private var lastLitvinSignature: String? = null
+
     // Phase 1a/1b Kotlin-side cache
     private var motionSamples: com.campro.v5.data.litvin.MotionLawSamples? = null
     private var transmission: com.campro.v5.data.litvin.TransmissionAndPitch? = null
@@ -49,16 +53,22 @@ class MotionLawEngine {
     fun isLitvinActive(): Boolean = litvinTables != null
 
     fun getLitvinCurves(): com.campro.v5.data.litvin.PitchCurvesDTO? = litvinCurves
+
     fun getLitvinTables(): com.campro.v5.data.litvin.LitvinTablesDTO? = litvinTables
+
     // Phase 1a/1b UI previews getters
     fun getMotionLawSamples(): com.campro.v5.data.litvin.MotionLawSamples? = motionSamples
+
     fun getTransmissionPreview(): com.campro.v5.data.litvin.TransmissionAndPitch? = transmission
 
     /**
      * Export the last generated motion-law samples to a JSON file (if available).
      */
     fun exportMotionLawToJson(targetFile: java.io.File) {
-        motionSamples?.let { com.campro.v5.data.litvin.MotionLawSerialization.writeToFile(targetFile, it) }
+        motionSamples?.let {
+            com.campro.v5.data.litvin.MotionLawSerialization
+                .writeToFile(targetFile, it)
+        }
     }
 
     data class LitvinFrameState(
@@ -67,7 +77,7 @@ class MotionLawEngine {
         val spinPsiDeg: List<Double>,
         val journalX: List<Double>,
         val journalY: List<Double>,
-        val pistonS: List<Double>
+        val pistonS: List<Double>,
     )
 
     fun getLitvinFrameState(angleDeg: Double): LitvinFrameState? {
@@ -93,28 +103,46 @@ class MotionLawEngine {
         }
         return LitvinFrameState(cx, cy, spin, jx, jy, ps)
     }
-    
+
     companion object {
         private val logger = LoggerFactory.getLogger(MotionLawEngine::class.java)
+
         // Flag to track whether the native library is available
         private var nativeLibraryAvailable = false
-        
+
         // Load the native library
         init {
             try {
                 var loaded = false
                 val attempted = mutableListOf<String>()
 
-                fun tryLoadFromDir(dir: String?, names: List<String>): Boolean {
+                fun tryLoadFromDir(
+                    dir: String?,
+                    names: List<String>,
+                ): Boolean {
                     if (dir.isNullOrBlank()) return false
-                    val base = java.nio.file.Path.of(dir)
-                    if (!java.nio.file.Files.isDirectory(base)) return false
+                    val base =
+                        java.nio.file.Path
+                            .of(dir)
+                    if (!java.nio.file.Files
+                            .isDirectory(base)
+                    ) {
+                        return false
+                    }
                     var ok = false
                     for (n in names) {
                         val p = base.resolve(System.mapLibraryName(n))
                         attempted += p.toString()
-                        if (!java.nio.file.Files.exists(p)) continue
-                        try { System.load(p.toString()); ok = true } catch (_: Throwable) {}
+                        if (!java.nio.file.Files
+                                .exists(p)
+                        ) {
+                            continue
+                        }
+                        try {
+                            System.load(p.toString())
+                            ok = true
+                        } catch (_: Throwable) {
+                        }
                     }
                     return ok
                 }
@@ -126,22 +154,70 @@ class MotionLawEngine {
 
                 // 2) System.loadLibrary by base name (in dependency order)
                 if (!loaded) {
-                    for (n in dllBaseNames) { try { System.loadLibrary(n); loaded = true } catch (_: UnsatisfiedLinkError) {} }
+                    for (n in dllBaseNames) {
+                        try {
+                            System.loadLibrary(n)
+                            loaded = true
+                        } catch (_: UnsatisfiedLinkError) {
+                        }
+                    }
                 }
 
                 // 3) Classpath resource dir (when running from build/resources)
                 if (!loaded) {
                     val res = MotionLawEngine::class.java.classLoader.getResource("native/${getOsName()}/${getOsArch()}")
                     if (res != null && res.protocol == "file") {
-                        loaded = loaded || tryLoadFromDir(java.nio.file.Paths.get(res.toURI()).toString(), dllBaseNames)
+                        loaded = loaded ||
+                            tryLoadFromDir(
+                                java.nio.file.Paths
+                                    .get(res.toURI())
+                                    .toString(),
+                                dllBaseNames,
+                            )
                     }
                 }
 
                 // 4) Rust target directories (useful during dev/CI)
-                if (!loaded) loaded = loaded || tryLoadFromDir(java.nio.file.Paths.get("CamProV5","camprofw","rust","fea-engine","target","debug").toString(), dllBaseNames)
-                if (!loaded) loaded = loaded || tryLoadFromDir(java.nio.file.Paths.get("CamProV5","camprofw","rust","fea-engine","target","debug","deps").toString(), dllBaseNames)
-                if (!loaded) loaded = loaded || tryLoadFromDir(java.nio.file.Paths.get("CamProV5","camprofw","rust","fea-engine","target","release").toString(), dllBaseNames)
-                if (!loaded) loaded = loaded || tryLoadFromDir(java.nio.file.Paths.get("CamProV5","camprofw","rust","fea-engine","target","release","deps").toString(), dllBaseNames)
+                if (!loaded) {
+                    loaded =
+                        loaded ||
+                        tryLoadFromDir(
+                            java.nio.file.Paths
+                                .get("CamProV5", "camprofw", "rust", "fea-engine", "target", "debug")
+                                .toString(),
+                            dllBaseNames,
+                        )
+                }
+                if (!loaded) {
+                    loaded =
+                        loaded ||
+                        tryLoadFromDir(
+                            java.nio.file.Paths
+                                .get("CamProV5", "camprofw", "rust", "fea-engine", "target", "debug", "deps")
+                                .toString(),
+                            dllBaseNames,
+                        )
+                }
+                if (!loaded) {
+                    loaded =
+                        loaded ||
+                        tryLoadFromDir(
+                            java.nio.file.Paths
+                                .get("CamProV5", "camprofw", "rust", "fea-engine", "target", "release")
+                                .toString(),
+                            dllBaseNames,
+                        )
+                }
+                if (!loaded) {
+                    loaded =
+                        loaded ||
+                        tryLoadFromDir(
+                            java.nio.file.Paths
+                                .get("CamProV5", "camprofw", "rust", "fea-engine", "target", "release", "deps")
+                                .toString(),
+                            dllBaseNames,
+                        )
+                }
 
                 // Initialize Rust logger (best-effort)
                 try {
@@ -150,7 +226,9 @@ class MotionLawEngine {
                     val dir = System.getProperty("campro.log.dir") ?: "logs"
                     LitvinNative.initRustLoggerNative(session, level, dir)
                     logger.info("Initialized Rust logger: session={} level={} dir={}", session, level ?: "(default)", dir)
-                } catch (_: UnsatisfiedLinkError) { } catch (_: Throwable) { }
+                } catch (_: UnsatisfiedLinkError) {
+                } catch (_: Throwable) {
+                }
 
                 nativeLibraryAvailable = verifyNativeLibrary()
                 if (!nativeLibraryAvailable && System.getProperty("debug") == "true") {
@@ -165,111 +243,113 @@ class MotionLawEngine {
                 logger.info("Note: Using fallback motion law implementation")
                 nativeLibraryAvailable = false
                 if (System.getProperty("debug") == "true") {
-                    val errorMessage = when (e) {
-                        is UnsatisfiedLinkError -> "Native library loading error: ${e.message}"
-                        is IllegalStateException -> "Resource not found: ${e.message}"
-                        is IOException -> "I/O error while extracting library: ${e.message}"
-                        else -> "Unexpected error: ${e.message}"
-                    }
+                    val errorMessage =
+                        when (e) {
+                            is UnsatisfiedLinkError -> "Native library loading error: ${e.message}"
+                            is IllegalStateException -> "Resource not found: ${e.message}"
+                            is IOException -> "I/O error while extracting library: ${e.message}"
+                            else -> "Unexpected error: ${e.message}"
+                        }
                     logger.error("Detailed error: {}", errorMessage, e)
                 }
             }
         }
-        
+
         /**
          * Get the normalized OS name.
          */
-        private fun getOsName(): String {
-            return when {
+        private fun getOsName(): String =
+            when {
                 System.getProperty("os.name").toLowerCase().contains("win") -> "windows"
                 System.getProperty("os.name").toLowerCase().contains("mac") -> "mac"
-                System.getProperty("os.name").toLowerCase().contains("nix") || 
-                System.getProperty("os.name").toLowerCase().contains("nux") -> "linux"
+                System.getProperty("os.name").toLowerCase().contains("nix") ||
+                    System.getProperty("os.name").toLowerCase().contains("nux") -> "linux"
                 else -> "unknown"
             }
-        }
-        
+
         /**
          * Get the normalized OS architecture.
          */
-        private fun getOsArch(): String {
-            return when {
+        private fun getOsArch(): String =
+            when {
                 System.getProperty("os.arch").toLowerCase().contains("amd64") -> "x86_64"
                 System.getProperty("os.arch").toLowerCase().contains("x86_64") -> "x86_64"
                 System.getProperty("os.arch").toLowerCase().contains("arm") -> "arm64"
                 else -> System.getProperty("os.arch").toLowerCase()
             }
-        }
-        
+
         /**
          * Get the library file extension for the current OS.
          */
-        private fun getLibraryExtension(): String {
-            return when (getOsName()) {
+        private fun getLibraryExtension(): String =
+            when (getOsName()) {
                 "windows" -> "dll"
                 "mac" -> "dylib"
                 "linux" -> "so"
                 else -> "unknown"
             }
-        }
-        
+
         /**
          * Extract the native library from the resources to a temporary file.
-         * 
+         *
          * @return The path to the extracted native library
          */
         private fun extractNativeLibrary(): Path {
             // Normalize OS name to remove spaces and version numbers
-            val osName = when {
-                System.getProperty("os.name").toLowerCase().contains("win") -> "windows"
-                System.getProperty("os.name").toLowerCase().contains("mac") -> "mac"
-                System.getProperty("os.name").toLowerCase().contains("nix") || 
-                System.getProperty("os.name").toLowerCase().contains("nux") -> "linux"
-                else -> throw UnsupportedOperationException("Unsupported OS: ${System.getProperty("os.name")}")
-            }
-        
+            val osName =
+                when {
+                    System.getProperty("os.name").toLowerCase().contains("win") -> "windows"
+                    System.getProperty("os.name").toLowerCase().contains("mac") -> "mac"
+                    System.getProperty("os.name").toLowerCase().contains("nix") ||
+                        System.getProperty("os.name").toLowerCase().contains("nux") -> "linux"
+                    else -> throw UnsupportedOperationException("Unsupported OS: ${System.getProperty("os.name")}")
+                }
+
             // Normalize architecture
-            val osArch = when {
-                System.getProperty("os.arch").toLowerCase().contains("amd64") -> "x86_64"
-                System.getProperty("os.arch").toLowerCase().contains("x86_64") -> "x86_64"
-                // Add ARM support if needed
-                else -> System.getProperty("os.arch").toLowerCase()
-            }
-        
-            val libraryName = when {
-                osName == "windows" -> "campro_motion.dll"
-                osName == "mac" -> "libcampro_motion.dylib"
-                osName == "linux" -> "libcampro_motion.so"
-                else -> throw UnsupportedOperationException("Unsupported operating system: $osName")
-            }
-        
+            val osArch =
+                when {
+                    System.getProperty("os.arch").toLowerCase().contains("amd64") -> "x86_64"
+                    System.getProperty("os.arch").toLowerCase().contains("x86_64") -> "x86_64"
+                    // Add ARM support if needed
+                    else -> System.getProperty("os.arch").toLowerCase()
+                }
+
+            val libraryName =
+                when {
+                    osName == "windows" -> "campro_motion.dll"
+                    osName == "mac" -> "libcampro_motion.dylib"
+                    osName == "linux" -> "libcampro_motion.so"
+                    else -> throw UnsupportedOperationException("Unsupported operating system: $osName")
+                }
+
             val resourcePath = "/native/$osName/$osArch/$libraryName"
             logger.info("Attempting to load native library from resource path: {}", resourcePath)
-        
-            val inputStream = MotionLawEngine::class.java.getResourceAsStream(resourcePath)
-                ?: throw IllegalStateException("Native library not found at $resourcePath")
-        
+
+            val inputStream =
+                MotionLawEngine::class.java.getResourceAsStream(resourcePath)
+                    ?: throw IllegalStateException("Native library not found at $resourcePath")
+
             val tempDir = Files.createTempDirectory("campro_motion")
             val tempFile = tempDir.resolve(libraryName)
-        
+
             inputStream.use { input ->
                 Files.newOutputStream(tempFile).use { output ->
                     input.copyTo(output)
                 }
             }
-        
+
             logger.info("Extracted native library to: {}", tempFile)
-        
+
             // Ensure the library is deleted when the JVM exits
             tempFile.toFile().deleteOnExit()
             tempDir.toFile().deleteOnExit()
-        
+
             return tempFile
         }
-        
+
         /**
          * Verify that the native library is working correctly.
-         * 
+         *
          * @return true if the library is working correctly, false otherwise
          */
         private fun verifyNativeLibrary(): Boolean {
@@ -282,7 +362,7 @@ class MotionLawEngine {
                 return false
             }
         }
-        
+
         /**
          * Test native method to verify that the library is working correctly.
          * The Rust implementation should return 42.
@@ -290,11 +370,17 @@ class MotionLawEngine {
         private external fun testNativeLibraryNative(): Int
 
         @JvmStatic fun isNativeAvailable(): Boolean = nativeLibraryAvailable
-        @JvmStatic fun runNativeSmokeTest(): Int? {
-            return try { testNativeLibraryNative() } catch (_: UnsatisfiedLinkError) { null } catch (_: Throwable) { null }
-        }
+
+        @JvmStatic fun runNativeSmokeTest(): Int? =
+            try {
+                testNativeLibraryNative()
+            } catch (_: UnsatisfiedLinkError) {
+                null
+            } catch (_: Throwable) {
+                null
+            }
     }
-    
+
     fun runNativeDiagnostics(): String? {
         return try {
             if (!isNativeAvailable()) return null
@@ -302,12 +388,16 @@ class MotionLawEngine {
             // lastLitvinSignature is computed on parameter updates
             val sig = lastLitvinSignature
             LitvinNative.runDiagnosticsNative(litvinId, SessionInfo.sessionId, sig)
-        } catch (_: UnsatisfiedLinkError) { null } catch (_: Throwable) { null }
+        } catch (_: UnsatisfiedLinkError) {
+            null
+        } catch (_: Throwable) {
+            null
+        }
     }
-    
+
     private var motionLawId: Long = 0
     private val dataTransfer = DataTransfer()
-    
+
     // Parameters for the fallback implementation
     private var baseCircleRadius = 25.0
     private var maxLift = 10.0
@@ -319,28 +409,29 @@ class MotionLawEngine {
     private var accelerationLimit = 500.0
     private var velocityLimit = 100.0
     private var rpm = 3000.0
-    
+
     /**
      * Create a new motion law engine.
      */
     init {
         // Create a default motion law
-        val defaultParameters = mapOf(
-            "base_circle_radius" to "25.0",
-            "max_lift" to "10.0",
-            "cam_duration" to "180.0",
-            "rise_duration" to "90.0",
-            "dwell_duration" to "45.0",
-            "fall_duration" to "90.0",
-            "jerk_limit" to "1000.0",
-            "acceleration_limit" to "500.0",
-            "velocity_limit" to "100.0",
-            "rpm" to "3000.0"
-        )
-        
+        val defaultParameters =
+            mapOf(
+                "base_circle_radius" to "25.0",
+                "max_lift" to "10.0",
+                "cam_duration" to "180.0",
+                "rise_duration" to "90.0",
+                "dwell_duration" to "45.0",
+                "fall_duration" to "90.0",
+                "jerk_limit" to "1000.0",
+                "acceleration_limit" to "500.0",
+                "velocity_limit" to "100.0",
+                "rpm" to "3000.0",
+            )
+
         // Store the default parameters
         this.parameters = defaultParameters
-        
+
         try {
             if (nativeLibraryAvailable) {
                 motionLawId = createMotionLawNative(defaultParameters.entries.flatMap { listOf(it.key, it.value) }.toTypedArray())
@@ -353,7 +444,7 @@ class MotionLawEngine {
             e.printStackTrace()
         }
     }
-    
+
     /**
      * Update parameters for the fallback implementation.
      */
@@ -369,10 +460,10 @@ class MotionLawEngine {
         velocityLimit = parameters["velocity_limit"]?.toDoubleOrNull() ?: 100.0
         rpm = parameters["rpm"]?.toDoubleOrNull() ?: 3000.0
     }
-    
+
     /**
      * Update the motion law parameters.
-     * 
+     *
      * @param parameters The new parameters
      */
     fun updateParameters(parameters: Map<String, String>) {
@@ -387,7 +478,9 @@ class MotionLawEngine {
 
                 run {
                     // Build Kotlin-side Litvin params, validate, and construct JNI args per guide
-                    val litvinParams = com.campro.v5.data.litvin.litvinParamsFromMap(parameters)
+                    val litvinParams =
+                        com.campro.v5.data.litvin
+                            .litvinParamsFromMap(parameters)
                     val errs = litvinParams.validate()
                     if (errs.isNotEmpty()) {
                         emitError("Invalid Litvin parameters: ${errs.joinToString("; ")}")
@@ -403,9 +496,14 @@ class MotionLawEngine {
                                 PerfDiag.jerkMaxAbs = md.jerkMaxAbsPerOmega3
                                 try {
                                     logger.info(
-                                        "Motion diagnostics: stepDeg=${"%.6f".format(ms.stepDeg)} accelMaxAbs=${"%.6f".format(md.accelMaxAbsPerOmega2)} jerkMaxAbs=${"%.6f".format(md.jerkMaxAbsPerOmega3)}"
+                                        "Motion diagnostics: stepDeg=${"%.6f".format(
+                                            ms.stepDeg,
+                                        )} accelMaxAbs=${"%.6f".format(
+                                            md.accelMaxAbsPerOmega2,
+                                        )} jerkMaxAbs=${"%.6f".format(md.jerkMaxAbsPerOmega3)}",
                                     )
-                                } catch (_: Throwable) { }
+                                } catch (_: Throwable) {
+                                }
                                 // Optional feasibility gate: surface error and short-circuit if accel exceeds user limit
                                 val accelLimit = parameters["accel_limit_per_omega2"]?.toDoubleOrNull()
                                 if (accelLimit != null && md.accelMaxAbsPerOmega2 > accelLimit) {
@@ -418,20 +516,32 @@ class MotionLawEngine {
                                 val meanI = transmission?.iOfTheta?.map { it.second }?.average()
                                 val resI = transmission?.residualArcLenRms
                                 logger.info(
-                                    "Litvin preview: stepDeg=${motionSamples?.stepDeg}, meanI=${"%.6f".format(meanI ?: Double.NaN)}, residual=${"%.6f".format(resI ?: Double.NaN)}"
+                                    "Litvin preview: stepDeg=${motionSamples?.stepDeg}, meanI=${"%.6f".format(
+                                        meanI ?: Double.NaN,
+                                    )}, residual=${"%.6f".format(
+                                        resI ?: Double.NaN,
+                                    )}",
                                 )
-                            } catch (_: Throwable) { }
+                            } catch (_: Throwable) {
+                            }
                         } catch (e: Exception) {
                             emitError("Motion law synthesis failed: ${e.message}")
                         }
                         val litvinArgs = litvinParams.toJniArgs()
                         // Compute signature from the normalized Litvin args (order-insensitive)
-                        val sigMap = com.campro.v5.data.litvin.jniArgsToMap(litvinArgs)
+                        val sigMap =
+                            com.campro.v5.data.litvin
+                                .jniArgsToMap(litvinArgs)
                         val sig = LitvinSignature.compute(sigMap)
                         logger.info("Litvin update: sig=${sig.take(16)}...")
                         logger.debug(
-                            "Params: up=${litvinParams.upFraction}, ramps=[${litvinParams.rampBeforeTdcDeg},${litvinParams.rampAfterTdcDeg},${litvinParams.rampBeforeBdcDeg},${litvinParams.rampAfterBdcDeg}], " +
-                                    "rpm=${litvinParams.rpm}, R=${litvinParams.journalRadius}, beta=${litvinParams.journalPhaseBetaDeg}, step=${litvinParams.samplingStepDeg}"
+                            "Params: up=${litvinParams.upFraction}, " +
+                                "ramps=[${litvinParams.rampBeforeTdcDeg},${litvinParams.rampAfterTdcDeg}," +
+                                "${litvinParams.rampBeforeBdcDeg},${litvinParams.rampAfterBdcDeg}], " +
+                                "rpm=${litvinParams.rpm}, " +
+                                "R=${litvinParams.journalRadius}, " +
+                                "beta=${litvinParams.journalPhaseBetaDeg}, " +
+                                "step=${litvinParams.samplingStepDeg}",
                         )
                         val changed = sig != lastLitvinSignature
                         if (!changed) {
@@ -440,23 +550,44 @@ class MotionLawEngine {
                             lastLitvinSignature = sig
                             // Create or update Litvin law and prefetch JSON payloads
                             if (litvinId == 0L) {
-                                litvinId = try { LitvinNative.createLitvinLawNative(litvinArgs) } catch (e: UnsatisfiedLinkError) { 0L }
+                                litvinId =
+                                    try {
+                                        LitvinNative.createLitvinLawNative(litvinArgs)
+                                    } catch (e: UnsatisfiedLinkError) {
+                                        0L
+                                    }
                             } else {
-                                try { LitvinNative.updateLitvinLawParametersNative(litvinId, litvinArgs) } catch (_: UnsatisfiedLinkError) {}
+                                try {
+                                    LitvinNative.updateLitvinLawParametersNative(litvinId, litvinArgs)
+                                } catch (
+                                    _: UnsatisfiedLinkError,
+                                ) {
+                                }
                             }
                             if (litvinId > 0L) {
                                 try {
                                     val curvesPath = LitvinNative.getLitvinPitchCurvesNative(litvinId)
                                     val tablesPath = LitvinNative.getLitvinKinematicsTablesNative(litvinId)
-                                    val boundaryPath = try { LitvinNative.getLitvinFeaBoundaryNative(litvinId) } catch (_: UnsatisfiedLinkError) { null }
+                                    val boundaryPath =
+                                        try {
+                                            LitvinNative.getLitvinFeaBoundaryNative(litvinId)
+                                        } catch (
+                                            _: UnsatisfiedLinkError,
+                                        ) {
+                                            null
+                                        }
                                     // gear_mode removed: Litvin is always active
                                     val curvesFile = File(curvesPath)
                                     val tablesFile = File(tablesPath)
                                     if (curvesFile.exists()) {
-                                        litvinCurves = com.campro.v5.data.litvin.LitvinJsonLoader.loadPitchCurves(curvesFile)
+                                        litvinCurves =
+                                            com.campro.v5.data.litvin.LitvinJsonLoader
+                                                .loadPitchCurves(curvesFile)
                                     }
                                     if (tablesFile.exists()) {
-                                        litvinTables = com.campro.v5.data.litvin.LitvinJsonLoader.loadTables(tablesFile)
+                                        litvinTables =
+                                            com.campro.v5.data.litvin.LitvinJsonLoader
+                                                .loadTables(tablesFile)
                                         // Update shared diagnostics for UI
                                         PerfDiag.lastLitvinDiagnostics = litvinTables?.diagnostics
                                     }
@@ -465,7 +596,13 @@ class MotionLawEngine {
                                         val bFile = File(boundaryPath)
                                         if (bFile.exists()) {
                                             // Load to validate format and warm cache; consumers can request again
-                                            try { com.campro.v5.data.litvin.LitvinJsonLoader.loadFeaBoundary(bFile) } catch (_: Exception) {}
+                                            try {
+                                                com.campro.v5.data.litvin.LitvinJsonLoader
+                                                    .loadFeaBoundary(bFile)
+                                            } catch (
+                                                _: Exception,
+                                            ) {
+                                            }
                                         }
                                     }
                                 } catch (e: Exception) {
@@ -484,44 +621,45 @@ class MotionLawEngine {
             e.printStackTrace()
         }
     }
-    
+
     /**
      * Get the component positions for the given angle.
-     * 
+     *
      * @param angle The angle in degrees
      * @return The component positions
      */
     fun getComponentPositions(angle: Double): ComponentPositions {
         try {
             // Get the displacement at the given angle
-            val displacement = if (nativeLibraryAvailable) {
-                getDisplacementNative(motionLawId, angle)
-            } else {
-                getDisplacementFallback(angle)
-            }
-            
+            val displacement =
+                if (nativeLibraryAvailable) {
+                    getDisplacementNative(motionLawId, angle)
+                } else {
+                    getDisplacementFallback(angle)
+                }
+
             // Calculate component positions based on the displacement
             return calculateComponentPositions(angle, displacement)
         } catch (e: Exception) {
             emitError("Failed to get component positions: ${e.message}")
             e.printStackTrace()
-            
+
             // Return default positions
             return ComponentPositions(
                 pistonPosition = Offset(0f, 0f),
                 rodPosition = Offset(0f, 0f),
-                camPosition = Offset(0f, 0f)
+                camPosition = Offset(0f, 0f),
             )
         }
     }
-    
+
     /**
      * Fallback implementation of displacement calculation.
      */
     private fun getDisplacementFallback(angle: Double): Double {
         val thetaNorm = angle % 360.0
         val totalDuration = riseDuration + dwellDuration + fallDuration
-        
+
         return when {
             thetaNorm <= riseDuration -> {
                 // Rise phase
@@ -544,7 +682,7 @@ class MotionLawEngine {
             }
         }
     }
-    
+
     /**
      * Fallback implementation of velocity calculation.
      */
@@ -553,7 +691,7 @@ class MotionLawEngine {
         val totalDuration = riseDuration + dwellDuration + fallDuration
         val degToRad = Math.PI / 180.0
         val omega = 2.0 * Math.PI * rpm / 60.0
-        
+
         return when {
             thetaNorm <= riseDuration -> {
                 // Rise phase
@@ -578,7 +716,7 @@ class MotionLawEngine {
             }
         }
     }
-    
+
     /**
      * Fallback implementation of acceleration calculation.
      */
@@ -587,7 +725,7 @@ class MotionLawEngine {
         val totalDuration = riseDuration + dwellDuration + fallDuration
         val degToRad = Math.PI / 180.0
         val omega = 2.0 * Math.PI * rpm / 60.0
-        
+
         return when {
             thetaNorm <= riseDuration -> {
                 // Rise phase
@@ -614,7 +752,7 @@ class MotionLawEngine {
             }
         }
     }
-    
+
     /**
      * Fallback implementation of jerk calculation.
      */
@@ -623,7 +761,7 @@ class MotionLawEngine {
         val totalDuration = riseDuration + dwellDuration + fallDuration
         val degToRad = Math.PI / 180.0
         val omega = 2.0 * Math.PI * rpm / 60.0
-        
+
         return when {
             thetaNorm <= riseDuration -> {
                 // Rise phase
@@ -650,33 +788,37 @@ class MotionLawEngine {
             }
         }
     }
-    
+
     /**
      * Cache for component positions to improve performance
      * Key: Pair of angle (rounded to nearest 0.5 degree) and displacement (rounded to 3 decimal places)
      * Value: Calculated component positions
-     * 
+     *
      * Using LRU (Least Recently Used) approach with a fixed size to prevent memory issues
      */
-    private val positionCache = object : LinkedHashMap<Pair<Double, Double>, ComponentPositions>(100, 0.75f, true) {
-        override fun removeEldestEntry(eldest: Map.Entry<Pair<Double, Double>, ComponentPositions>): Boolean {
-            return size > 500 // Limit cache size to 500 entries
+    private val positionCache =
+        object : LinkedHashMap<Pair<Double, Double>, ComponentPositions>(100, 0.75f, true) {
+            override fun removeEldestEntry(eldest: Map.Entry<Pair<Double, Double>, ComponentPositions>): Boolean {
+                return size > 500 // Limit cache size to 500 entries
+            }
         }
-    }
-    
+
     /**
      * Calculate component positions based on the angle and displacement.
      * Enhanced with more accurate mechanical modeling and caching.
-     * 
+     *
      * @param angle The angle in degrees
      * @param displacement The displacement
      * @return The component positions
      */
-    private fun calculateComponentPositions(angle: Double, displacement: Double): ComponentPositions {
+    private fun calculateComponentPositions(
+        angle: Double,
+        displacement: Double,
+    ): ComponentPositions {
         try {
             // Round values for cache key to reduce cache size while maintaining accuracy
-            val cacheKeyAngle = (angle * 2).toInt() / 2.0  // Round to nearest 0.5 degree
-            val cacheKeyDisplacement = (displacement * 1000).toInt() / 1000.0  // Round to 3 decimal places
+            val cacheKeyAngle = (angle * 2).toInt() / 2.0 // Round to nearest 0.5 degree
+            val cacheKeyDisplacement = (displacement * 1000).toInt() / 1000.0 // Round to 3 decimal places
             val cacheKey = Pair(cacheKeyAngle, cacheKeyDisplacement)
 
             // Check cache first
@@ -691,11 +833,12 @@ class MotionLawEngine {
                     val jx = fs.journalX[0].toFloat()
                     val jy = fs.journalY[0].toFloat()
                     val ps = fs.pistonS[0].toFloat()
-                    val positions = ComponentPositions(
-                        pistonPosition = Offset(0f, ps),
-                        rodPosition = Offset(jx, jy),
-                        camPosition = Offset(cx, cy)
-                    )
+                    val positions =
+                        ComponentPositions(
+                            pistonPosition = Offset(0f, ps),
+                            rodPosition = Offset(jx, jy),
+                            camPosition = Offset(cx, cy),
+                        )
                     positionCache[cacheKey] = positions
                     return positions
                 }
@@ -708,11 +851,12 @@ class MotionLawEngine {
                 if (n > 0) {
                     val idx = (((angle / step).roundToInt() % n) + n) % n
                     val x = ml.samples[idx].xMm.toFloat()
-                    val positions = ComponentPositions(
-                        pistonPosition = Offset(0f, x),
-                        rodPosition = Offset(0f, x),
-                        camPosition = Offset(0f, 0f)
-                    )
+                    val positions =
+                        ComponentPositions(
+                            pistonPosition = Offset(0f, x),
+                            rodPosition = Offset(0f, x),
+                            camPosition = Offset(0f, 0f),
+                        )
                     positionCache[cacheKey] = positions
                     return positions
                 }
@@ -726,10 +870,30 @@ class MotionLawEngine {
             val baseCircleRadius = baseCircleRadius.toFloat()
 
             // Get rod length and piston diameter from parameters or use defaults
-            val rodLength = try { parameters["rod_length"]?.toFloatOrNull() ?: 40f } catch (e: Exception) { 40f }
-            val pistonDiameter = try { parameters["piston_diameter"]?.toFloatOrNull() ?: 70f } catch (e: Exception) { 70f }
-            val followerOffset = try { parameters["follower_offset"]?.toFloatOrNull() ?: 0f } catch (e: Exception) { 0f }
-            val camOffset = try { parameters["cam_offset"]?.toFloatOrNull() ?: 0f } catch (e: Exception) { 0f }
+            val rodLength =
+                try {
+                    parameters["rod_length"]?.toFloatOrNull() ?: 40f
+                } catch (e: Exception) {
+                    40f
+                }
+            val pistonDiameter =
+                try {
+                    parameters["piston_diameter"]?.toFloatOrNull() ?: 70f
+                } catch (e: Exception) {
+                    70f
+                }
+            val followerOffset =
+                try {
+                    parameters["follower_offset"]?.toFloatOrNull() ?: 0f
+                } catch (e: Exception) {
+                    0f
+                }
+            val camOffset =
+                try {
+                    parameters["cam_offset"]?.toFloatOrNull() ?: 0f
+                } catch (e: Exception) {
+                    0f
+                }
 
             val camPosition = Offset(camOffset, 0f)
 
@@ -739,18 +903,22 @@ class MotionLawEngine {
             val followerX = baseCircleX + followerOffset
             val followerY = baseCircleY + displacement.toFloat()
 
-            val rodAngle = try {
-                Math.atan2((pistonDiameter / 2 - followerX).toDouble(), (rodLength - (followerY - baseCircleY)).toDouble())
-            } catch (_: Exception) { 0.0 }
+            val rodAngle =
+                try {
+                    Math.atan2((pistonDiameter / 2 - followerX).toDouble(), (rodLength - (followerY - baseCircleY)).toDouble())
+                } catch (_: Exception) {
+                    0.0
+                }
 
             val pistonX = followerX
             val pistonY = followerY + rodLength * Math.cos(rodAngle).toFloat()
 
-            val positions = ComponentPositions(
-                pistonPosition = Offset(pistonX, pistonY),
-                rodPosition = Offset(followerX, followerY),
-                camPosition = camPosition
-            )
+            val positions =
+                ComponentPositions(
+                    pistonPosition = Offset(pistonX, pistonY),
+                    rodPosition = Offset(followerX, followerY),
+                    camPosition = camPosition,
+                )
 
             positionCache[cacheKey] = positions
             return positions
@@ -759,71 +927,72 @@ class MotionLawEngine {
             return ComponentPositions(
                 pistonPosition = Offset(0f, 0f),
                 rodPosition = Offset(0f, 0f),
-                camPosition = Offset(0f, 0f)
+                camPosition = Offset(0f, 0f),
             )
         }
     }
-    
+
     /**
      * Perform a kinematic analysis of the motion law.
-     * 
+     *
      * @param numPoints The number of points to analyze
      * @return The kinematic analysis results
      */
-    suspend fun analyzeKinematics(numPoints: Int): KinematicAnalysis = withContext(Dispatchers.IO) {
-        try {
-            if (nativeLibraryAvailable) {
-                // Create a temporary file for the results
-                val resultsFile = File.createTempFile("kinematic_analysis_", ".json")
-                resultsFile.deleteOnExit()
-                
-                // Call the native method
-                analyzeKinematicsNative(
-                    motionLawId,
-                    numPoints,
-                    resultsFile.absolutePath
-                )
-                
-                // Parse the results
-                val analysis = dataTransfer.transferFromRust(resultsFile, KinematicAnalysis::class.java)
-                
-                return@withContext analysis
-            } else {
-                // Use fallback implementation to generate analysis
-                return@withContext analyzeKinematicsFallback(numPoints)
+    suspend fun analyzeKinematics(numPoints: Int): KinematicAnalysis =
+        withContext(Dispatchers.IO) {
+            try {
+                if (nativeLibraryAvailable) {
+                    // Create a temporary file for the results
+                    val resultsFile = File.createTempFile("kinematic_analysis_", ".json")
+                    resultsFile.deleteOnExit()
+
+                    // Call the native method
+                    analyzeKinematicsNative(
+                        motionLawId,
+                        numPoints,
+                        resultsFile.absolutePath,
+                    )
+
+                    // Parse the results
+                    val analysis = dataTransfer.transferFromRust(resultsFile, KinematicAnalysis::class.java)
+
+                    return@withContext analysis
+                } else {
+                    // Use fallback implementation to generate analysis
+                    return@withContext analyzeKinematicsFallback(numPoints)
+                }
+            } catch (e: Exception) {
+                emitError("Failed to analyze kinematics: ${e.message}")
+                throw e
             }
-        } catch (e: Exception) {
-            emitError("Failed to analyze kinematics: ${e.message}")
-            throw e
         }
-    }
-    
+
     /**
      * Fallback implementation of kinematic analysis.
      */
     private fun analyzeKinematicsFallback(numPoints: Int): KinematicAnalysis {
         // Generate angle array
         val theta = List(numPoints) { i -> i * 360.0 / (numPoints - 1) }
-        
+
         // Calculate kinematics
         val displacement = theta.map { getDisplacementFallback(it) }
         val velocity = theta.map { getVelocityFallback(it) }
         val acceleration = theta.map { getAccelerationFallback(it) }
         val jerk = theta.map { getJerkFallback(it) }
-        
+
         // Calculate statistics
         val maxVelocity = velocity.maxOfOrNull { kotlin.math.abs(it) } ?: 0.0
         val maxAcceleration = acceleration.maxOfOrNull { kotlin.math.abs(it) } ?: 0.0
         val maxJerk = jerk.maxOfOrNull { kotlin.math.abs(it) } ?: 0.0
-        
+
         val rmsAcceleration = kotlin.math.sqrt(acceleration.map { it * it }.average())
         val rmsJerk = kotlin.math.sqrt(jerk.map { it * it }.average())
-        
+
         // Check constraint violations
         val velocityViolation = maxVelocity > velocityLimit
         val accelerationViolation = maxAcceleration > accelerationLimit
         val jerkViolation = maxJerk > jerkLimit
-        
+
         return KinematicAnalysis(
             theta = theta,
             displacement = displacement,
@@ -837,10 +1006,10 @@ class MotionLawEngine {
             rmsJerk = rmsJerk,
             velocityViolation = velocityViolation,
             accelerationViolation = accelerationViolation,
-            jerkViolation = jerkViolation
+            jerkViolation = jerkViolation,
         )
     }
-    
+
     /**
      * Clean up resources when the engine is no longer needed.
      */
@@ -850,7 +1019,10 @@ class MotionLawEngine {
             if (nativeLibraryAvailable) {
                 disposeMotionLawNative(motionLawId)
                 if (litvinId != 0L) {
-                    try { LitvinNative.disposeLitvinLawNative(litvinId) } catch (_: UnsatisfiedLinkError) {}
+                    try {
+                        LitvinNative.disposeLitvinLawNative(litvinId)
+                    } catch (_: UnsatisfiedLinkError) {
+                    }
                     litvinId = 0
                     litvinCurves = null
                     litvinTables = null
@@ -862,64 +1034,79 @@ class MotionLawEngine {
             e.printStackTrace()
         }
     }
-    
+
     // Native methods
-    
+
     /**
      * Native method to create a motion law.
-     * 
+     *
      * @param parameters The parameters for the motion law
      * @return The ID of the created motion law
      */
     private external fun createMotionLawNative(parameters: Array<String>): Long
-    
+
     /**
      * Native method to update motion law parameters.
-     * 
+     *
      * @param motionLawId The ID of the motion law
      * @param parameters The new parameters
      */
-    private external fun updateMotionLawParametersNative(motionLawId: Long, parameters: Array<String>)
-    
+    private external fun updateMotionLawParametersNative(
+        motionLawId: Long,
+        parameters: Array<String>,
+    )
+
     /**
      * Native method to get the displacement at a specific angle.
-     * 
+     *
      * @param motionLawId The ID of the motion law
      * @param angle The angle in degrees
      * @return The displacement
      */
-    private external fun getDisplacementNative(motionLawId: Long, angle: Double): Double
-    
+    private external fun getDisplacementNative(
+        motionLawId: Long,
+        angle: Double,
+    ): Double
+
     /**
      * Native method to get the velocity at a specific angle.
-     * 
+     *
      * @param motionLawId The ID of the motion law
      * @param angle The angle in degrees
      * @return The velocity
      */
-    private external fun getVelocityNative(motionLawId: Long, angle: Double): Double
-    
+    private external fun getVelocityNative(
+        motionLawId: Long,
+        angle: Double,
+    ): Double
+
     /**
      * Native method to get the acceleration at a specific angle.
-     * 
+     *
      * @param motionLawId The ID of the motion law
      * @param angle The angle in degrees
      * @return The acceleration
      */
-    private external fun getAccelerationNative(motionLawId: Long, angle: Double): Double
-    
+    private external fun getAccelerationNative(
+        motionLawId: Long,
+        angle: Double,
+    ): Double
+
     /**
      * Native method to get the jerk at a specific angle.
-     * 
+     *
      * @param motionLawId The ID of the motion law
      * @param angle The angle in degrees
      * @return The jerk
      */
-    private external fun getJerkNative(motionLawId: Long, angle: Double): Double
-    
+    private external fun getJerkNative(
+        motionLawId: Long,
+        angle: Double,
+    ): Double
+
     /**
      * Native method to analyze kinematics.
-     * 
+     *
      * @param motionLawId The ID of the motion law
      * @param numPoints The number of points to analyze
      * @param resultsFilePath The path to the results file
@@ -927,16 +1114,15 @@ class MotionLawEngine {
     private external fun analyzeKinematicsNative(
         motionLawId: Long,
         numPoints: Int,
-        resultsFilePath: String
+        resultsFilePath: String,
     )
-    
+
     /**
      * Native method to dispose a motion law.
-     * 
+     *
      * @param motionLawId The ID of the motion law
      */
     private external fun disposeMotionLawNative(motionLawId: Long)
-    
 }
 
 /**
@@ -955,5 +1141,5 @@ data class KinematicAnalysis(
     val rmsJerk: Double,
     val velocityViolation: Boolean,
     val accelerationViolation: Boolean,
-    val jerkViolation: Boolean
+    val jerkViolation: Boolean,
 )

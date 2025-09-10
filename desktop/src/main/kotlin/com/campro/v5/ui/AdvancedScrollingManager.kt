@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -17,13 +16,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -37,10 +32,10 @@ import kotlin.math.*
  * Scroll synchronization modes
  */
 enum class ScrollSyncMode {
-    NONE,           // No synchronization
-    HORIZONTAL,     // Synchronize horizontal scrolling
-    VERTICAL,       // Synchronize vertical scrolling
-    BOTH           // Synchronize both directions
+    NONE, // No synchronization
+    HORIZONTAL, // Synchronize horizontal scrolling
+    VERTICAL, // Synchronize vertical scrolling
+    BOTH, // Synchronize both directions
 }
 
 /**
@@ -51,10 +46,11 @@ data class MomentumScrollConfig(
     val friction: Float = 0.92f,
     val minVelocity: Float = 50f,
     val maxVelocity: Float = 5000f,
-    val easingSpec: AnimationSpec<Float> = tween(
-        durationMillis = 800,
-        easing = FastOutSlowInEasing
-    )
+    val easingSpec: AnimationSpec<Float> =
+        tween(
+            durationMillis = 800,
+            easing = FastOutSlowInEasing,
+        ),
 )
 
 /**
@@ -64,7 +60,7 @@ data class ScrollPositionMemory(
     val panelId: String,
     val horizontalPosition: Int,
     val verticalPosition: Int,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
 )
 
 /**
@@ -78,7 +74,7 @@ data class MinimapConfig(
     val opacity: Float = 0.8f,
     val showViewport: Boolean = true,
     val autoHide: Boolean = true,
-    val autoHideDelay: Long = 3000L
+    val autoHideDelay: Long = 3000L,
 )
 
 /**
@@ -88,39 +84,42 @@ enum class MinimapPosition {
     TOP_LEFT,
     TOP_RIGHT,
     BOTTOM_LEFT,
-    BOTTOM_RIGHT
+    BOTTOM_RIGHT,
 }
 
 /**
  * Advanced Scrolling Manager for enhanced scrolling functionality
  */
 class AdvancedScrollingManager(
-    internal val scope: CoroutineScope
+    internal val scope: CoroutineScope,
 ) {
     private val _scrollStates = MutableStateFlow<Map<String, ScrollState>>(emptyMap())
     val scrollStates: StateFlow<Map<String, ScrollState>> = _scrollStates.asStateFlow()
-    
+
     private val _scrollPositionMemory = MutableStateFlow<Map<String, ScrollPositionMemory>>(emptyMap())
     val scrollPositionMemory: StateFlow<Map<String, ScrollPositionMemory>> = _scrollPositionMemory.asStateFlow()
-    
+
     private val _synchronizedGroups = MutableStateFlow<Map<String, Set<String>>>(emptyMap())
     val synchronizedGroups: StateFlow<Map<String, Set<String>>> = _synchronizedGroups.asStateFlow()
-    
+
     private val _momentumScrollConfig = MutableStateFlow(MomentumScrollConfig())
     val momentumScrollConfig: StateFlow<MomentumScrollConfig> = _momentumScrollConfig.asStateFlow()
-    
+
     private val _minimapConfigs = MutableStateFlow<Map<String, MinimapConfig>>(emptyMap())
     val minimapConfigs: StateFlow<Map<String, MinimapConfig>> = _minimapConfigs.asStateFlow()
-    
+
     private val _activeScrollOperations = MutableStateFlow<Set<String>>(emptySet())
     val activeScrollOperations: StateFlow<Set<String>> = _activeScrollOperations.asStateFlow()
-    
+
     /**
      * Register a scroll state for a panel
      */
-    fun registerScrollState(panelId: String, scrollState: ScrollState) {
+    fun registerScrollState(
+        panelId: String,
+        scrollState: ScrollState,
+    ) {
         _scrollStates.value = _scrollStates.value + (panelId to scrollState)
-        
+
         // Restore saved scroll position if available
         val savedPosition = _scrollPositionMemory.value[panelId]
         if (savedPosition != null) {
@@ -129,7 +128,7 @@ class AdvancedScrollingManager(
             }
         }
     }
-    
+
     /**
      * Unregister a scroll state
      */
@@ -139,51 +138,54 @@ class AdvancedScrollingManager(
         if (scrollState != null) {
             saveScrollPosition(panelId, 0, scrollState.value)
         }
-        
+
         _scrollStates.value = _scrollStates.value - panelId
         _minimapConfigs.value = _minimapConfigs.value - panelId
     }
-    
+
     /**
      * Perform momentum-based scrolling
      */
     suspend fun performMomentumScroll(
         panelId: String,
         initialVelocity: Float,
-        direction: ScrollDirection = ScrollDirection.VERTICAL
+        direction: ScrollDirection = ScrollDirection.VERTICAL,
     ) {
         val scrollState = _scrollStates.value[panelId] ?: return
         val config = _momentumScrollConfig.value
-        
+
         if (!config.enabled || abs(initialVelocity) < config.minVelocity) return
-        
+
         _activeScrollOperations.value = _activeScrollOperations.value + panelId
-        
+
         try {
             val clampedVelocity = initialVelocity.coerceIn(-config.maxVelocity, config.maxVelocity)
             val targetPosition = scrollState.value + (clampedVelocity * 0.5f).toInt()
             val clampedTarget = targetPosition.coerceIn(0, scrollState.maxValue)
-            
+
             // Animate to target position with easing
             scrollState.animateScrollTo(
                 value = clampedTarget,
-                animationSpec = config.easingSpec
+                animationSpec = config.easingSpec,
             )
-            
+
             // Synchronize with other panels if needed
             synchronizeScroll(panelId, clampedTarget, direction)
-            
         } finally {
             _activeScrollOperations.value = _activeScrollOperations.value - panelId
         }
     }
-    
+
     /**
      * Create a synchronized scroll group
      */
-    fun createSyncGroup(groupId: String, panelIds: Set<String>, syncMode: ScrollSyncMode) {
+    fun createSyncGroup(
+        groupId: String,
+        panelIds: Set<String>,
+        syncMode: ScrollSyncMode,
+    ) {
         _synchronizedGroups.value = _synchronizedGroups.value + (groupId to panelIds)
-        
+
         // Set up synchronization listeners
         panelIds.forEach { panelId ->
             val scrollState = _scrollStates.value[panelId]
@@ -199,33 +201,34 @@ class AdvancedScrollingManager(
             }
         }
     }
-    
+
     /**
      * Remove a synchronized scroll group
      */
     fun removeSyncGroup(groupId: String) {
         _synchronizedGroups.value = _synchronizedGroups.value - groupId
     }
-    
+
     /**
      * Synchronize scroll position across panels in the same group
      */
     private suspend fun synchronizeScroll(
         sourcePanelId: String,
         position: Int,
-        direction: ScrollDirection
+        direction: ScrollDirection,
     ) {
         val groups = _synchronizedGroups.value
-        val sourceGroup = groups.entries.find { (_, panelIds) -> sourcePanelId in panelIds }
-            ?: return
-        
+        val sourceGroup =
+            groups.entries.find { (_, panelIds) -> sourcePanelId in panelIds }
+                ?: return
+
         val targetPanels = sourceGroup.value - sourcePanelId
-        
+
         targetPanels.forEach { targetPanelId ->
             val targetScrollState = _scrollStates.value[targetPanelId]
             if (targetScrollState != null && targetPanelId !in _activeScrollOperations.value) {
                 _activeScrollOperations.value = _activeScrollOperations.value + targetPanelId
-                
+
                 try {
                     val targetPosition = position.coerceIn(0, targetScrollState.maxValue)
                     targetScrollState.animateScrollTo(targetPosition)
@@ -235,52 +238,60 @@ class AdvancedScrollingManager(
             }
         }
     }
-    
+
     /**
      * Save scroll position to memory
      */
-    fun saveScrollPosition(panelId: String, horizontalPosition: Int, verticalPosition: Int) {
-        val memory = ScrollPositionMemory(
-            panelId = panelId,
-            horizontalPosition = horizontalPosition,
-            verticalPosition = verticalPosition
-        )
-        
+    fun saveScrollPosition(
+        panelId: String,
+        horizontalPosition: Int,
+        verticalPosition: Int,
+    ) {
+        val memory =
+            ScrollPositionMemory(
+                panelId = panelId,
+                horizontalPosition = horizontalPosition,
+                verticalPosition = verticalPosition,
+            )
+
         _scrollPositionMemory.value = _scrollPositionMemory.value + (panelId to memory)
     }
-    
+
     /**
      * Restore scroll position from memory
      */
     suspend fun restoreScrollPosition(panelId: String): Boolean {
         val scrollState = _scrollStates.value[panelId] ?: return false
         val memory = _scrollPositionMemory.value[panelId] ?: return false
-        
+
         scrollState.animateScrollTo(memory.verticalPosition)
         return true
     }
-    
+
     /**
      * Clear scroll position memory for a panel
      */
     fun clearScrollMemory(panelId: String) {
         _scrollPositionMemory.value = _scrollPositionMemory.value - panelId
     }
-    
+
     /**
      * Configure minimap for a panel
      */
-    fun configureMinimap(panelId: String, config: MinimapConfig) {
+    fun configureMinimap(
+        panelId: String,
+        config: MinimapConfig,
+    ) {
         _minimapConfigs.value = _minimapConfigs.value + (panelId to config)
     }
-    
+
     /**
      * Update momentum scroll configuration
      */
     fun updateMomentumConfig(config: MomentumScrollConfig) {
         _momentumScrollConfig.value = config
     }
-    
+
     /**
      * Get scroll progress for a panel (0.0 to 1.0)
      */
@@ -288,13 +299,18 @@ class AdvancedScrollingManager(
         val scrollState = _scrollStates.value[panelId] ?: return 0f
         return if (scrollState.maxValue > 0) {
             scrollState.value.toFloat() / scrollState.maxValue.toFloat()
-        } else 0f
+        } else {
+            0f
+        }
     }
-    
+
     /**
      * Scroll to a specific progress (0.0 to 1.0)
      */
-    suspend fun scrollToProgress(panelId: String, progress: Float) {
+    suspend fun scrollToProgress(
+        panelId: String,
+        progress: Float,
+    ) {
         val scrollState = _scrollStates.value[panelId] ?: return
         val targetPosition = (progress * scrollState.maxValue).toInt()
         scrollState.animateScrollTo(targetPosition)
@@ -306,7 +322,7 @@ class AdvancedScrollingManager(
  */
 enum class ScrollDirection {
     HORIZONTAL,
-    VERTICAL
+    VERTICAL,
 }
 
 /**
@@ -320,11 +336,11 @@ fun AdvancedScrollableContent(
     enableMomentumScroll: Boolean = true,
     enableMinimap: Boolean = false,
     minimapConfig: MinimapConfig = MinimapConfig(),
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     val scrollState = rememberScrollState()
     val density = LocalDensity.current
-    
+
     // Register scroll state
     LaunchedEffect(panelId) {
         scrollingManager.registerScrollState(panelId, scrollState)
@@ -332,61 +348,62 @@ fun AdvancedScrollableContent(
             scrollingManager.configureMinimap(panelId, minimapConfig)
         }
     }
-    
+
     // Cleanup on disposal
     DisposableEffect(panelId) {
         onDispose {
             scrollingManager.unregisterScrollState(panelId)
         }
     }
-    
+
     var lastScrollTime by remember { mutableStateOf(0L) }
     var scrollVelocity by remember { mutableStateOf(0f) }
-    
+
     Box(modifier = modifier.fillMaxSize()) {
         // Main scrollable content
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .pointerInput(panelId) {
-                    if (enableMomentumScroll) {
-                        detectDragGestures(
-                            onDragEnd = {
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .pointerInput(panelId) {
+                        if (enableMomentumScroll) {
+                            detectDragGestures(
+                                onDragEnd = {
+                                    val currentTime = System.currentTimeMillis()
+                                    val timeDelta = currentTime - lastScrollTime
+
+                                    if (timeDelta > 0 && abs(scrollVelocity) > 50f) {
+                                        scrollingManager.scope.launch {
+                                            scrollingManager.performMomentumScroll(
+                                                panelId = panelId,
+                                                initialVelocity = scrollVelocity,
+                                            )
+                                        }
+                                    }
+                                },
+                            ) { _, dragAmount ->
                                 val currentTime = System.currentTimeMillis()
                                 val timeDelta = currentTime - lastScrollTime
-                                
-                                if (timeDelta > 0 && abs(scrollVelocity) > 50f) {
-                                    scrollingManager.scope.launch {
-                                        scrollingManager.performMomentumScroll(
-                                            panelId = panelId,
-                                            initialVelocity = scrollVelocity
-                                        )
-                                    }
+
+                                if (timeDelta > 0) {
+                                    scrollVelocity = dragAmount.y / (timeDelta / 1000f)
                                 }
+
+                                lastScrollTime = currentTime
                             }
-                        ) { _, dragAmount ->
-                            val currentTime = System.currentTimeMillis()
-                            val timeDelta = currentTime - lastScrollTime
-                            
-                            if (timeDelta > 0) {
-                                scrollVelocity = dragAmount.y / (timeDelta / 1000f)
-                            }
-                            
-                            lastScrollTime = currentTime
                         }
-                    }
-                }
+                    },
         ) {
             content()
         }
-        
+
         // Minimap overlay
         if (enableMinimap) {
             MinimapOverlay(
                 panelId = panelId,
                 scrollingManager = scrollingManager,
-                config = minimapConfig
+                config = minimapConfig,
             )
         }
     }
@@ -399,114 +416,118 @@ fun AdvancedScrollableContent(
 private fun BoxScope.MinimapOverlay(
     panelId: String,
     scrollingManager: AdvancedScrollingManager,
-    config: MinimapConfig
+    config: MinimapConfig,
 ) {
     val scrollProgress by remember {
         derivedStateOf { scrollingManager.getScrollProgress(panelId) }
     }
-    
+
     var isVisible by remember { mutableStateOf(true) }
     var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
-    
+
     // Auto-hide logic
     LaunchedEffect(scrollProgress) {
         if (config.autoHide) {
             lastInteractionTime = System.currentTimeMillis()
             isVisible = true
-            
+
             delay(config.autoHideDelay)
             if (System.currentTimeMillis() - lastInteractionTime >= config.autoHideDelay) {
                 isVisible = false
             }
         }
     }
-    
+
     val alpha by animateFloatAsState(
         targetValue = if (isVisible) config.opacity else 0f,
-        animationSpec = tween(300)
+        animationSpec = tween(300),
     )
-    
+
     if (alpha > 0f) {
-        val alignment = when (config.position) {
-            MinimapPosition.TOP_LEFT -> Alignment.TopStart
-            MinimapPosition.TOP_RIGHT -> Alignment.TopEnd
-            MinimapPosition.BOTTOM_LEFT -> Alignment.BottomStart
-            MinimapPosition.BOTTOM_RIGHT -> Alignment.BottomEnd
-        }
-        
+        val alignment =
+            when (config.position) {
+                MinimapPosition.TOP_LEFT -> Alignment.TopStart
+                MinimapPosition.TOP_RIGHT -> Alignment.TopEnd
+                MinimapPosition.BOTTOM_LEFT -> Alignment.BottomStart
+                MinimapPosition.BOTTOM_RIGHT -> Alignment.BottomEnd
+            }
+
         Card(
-            modifier = Modifier
-                .align(alignment)
-                .size(config.width, config.height)
-                .padding(16.dp)
-                .alpha(alpha)
-                .zIndex(10f),
+            modifier =
+                Modifier
+                    .align(alignment)
+                    .size(config.width, config.height)
+                    .padding(16.dp)
+                    .alpha(alpha)
+                    .zIndex(10f),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-            )
+            colors =
+                CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                ),
         ) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(4.dp)
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(4.dp),
             ) {
                 // Minimap background
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            MaterialTheme.colorScheme.surfaceVariant,
-                            RoundedCornerShape(4.dp)
-                        )
-                        .border(
-                            1.dp,
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                            RoundedCornerShape(4.dp)
-                        )
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                                RoundedCornerShape(4.dp),
+                            ).border(
+                                1.dp,
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                RoundedCornerShape(4.dp),
+                            ),
                 )
-                
+
                 // Viewport indicator
                 if (config.showViewport) {
                     val viewportHeight = 20.dp
                     val viewportTop = (config.height - 8.dp - viewportHeight) * scrollProgress
-                    
+
                     Box(
-                        modifier = Modifier
-                            .offset(y = viewportTop)
-                            .fillMaxWidth()
-                            .height(viewportHeight)
-                            .padding(horizontal = 2.dp)
-                            .background(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                                RoundedCornerShape(2.dp)
-                            )
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.primary,
-                                RoundedCornerShape(2.dp)
-                            )
-                            .pointerInput(panelId) {
-                                detectDragGestures { _, dragAmount ->
-                                    val newProgress = (scrollProgress + dragAmount.y / size.height)
-                                        .coerceIn(0f, 1f)
-                                    
-                                    scrollingManager.scope.launch {
-                                        scrollingManager.scrollToProgress(panelId, newProgress)
+                        modifier =
+                            Modifier
+                                .offset(y = viewportTop)
+                                .fillMaxWidth()
+                                .height(viewportHeight)
+                                .padding(horizontal = 2.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                                    RoundedCornerShape(2.dp),
+                                ).border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.primary,
+                                    RoundedCornerShape(2.dp),
+                                ).pointerInput(panelId) {
+                                    detectDragGestures { _, dragAmount ->
+                                        val newProgress =
+                                            (scrollProgress + dragAmount.y / size.height)
+                                                .coerceIn(0f, 1f)
+
+                                        scrollingManager.scope.launch {
+                                            scrollingManager.scrollToProgress(panelId, newProgress)
+                                        }
+
+                                        lastInteractionTime = System.currentTimeMillis()
                                     }
-                                    
-                                    lastInteractionTime = System.currentTimeMillis()
-                                }
-                            }
+                                },
                     )
                 }
-                
+
                 // Scroll progress indicator
                 Text(
                     text = "${(scrollProgress * 100).toInt()}%",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.align(Alignment.BottomCenter)
+                    modifier = Modifier.align(Alignment.BottomCenter),
                 )
             }
         }
@@ -520,75 +541,76 @@ private fun BoxScope.MinimapOverlay(
 fun ScrollSyncControls(
     scrollingManager: AdvancedScrollingManager,
     availablePanels: List<String>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val synchronizedGroups by scrollingManager.synchronizedGroups.collectAsState()
     var selectedPanels by remember { mutableStateOf(setOf<String>()) }
     var syncMode by remember { mutableStateOf(ScrollSyncMode.VERTICAL) }
-    
+
     Card(
         modifier = modifier.padding(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 text = "Scroll Synchronization",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
             )
-            
+
             // Panel selection
             Text(
                 text = "Select panels to synchronize:",
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
             )
-            
+
             availablePanels.forEach { panelId ->
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Checkbox(
                         checked = panelId in selectedPanels,
                         onCheckedChange = { checked ->
-                            selectedPanels = if (checked) {
-                                selectedPanels + panelId
-                            } else {
-                                selectedPanels - panelId
-                            }
-                        }
+                            selectedPanels =
+                                if (checked) {
+                                    selectedPanels + panelId
+                                } else {
+                                    selectedPanels - panelId
+                                }
+                        },
                     )
                     Text(
                         text = panelId,
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = Modifier.padding(start = 8.dp),
                     )
                 }
             }
-            
+
             // Sync mode selection
             Text(
                 text = "Synchronization mode:",
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
             )
-            
+
             ScrollSyncMode.values().forEach { mode ->
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     RadioButton(
                         selected = syncMode == mode,
-                        onClick = { syncMode = mode }
+                        onClick = { syncMode = mode },
                     )
                     Text(
                         text = mode.name,
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = Modifier.padding(start = 8.dp),
                     )
                 }
             }
-            
+
             // Create sync group button
             Button(
                 onClick = {
@@ -598,37 +620,37 @@ fun ScrollSyncControls(
                         selectedPanels = emptySet()
                     }
                 },
-                enabled = selectedPanels.size >= 2
+                enabled = selectedPanels.size >= 2,
             ) {
                 Text("Create Sync Group")
             }
-            
+
             // Active sync groups
             if (synchronizedGroups.isNotEmpty()) {
                 Text(
                     text = "Active sync groups:",
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = 8.dp),
                 )
-                
+
                 synchronizedGroups.forEach { (groupId, panelIds) ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = panelIds.joinToString(", "),
                             style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         )
-                        
+
                         IconButton(
-                            onClick = { scrollingManager.removeSyncGroup(groupId) }
+                            onClick = { scrollingManager.removeSyncGroup(groupId) },
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = "Remove sync group"
+                                contentDescription = "Remove sync group",
                             )
                         }
                     }
