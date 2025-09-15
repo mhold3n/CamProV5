@@ -11,11 +11,39 @@ New-Item -ItemType Directory -Path (Join-Path $Work 'content/ij-shared-indexes-t
 New-Item -ItemType Directory -Path (Join-Path $Work 'content/ij-shared-indexes-tool-cli/bin') -Force | Out-Null
 Set-Content -LiteralPath (Join-Path $Work 'content/.shared-indexes/index.info') -Value 'ok'
 Set-Content -LiteralPath (Join-Path $Work 'content/ij-shared-indexes-tool-cli/bin/ijSharedIndexesTool') -Value 'ok'
-# zip
-Compress-Archive -Path (Join-Path $Work 'content/.shared-indexes/*') -DestinationPath (Join-Path $Work 'artifacts/shared.zip') -Force
-Compress-Archive -Path (Join-Path $Work 'content/ij-shared-indexes-tool-data/*') -DestinationPath (Join-Path $Work 'artifacts/tool-data.zip') -Force
-Compress-Archive -Path (Join-Path $Work 'content/ij-shared-indexes-tool-cli/*') -DestinationPath (Join-Path $Work 'artifacts/cli.zip') -Force
-function Get-SHA256([string]$f){ (Get-FileHash -Algorithm SHA256 -LiteralPath $f).Hash.ToLower() }
+# zip with error handling
+Write-Host "Creating ZIP files..."
+try {
+    Compress-Archive -Path (Join-Path $Work 'content/.shared-indexes/*') -DestinationPath (Join-Path $Work 'artifacts/shared.zip') -Force
+    Write-Host "Created shared.zip"
+} catch {
+    Write-Error "Failed to create shared.zip: $_"
+    exit 1
+}
+
+try {
+    Compress-Archive -Path (Join-Path $Work 'content/ij-shared-indexes-tool-data/*') -DestinationPath (Join-Path $Work 'artifacts/tool-data.zip') -Force
+    Write-Host "Created tool-data.zip"
+} catch {
+    Write-Error "Failed to create tool-data.zip: $_"
+    exit 1
+}
+
+try {
+    Compress-Archive -Path (Join-Path $Work 'content/ij-shared-indexes-tool-cli/*') -DestinationPath (Join-Path $Work 'artifacts/cli.zip') -Force
+    Write-Host "Created cli.zip"
+} catch {
+    Write-Error "Failed to create cli.zip: $_"
+    exit 1
+}
+
+function Get-SHA256([string]$f){ 
+    if (-not (Test-Path -LiteralPath $f)) {
+        Write-Error "File not found for hash calculation: $f"
+        exit 1
+    }
+    (Get-FileHash -Algorithm SHA256 -LiteralPath $f).Hash.ToLower()
+}
 $shaShared = Get-SHA256 (Join-Path $Work 'artifacts/shared.zip')
 $shaData = Get-SHA256 (Join-Path $Work 'artifacts/tool-data.zip')
 $shaCli = Get-SHA256 (Join-Path $Work 'artifacts/cli.zip')

@@ -10,11 +10,24 @@ echo "ok" > "$WORK/content/.shared-indexes/index.info"
 # Add minimal placeholder so zip has content
 echo "ok" > "$WORK/content/ij-shared-indexes-tool-data/.keep"
 echo "ok" > "$WORK/content/ij-shared-indexes-tool-cli/bin/ijSharedIndexesTool"
-# zip them
-( cd "$WORK/content/.shared-indexes" && zip -qr "$WORK/artifacts/shared.zip" . )
-( cd "$WORK/content/ij-shared-indexes-tool-data" && zip -qr "$WORK/artifacts/tool-data.zip" . )
-( cd "$WORK/content/ij-shared-indexes-tool-cli" && zip -qr "$WORK/artifacts/cli.zip" . )
-sha() { if command -v sha256sum >/dev/null; then sha256sum "$1"|awk '{print $1}'; else shasum -a 256 "$1"|awk '{print $1}'; fi }
+# zip them with error handling
+echo "Creating ZIP files..."
+( cd "$WORK/content/.shared-indexes" && zip -qr "$WORK/artifacts/shared.zip" . ) || { echo "Failed to create shared.zip" >&2; exit 1; }
+echo "Created shared.zip"
+( cd "$WORK/content/ij-shared-indexes-tool-data" && zip -qr "$WORK/artifacts/tool-data.zip" . ) || { echo "Failed to create tool-data.zip" >&2; exit 1; }
+echo "Created tool-data.zip"
+( cd "$WORK/content/ij-shared-indexes-tool-cli" && zip -qr "$WORK/artifacts/cli.zip" . ) || { echo "Failed to create cli.zip" >&2; exit 1; }
+echo "Created cli.zip"
+
+sha() { 
+  local file="$1"
+  [[ -f "$file" ]] || { echo "File not found for hash calculation: $file" >&2; exit 1; }
+  if command -v sha256sum >/dev/null; then 
+    sha256sum "$file"|awk '{print $1}'
+  else 
+    shasum -a 256 "$file"|awk '{print $1}'
+  fi
+}
 SHA_SHARED=$(sha "$WORK/artifacts/shared.zip")
 SHA_DATA=$(sha "$WORK/artifacts/tool-data.zip")
 SHA_CLI=$(sha "$WORK/artifacts/cli.zip")
