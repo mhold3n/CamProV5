@@ -31,12 +31,19 @@ jobs:
         if: hashFiles('setup.py') != ''
         run: python -m pip install -e .
 
+      - name: Install additional test dependencies
+        run: |
+          python -m pip install pytest
+
+      - name: Install Rust (if Rust components exist)
+        if: hashFiles('Cargo.toml') != '' || hashFiles('camprofw/rust/**') != ''
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Run pytest (if tests present)
         if: hashFiles('tests/**') != ''
+        shell: bash
         env:
           PYTHONUNBUFFERED: "1"
           PYTHONDONTWRITEBYTECODE: "1"
         run: |
-          set -euo pipefail
-          python -m pip install pytest
-          pytest -q tests
+          pytest -v tests --tb=short

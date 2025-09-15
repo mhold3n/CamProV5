@@ -64,7 +64,7 @@ def test_complete_workflow():
         logger.info("  ✓ Motion law created successfully")
     except Exception as e:
         logger.error(f"  ✗ Failed to create motion law: {e}")
-        return False
+        assert False, f"Failed to create motion law: {e}"
     
     # Step 2: Analyze kinematics
     logger.info("Step 2: Analyzing kinematics...")
@@ -73,7 +73,7 @@ def test_complete_workflow():
         logger.info("  ✓ Kinematics analyzed successfully")
     except Exception as e:
         logger.error(f"  ✗ Failed to analyze kinematics: {e}")
-        return False
+        assert False, f"Failed to analyze kinematics: {e}"
     
     # Step 3: Export parameters for FEA
     logger.info("Step 3: Exporting parameters for FEA...")
@@ -100,10 +100,10 @@ def test_complete_workflow():
             logger.info("  ✓ Parameters exported successfully")
         else:
             logger.error("  ✗ Exported parameters do not match original parameters")
-            return False
+            assert False, "Exported parameters do not match original parameters"
     except Exception as e:
         logger.error(f"  ✗ Failed to export parameters: {e}")
-        return False
+        assert False, f"Failed to export parameters: {e}"
     
     # Step 4: Run FEA simulation
     logger.info("Step 4: Running FEA simulation...")
@@ -156,10 +156,10 @@ def test_complete_workflow():
                     logger.info("  ✓ Simulation results are valid")
                 else:
                     logger.error("  ✗ Simulation results are invalid")
-                    return False
+                    assert False, "Test step failed"
             else:
                 logger.error(f"  ✗ FEA simulation failed: {result.stderr}")
-                return False
+                assert False, "Test step failed"
         else:
             logger.warning("  ! FEA binary not found, skipping simulation")
         
@@ -171,7 +171,7 @@ def test_complete_workflow():
                 pass
     except Exception as e:
         logger.error(f"  ✗ Failed to run FEA simulation: {e}")
-        return False
+        assert False, "Test step failed"
     
     # Step 5: Generate visualization data
     logger.info("Step 5: Generating visualization data...")
@@ -225,7 +225,7 @@ def test_complete_workflow():
         logger.info("  ✓ Visualization data generated successfully")
     except Exception as e:
         logger.error(f"  ✗ Failed to generate visualization data: {e}")
-        return False
+        assert False, "Test step failed"
     
     # Step 6: Export SVG
     logger.info("Step 6: Exporting SVG...")
@@ -244,10 +244,10 @@ def test_complete_workflow():
         logger.info("  ✓ SVG exported successfully")
     except Exception as e:
         logger.error(f"  ✗ Failed to export SVG: {e}")
-        return False
+        assert False, "Test step failed"
     
     logger.info("✓ Complete application workflow test passed!")
-    return True
+    # Test passed successfully
 
 def test_data_flow():
     """Test the data flow from input to visualization."""
@@ -270,7 +270,7 @@ def test_data_flow():
         logger.info("  ✓ Motion law created successfully")
     except Exception as e:
         logger.error(f"  ✗ Failed to create motion law: {e}")
-        return False
+        assert False, "Test step failed"
     
     # Step 2: Generate displacement, velocity, acceleration, and jerk data
     logger.info("Step 2: Generating kinematic data...")
@@ -284,7 +284,7 @@ def test_data_flow():
         logger.info("  ✓ Kinematic data generated successfully")
     except Exception as e:
         logger.error(f"  ✗ Failed to generate kinematic data: {e}")
-        return False
+        assert False, "Test step failed"
     
     # Step 3: Verify data consistency
     logger.info("Step 3: Verifying data consistency...")
@@ -297,7 +297,7 @@ def test_data_flow():
             logger.info("  ✓ Data has the expected shape")
         else:
             logger.error("  ✗ Data does not have the expected shape")
-            return False
+            assert False, "Test step failed"
         
         # Check that the displacement is within the expected range
         if (np.min(displacement) >= 0 and
@@ -305,7 +305,7 @@ def test_data_flow():
             logger.info("  ✓ Displacement is within the expected range")
         else:
             logger.error("  ✗ Displacement is not within the expected range")
-            return False
+            assert False, "Test step failed"
         
         # Check that the velocity is zero at the dwell points
         dwell_start = params.rise_duration
@@ -318,12 +318,12 @@ def test_data_flow():
                 logger.info("  ✓ Velocity is zero at the dwell points")
             else:
                 logger.error("  ✗ Velocity is not zero at the dwell points")
-                return False
+                assert False, "Test step failed"
         
         logger.info("  ✓ Data consistency verified")
     except Exception as e:
         logger.error(f"  ✗ Failed to verify data consistency: {e}")
-        return False
+        assert False, "Test step failed"
     
     # Step 4: Save data for visualization
     logger.info("Step 4: Saving data for visualization...")
@@ -342,10 +342,10 @@ def test_data_flow():
         logger.info("  ✓ Data saved successfully")
     except Exception as e:
         logger.error(f"  ✗ Failed to save data: {e}")
-        return False
+        assert False, "Test step failed"
     
     logger.info("✓ Data flow test passed!")
-    return True
+    # Test passed successfully
 
 def test_computation_triggering():
     """Test the computation triggering and result handling."""
@@ -365,7 +365,7 @@ def test_computation_triggering():
         logger.info("  ✓ Test parameters created successfully")
     except Exception as e:
         logger.error(f"  ✗ Failed to create test parameters: {e}")
-        return False
+        assert False, "Test step failed"
     
     # Step 2: Trigger computation
     logger.info("Step 2: Triggering computation...")
@@ -379,7 +379,7 @@ def test_computation_triggering():
         logger.info("  ✓ Computation triggered successfully")
     except Exception as e:
         logger.error(f"  ✗ Failed to trigger computation: {e}")
-        return False
+        assert False, "Test step failed"
     
     # Step 3: Handle results
     logger.info("Step 3: Handling results...")
@@ -415,10 +415,10 @@ def test_computation_triggering():
         logger.info("  ✓ Results handled successfully")
     except Exception as e:
         logger.error(f"  ✗ Failed to handle results: {e}")
-        return False
+        assert False, "Test step failed"
     
     logger.info("✓ Computation triggering and result handling test passed!")
-    return True
+    # Test passed successfully
 
 def test_export_functionality():
     """Test the export functionality."""
@@ -438,7 +438,7 @@ def test_export_functionality():
         logger.info("  ✓ Test parameters created successfully")
     except Exception as e:
         logger.error(f"  ✗ Failed to create test parameters: {e}")
-        return False
+        assert False, "Test step failed"
     
     # Step 2: Export parameters to JSON
     logger.info("Step 2: Exporting parameters to JSON...")
@@ -465,10 +465,10 @@ def test_export_functionality():
             logger.info("  ✓ Parameters exported to JSON successfully")
         else:
             logger.error("  ✗ Exported JSON parameters do not match original parameters")
-            return False
+            assert False, "Test step failed"
     except Exception as e:
         logger.error(f"  ✗ Failed to export parameters to JSON: {e}")
-        return False
+        assert False, "Test step failed"
     
     # Step 3: Export parameters to TOML
     logger.info("Step 3: Exporting parameters to TOML...")
@@ -491,10 +491,10 @@ def test_export_functionality():
             logger.info("  ✓ Parameters exported to TOML successfully")
         else:
             logger.error("  ✗ Exported TOML parameters do not match original parameters")
-            return False
+            assert False, "Test step failed"
     except Exception as e:
         logger.error(f"  ✗ Failed to export parameters to TOML: {e}")
-        return False
+        assert False, "Test step failed"
     
     # Step 4: Export SVG
     logger.info("Step 4: Exporting SVG...")
@@ -516,13 +516,13 @@ def test_export_functionality():
             logger.info("  ✓ SVG exported successfully")
         else:
             logger.error("  ✗ Failed to export SVG")
-            return False
+            assert False, "Test step failed"
     except Exception as e:
         logger.error(f"  ✗ Failed to export SVG: {e}")
-        return False
+        assert False, "Test step failed"
     
     logger.info("✓ Export functionality test passed!")
-    return True
+    # Test passed successfully
 
 def test_end_to_end():
     """Run the end-to-end headless tests."""

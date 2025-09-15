@@ -12,14 +12,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install zip tool
-        run: sudo apt-get update && sudo apt-get install -y zip
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y zip gpg curl
+      - name: Setup smoke test environment
+        run: |
+          mkdir -p .smoke-shared-indexes/artifacts
+          # Create placeholder checksum files if missing
+          for file in shared.zip tool-data.zip cli.zip; do
+            touch ".smoke-shared-indexes/artifacts/${file}.sha256"
+          done
       - name: Run smoke
         run: bash scripts/ci/smoke-shared-indexes.sh
   smoke-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup smoke test environment
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path ".smoke-shared-indexes/artifacts"
+          # Create placeholder checksum files
+          @("shared.zip.sha256", "tool-data.zip.sha256", "cli.zip.sha256") | ForEach-Object {
+            New-Item -ItemType File -Force -Path ".smoke-shared-indexes/artifacts/$_"
+          }
       - name: Run smoke
         shell: pwsh
         run: |
