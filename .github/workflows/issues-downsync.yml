@@ -53,17 +53,32 @@ jobs:
 
           write_issue() {
             local num="$1"
-            issue_json=$(gh api repos/$REPO/issues/$num)
-            title=$(jq -r '.title' <<<"$issue_json")
-            state=$(jq -r '.state' <<<"$issue_json")
+            echo "Processing issue #$num..."
+            
+            # Add error handling for GitHub API calls
+            if ! issue_json=$(gh api repos/$REPO/issues/$num 2>/dev/null); then
+              echo "WARNING: Failed to fetch issue #$num, skipping..."
+              return 0
+            fi
+            
+            # Validate JSON response
+            if ! echo "$issue_json" | jq empty 2>/dev/null; then
+              echo "WARNING: Invalid JSON response for issue #$num, skipping..."
+              return 0
+            fi
+            
+            title=$(jq -r '.title // "Untitled"' <<<"$issue_json")
+            state=$(jq -r '.state // "open"' <<<"$issue_json")
             body=$(jq -r '.body // ""' <<<"$issue_json")
-            labels=$(jq -r '[.labels[].name]' <<<"$issue_json")
-            assignees=$(jq -r '[.assignees[].login]' <<<"$issue_json")
+            labels=$(jq -r '[.labels[].name] // []' <<<"$issue_json")
+            assignees=$(jq -r '[.assignees[].login] // []' <<<"$issue_json")
             milestone=$(jq -r '.milestone.title // empty' <<<"$issue_json")
-            created=$(jq -r '.created_at' <<<"$issue_json")
-            updated=$(jq -r '.updated_at' <<<"$issue_json")
-            url=$(jq -r '.html_url' <<<"$issue_json")
-            etag=$(gh api -i repos/$REPO/issues/$num | awk 'BEGIN{IGNORECASE=1} /^etag:/{print $2; exit}')
+            created=$(jq -r '.created_at // ""' <<<"$issue_json")
+            updated=$(jq -r '.updated_at // ""' <<<"$issue_json")
+            url=$(jq -r '.html_url // ""' <<<"$issue_json")
+            
+            # Make etag optional and handle errors
+            etag=$(gh api -i repos/$REPO/issues/$num 2>/dev/null | awk 'BEGIN{IGNORECASE=1} /^etag:/{print $2; exit}' || echo "")
 
             file=".junie/issues/${num}.md"
             {
@@ -88,22 +103,29 @@ jobs:
             printf 'See ../%s.md\n' "$num" > ".junie/issues/aliases/${num}-${slug}.md"
 
             mkdir -p ".junie/comments/$num"
-            gh api repos/$REPO/issues/$num/comments --paginate | jq -c '.[]' | while read -r c; do
-              ccreated=$(jq -r '.created_at' <<<"$c")
-              cauthor=$(jq -r '.user.login' <<<"$c")
-              cbody=$(jq -r '.body // ""' <<<"$c")
-              cid=$(jq -r '.id' <<<"$c")
-              fname=".junie/comments/$num/${ccreated}_${cauthor}_${cid}.md"
-              {
-                echo '---'
-                echo "author: $cauthor"
-                echo "created_at: $ccreated"
-                echo "id: $cid"
-                echo '---'
-                echo
-                printf '%s\n' "$cbody"
-              } > "$fname"
-            done
+            # Handle comments API with error handling
+            if comments_json=$(gh api repos/$REPO/issues/$num/comments --paginate 2>/dev/null); then
+              echo "$comments_json" | jq -c '.[]' 2>/dev/null | while read -r c; do
+                ccreated=$(jq -r '.created_at // ""' <<<"$c")
+                cauthor=$(jq -r '.user.login // "unknown"' <<<"$c")
+                cbody=$(jq -r '.body // ""' <<<"$c")
+                cid=$(jq -r '.id // ""' <<<"$c")
+                fname=".junie/comments/$num/${ccreated}_${cauthor}_${cid}.md"
+                {
+                  echo '---'
+                  echo "author: $cauthor"
+                  echo "created_at: $ccreated"
+                  echo "id: $cid"
+                  echo '---'
+                  echo
+                  printf '%s\n' "$cbody"
+                } > "$fname"
+              done
+            else
+              echo "WARNING: Failed to fetch comments for issue #$num"
+            fi
+            
+            echo "Successfully processed issue #$num"
           }
 
           # Handle different event types

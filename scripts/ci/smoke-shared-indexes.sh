@@ -31,6 +31,23 @@ sha() {
 SHA_SHARED=$(sha "$WORK/artifacts/shared.zip")
 SHA_DATA=$(sha "$WORK/artifacts/tool-data.zip")
 SHA_CLI=$(sha "$WORK/artifacts/cli.zip")
+
+# Create the .sha256 checksum files that setup/update scripts expect
+echo "Creating checksum files for compatibility..."
+echo "$SHA_SHARED" > "$WORK/artifacts/shared.zip.sha256"
+echo "$SHA_DATA" > "$WORK/artifacts/tool-data.zip.sha256" 
+echo "$SHA_CLI" > "$WORK/artifacts/cli.zip.sha256"
+
+# Verify checksum files were created
+for checksum_file in "$WORK/artifacts/"*.sha256; do
+    if [[ -f "$checksum_file" ]]; then
+        echo "Created checksum file: $(basename "$checksum_file")"
+    else
+        echo "ERROR: Failed to create checksum file: $checksum_file" >&2
+        exit 1
+    fi
+done
+
 # manifest
 cat > "$ROOT/.junie/config/ci-shared-indexes.yaml" <<YAML
 installRootName: github
