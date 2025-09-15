@@ -84,7 +84,17 @@ if [[ -z "$MANIFEST" && -f "$REPO_ROOT/.junie/config/shared-indexes.yaml" ]]; th
 
 sha256_file(){ if command -v sha256sum>/dev/null; then sha256sum "$1"|awk '{print $1}'; else shasum -a 256 "$1"|awk '{print $1}'; fi }
 _download(){ if command -v curl>/dev/null; then curl -fsSL "$1" -o "$2"; elif command -v wget>/dev/null; then wget -q "$1" -O "$2"; else err "curl/wget not available"; fi }
-_fetch_sidecar_sha256(){ local url="$1"; local arc="$2"; local side="${arc}.sha256"; { curl -fsSL "${url}.sha256" -o "$side" || wget -q "${url}.sha256" -O "$side" || true; } >/dev/null 2>&1; [[ -f "$side" ]] && awk '{print $1}' "$side" || true }
+_fetch_sidecar_sha256(){
+  local url="$1"
+  local arc="$2"
+  local side="${arc}.sha256"
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "${url}.sha256" -o "$side" || true
+  elif command -v wget >/dev/null 2>&1; then
+    wget -q "${url}.sha256" -O "$side" || true
+  fi
+  if [[ -f "$side" ]]; then awk '{print $1}' "$side"; fi
+}
 _verify_gpg(){ local arc="$1"; if command -v gpg >/dev/null 2>&1; then if [[ -f "${arc}.asc" ]]; then gpg --verify "${arc}.asc" "$arc" >/dev/null 2>&1 || err "GPG signature verification failed for $arc"; fi else warn "gpg not found; skipping signature verification for $arc"; fi }
 _extract(){ local arc="$1" dst="$2"; mkdir -p "$dst"; case "$arc" in
   *.zip) unzip -q -o "$arc" -d "$dst";;
@@ -107,35 +117,39 @@ parse_manifest_assets(){ local file="$1"; [[ -f "$file" ]] || return 0
   if grep -q '^platforms:' "$file"; then
     awk -v PLAT="$plat" '
       BEGIN{inplat=0;inassets=0;dir="";url="";sha=""}
-      /^\s*platforms:/ {inplat=0; next}
-      { if ($0 ~ "^\\s*" PLAT ":") {inplat=1; next} }
-      { if (inplat && $0 ~ /^\s*assets:/) {inassets=1; next} }
-      { if (inplat && inassets && $0 ~ /^\s*-\s*dir:/) {dir=$2} }
-      { if (inplat && inassets && $0 ~ /^\s*url:/) {url=$2} }
-      { if (inplat && inassets && $0 ~ /^\s*sha256:/) {sha=$2} }
-      { if (inplat && inassets && dir!="" && url!="" && ($0 ~ /sha256:/ || $0 ~ /^\s*-\s*dir:/)) { print dir"|"url"|"sha; url=""; sha="" } }
+      /^[[:space:]]*platforms:/ {inplat=0; next}
+      { if ($0 ~ "^[[:space:]]*" PLAT ":") {inplat=1; next} }
+      { if (inplat && $0 ~ /^[[:space:]]*assets:/) {inassets=1; next} }
+      { if (inplat && inassets && $0 ~ /^[[:space:]]*-[[:space:]]*dir:/) {dir=$3} }
+      { if (inplat && inassets && $0 ~ /^[[:space:]]*url:/) {url=$2} }
+      { if (inplat && inassets && $0 ~ /^[[:space:]]*sha256:/) {sha=$2} }
+      { if (inplat && inassets && dir!="" && url!="" && ($0 ~ /sha256:/ || $0 ~ /^[[:space:]]*-[[:space:]]*dir:/)) { print dir"|"url"|"sha; url=""; sha="" } }
     ' "$file" | sed 's/"//g' | sed "s/{{channel}}/${channel}/g" | sed "s/{{version}}/${ver_token}/g"
     return 0
   fi
   # Fallback: flat assets
   awk '
     BEGIN{d="";u="";s=""}
-    /^\s*-\s*dir:/ { d=$2 }
-    /^\s*url:/ { u=$2 }
-    /^\s*sha256:/ { s=$2 }
-    { if (d!="" && u!="" && ($0 ~ /sha256:/ || $0 ~ /^\s*-\s*dir:/)) { print d"|"u"|"s; u=""; s="" } }
+    /^[[:space:]]*-[[:space:]]*dir:/ { d=$3 }
+    /^[[:space:]]*url:/ { u=$2 }
+    /^[[:space:]]*sha256:/ { s=$2 }
+    { if (d!="" && u!="" && ($0 ~ /sha256:/ || $0 ~ /^[[:space:]]*-[[:space:]]*dir:/)) { print d"|"u"|"s; u=""; s="" } }
     END{ if (d!="" && u!="") print d"|"u"|"s }
   ' "$file" | sed 's/"//g'
 }
 
 # Outputs expected markers as lines: dir|relative_path
-parse_manifest_expected_files(){ local file="$1"; [[ -f "$file" ]] || return 0; awk '
-  BEGIN{exp=0;dir=""}
-  /^\s*expectedFiles:/ {exp=1; next}
-  exp && /^\s*[A-Za-z0-9._-]+:/ { dir=$1; sub(":","",dir); next }
-  exp && /^\s*-\s*/ { f=$2; print dir"|"f; next }
-  exp && /^\s*assets:/ {exp=0}
-' "$file" | sed 's/"//g' }
+parse_manifest_expected_files(){
+  local file="$1"
+  [[ -f "$file" ]] || return 0
+  awk '
+    BEGIN{ine=0;dir=""}
+    /^[[:space:]]*expectedFiles:/ {ine=1; next}
+    ine && /^[[:space:]]*[A-Za-z0-9._-]+:/ { dir=$1; sub(":","",dir); next }
+    ine && /^[[:space:]]*-\s*/ { f=$2; print dir"|"f; next }
+    ine && /^[[:space:]]*assets:/ {ine=0}
+  ' "$file" | sed 's/"//g'
+}
 
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 

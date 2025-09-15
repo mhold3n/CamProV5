@@ -153,11 +153,11 @@ PY
     *)
       awk '
         BEGIN{dir="";url="";sha=""}
-        /^\s*-\s*dir:/ { gsub(/\r/,"",$0); dir=$2 }
-        /^\s*url:/ { url=$2 }
-        /^\s*sha256:/ { sha=$2 }
-        { if (dir!="" && url!="" && ($0 ~ /sha256:/ || $0 ~ /^\s*-\s*dir:/)) { print dir"|"url"|"sha; url=""; sha="" } }
-        END{ if (dir!="" && url!="") print dir"|"url"|"sha" }
+        /^[[:space:]]*-[[:space:]]*dir:/ { gsub(/\r/,"",$0); dir=$3 }
+        /^[[:space:]]*url:/ { url=$2 }
+        /^[[:space:]]*sha256:/ { sha=$2 }
+        { if (dir!="" && url!="" && ($0 ~ /sha256:/ || $0 ~ /^[[:space:]]*-[[:space:]]*dir:/)) { print dir"|"url"|"sha; url=""; sha="" } }
+        END{ if (dir!="" && url!="") print dir"|"url"|"sha }
       ' "$file" | sed 's/"//g'
       ;;
   esac
@@ -184,11 +184,11 @@ PY
       ;;
     *)
       awk '
-        BEGIN{exp=0;dir=""}
-        /^\s*expectedFiles:/ {exp=1; next}
-        exp && /^\s*[A-Za-z0-9._-]+:/ { dir=$1; sub(":","",dir); gsub(/^\s+|\s+$/,"",dir); next }
-        exp && /^\s*-\s*/ { f=$2; print dir"|"f; next }
-        exp && /^\s*assets:/ {exp=0}
+        BEGIN{ine=0;dir=""}
+        /^[[:space:]]*expectedFiles:/ {ine=1; next}
+        ine && /^[[:space:]]*[A-Za-z0-9._-]+:/ { dir=$1; sub(":","",dir); gsub(/^[[:space:]]+|[[:space:]]+$/,"",dir); next }
+        ine && /^[[:space:]]*-\s*/ { f=$2; print dir"|"f; next }
+        ine && /^[[:space:]]*assets:/ {ine=0}
       ' "$file" | sed 's/"//g'
       ;;
   esac
@@ -255,7 +255,7 @@ for d in "${DIRS[@]}"; do
     if $CREATE_MISSING; then if $DRY_RUN; then log "[dry-run] mkdir -p $TGT"; else log "Creating missing target directory: $TGT"; mkdir -p "$TGT"; fi; else warn "Target missing (will link anyway): $TGT"; fi
   fi
 
-  REL_TO_INSTALL="../$(basename "$INSTALL_ROOT")"; LINK_TARGET="$REL_TO_INSTALL/$d"
+  LINK_TARGET="$INSTALL_ROOT/$d"
   if $DRY_RUN; then log "[dry-run] link $REPO_ROOT/$d -> $LINK_TARGET"; else log "Linking $d -> $LINK_TARGET"; ln -snf "$LINK_TARGET" "$REPO_ROOT/$d"; fi
 
   if ! $DRY_RUN; then

@@ -7,6 +7,8 @@ rm -rf "$WORK" && mkdir -p "$WORK/artifacts" "$ROOT/.junie/config"
 # create tiny content
 mkdir -p "$WORK/content/.shared-indexes" "$WORK/content/ij-shared-indexes-tool-data" "$WORK/content/ij-shared-indexes-tool-cli/bin"
 echo "ok" > "$WORK/content/.shared-indexes/index.info"
+# Add minimal placeholder so zip has content
+echo "ok" > "$WORK/content/ij-shared-indexes-tool-data/.keep"
 echo "ok" > "$WORK/content/ij-shared-indexes-tool-cli/bin/ijSharedIndexesTool"
 # zip them
 ( cd "$WORK/content/.shared-indexes" && zip -qr "$WORK/artifacts/shared.zip" . )
@@ -36,14 +38,19 @@ assets:
     sha256: $SHA_CLI
 YAML
 # Run setup to populate and link (INSTALL_ROOT is parent named github in CI? override to workspace)
-bash scripts/setup-shared-indexes.sh --install-root "$ROOT" --download-manifest "$ROOT/.junie/config/ci-shared-indexes.yaml" --yes --quiet
+IR="$(cd "$ROOT/.." && pwd)"
+bash scripts/setup-shared-indexes.sh --install-root "$IR" --download-manifest "$ROOT/.junie/config/ci-shared-indexes.yaml" --yes --quiet
 # Run update to version ci-smoke-1
-bash scripts/update-shared-indexes.sh --install-root "$ROOT" --manifest "$ROOT/.junie/config/ci-shared-indexes.yaml" --version ci-smoke-1 --set-current --rollback-on-fail --yes --quiet
+bash scripts/update-shared-indexes.sh --install-root "$IR" --manifest "$ROOT/.junie/config/ci-shared-indexes.yaml" --version ci-smoke-1 --set-current --rollback-on-fail --yes --quiet
 # Validate aliases
 for d in .shared-indexes ij-shared-indexes-tool-data ij-shared-indexes-tool-cli; do
   [[ -L "$ROOT/$d" ]] || { echo "alias missing $d" >&2; exit 1; }
-  tgt=$(readlink "$ROOT/$d")
-  [[ "$tgt" == "$d-ci-smoke-1" ]] || { echo "alias not pointing to version for $d: $tgt" >&2; exit 1; }
-  [[ -d "$ROOT/${d}-ci-smoke-1" ]] || { echo "version dir missing: $ROOT/${d}-ci-smoke-1" >&2; exit 1; }
+  tgt1=$(readlink "$ROOT/$d")
+  expected1="$IR/$d"
+  [[ "$tgt1" == "$expected1" ]] || { echo "repo link not pointing to install-root alias for $d: $tgt1 (expected $expected1)" >&2; exit 1; }
+  [[ -L "$IR/$d" ]] || { echo "install-root alias missing for $d: $IR/$d" >&2; exit 1; }
+  tgt2=$(readlink "$IR/$d")
+  [[ "$tgt2" == "${d}-ci-smoke-1" ]] || { echo "install-root alias not pointing to version for $d: $tgt2" >&2; exit 1; }
+  [[ -d "$IR/${d}-ci-smoke-1" ]] || { echo "version dir missing: $IR/${d}-ci-smoke-1" >&2; exit 1; }
 done
 echo "[SMOKE] OK"
