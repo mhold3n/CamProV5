@@ -19,23 +19,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          token: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-      
-      - name: Configure git credentials
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:$GITHUB_TOKEN@github.com/${{ github.repository }}
       
       - name: Ensure bot branch exists and checkout
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
           if git ls-remote --exit-code --heads origin bot/issue-sync >/dev/null 2>&1; then
             git fetch origin bot/issue-sync:bot/issue-sync
             git switch bot/issue-sync
@@ -51,7 +45,6 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -y && sudo apt-get install -y jq gh
-          gh --version || true
           mkdir -p .junie/issues .junie/comments .junie/issues/aliases
 
           write_issue() {
@@ -109,16 +102,16 @@ jobs:
             done
           }
 
+          # Prevent infinite loops by limiting scheduled runs
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            page=1
-            while :; do
-              list=$(gh api repos/$REPO/issues -f state=all -f per_page=100 -f page=$page)
-              count=$(jq 'length' <<<"$list")
-              [ "$count" -eq 0 ] && break
+            # Only sync last 25 updated issues in scheduled runs
+            list=$(gh api repos/$REPO/issues -f state=all -f per_page=25 -f sort=updated)
+            count=$(jq 'length' <<<"$list")
+            if [ "$count" -gt 0 ]; then
               jq -r '.[].number' <<<"$list" | while read num; do write_issue "$num"; done
-              page=$((page+1))
-            done
+            fi
           else
+            # Event-driven: sync specific issue
             if [ -n "${{ github.event.issue.number }}" ]; then
               write_issue "${{ github.event.issue.number }}"
             elif [ -n "${{ github.event.comment.issue_url }}" ]; then
@@ -134,3 +127,6 @@ jobs:
           commit_message: "chore(junie): sync issues → files [junie-mirror]"
           branch: bot/issue-sync
           file_pattern: .junie/issues/** .junie/comments/**
+          commit_user_name: github-actions[bot]
+          commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit_author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
