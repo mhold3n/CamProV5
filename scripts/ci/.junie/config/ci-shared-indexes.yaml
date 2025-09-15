@@ -1,0 +1,16 @@
+installRootName: github
+expectedFiles:
+  .shared-indexes:
+    - index.info
+  ij-shared-indexes-tool-cli:
+    - bin/ijSharedIndexesTool
+assets:
+  - dir: .shared-indexes
+    url: file:///Users/maxholden/Documents/GitHub/CamProV5/scripts/ci/.smoke-shared-indexes/artifacts/shared.zip
+    sha256: f6d6c85c3af5d6108c6ce5fcd4a63e048107d72d82fb1c72d05484a475994a88
+  - dir: ij-shared-indexes-tool-data
+    url: file:///Users/maxholden/Documents/GitHub/CamProV5/scripts/ci/.smoke-shared-indexes/artifacts/tool-data.zip
+    sha256: b8fc9e5e1f4353015665b4307492ddf19e2a2e343ec1c7271b1cc955989a285d
+  - dir: ij-shared-indexes-tool-cli
+    url: file:///Users/maxholden/Documents/GitHub/CamProV5/scripts/ci/.smoke-shared-indexes/artifacts/cli.zip
+    sha256: 0041d528e505b49a74d5ff4e8e91f830a6369f217839e2823640b39b6269d1e9

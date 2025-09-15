@@ -1,0 +1,5 @@
+[console_scripts]
+campro = campro.main:main
+campro-test-scenarios = campro.testing.create_scenarios:main
+campro-test-session = campro.testing.start_agent_session:main
+campro-test-setup = campro.testing.setup_agent:main

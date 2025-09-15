@@ -1,0 +1,12 @@
+numpy>=1.20.0
+matplotlib>=3.4.0
+scipy>=1.6.0
+pandas>=1.2.0
+PyQt5>=5.15.0
+PyQtChart>=5.15.0
+tqdm>=4.60.0
+colorama>=0.4.4
+
+[dev]
+pytest>=6.2.0
+pytest-qt>=4.0.0
