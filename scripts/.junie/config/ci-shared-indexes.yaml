@@ -7,10 +7,10 @@ expectedFiles:
 assets:
   - dir: .shared-indexes
     url: file:///Users/maxholden/Documents/GitHub/CamProV5/scripts/.smoke-shared-indexes/artifacts/shared.zip
-    sha256: 3fd5b315421f97f436de3582fda379f7512e3af0290e7dc861760b66c6b79468
+    sha256: 042a033d7b1147bf1bb9577bb0bdb98d0134dba11cb4ef6a203903ae4c8b3f8a
   - dir: ij-shared-indexes-tool-data
     url: file:///Users/maxholden/Documents/GitHub/CamProV5/scripts/.smoke-shared-indexes/artifacts/tool-data.zip
-    sha256: 985397e9a56dabd84152c3df904f2e210a86dbfcf52729f0e46e780784265418
+    sha256: c3ed61276adc8acbba5c7ba7256597b15eceb6dda0d8d4bab7bd18a4cdf61752
   - dir: ij-shared-indexes-tool-cli
     url: file:///Users/maxholden/Documents/GitHub/CamProV5/scripts/.smoke-shared-indexes/artifacts/cli.zip
-    sha256: 95c28c3f32ec676a195b9929036612f2ef1639016254b4b390145a8377a423be
+    sha256: 3154d0b80e96db9d699ff20615164cf9ab55ace2ac26fc2f87e31270a15cf56d
