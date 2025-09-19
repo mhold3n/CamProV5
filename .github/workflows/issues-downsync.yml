@@ -146,7 +146,7 @@ jobs:
             if ! echo "$list" | jq 'type=="array"' | grep -q true; then
               echo "API did not return an array, skipping sync."
             else
-              list=$(echo "$list" | jq '[.[] | select(.pull_request | not)]')
+              list=$(echo "$list" | jq '[.[] | select(type=="object" and (.pull_request|not))]')
               count=$(jq 'length' <<<"$list")
               if [ "$count" -gt 0 ]; then
                 jq -r '.[].number' <<<"$list" | while read num; do write_issue "$num"; done
@@ -161,7 +161,7 @@ jobs:
             if ! echo "$list" | jq 'type=="array"' | grep -q true; then
               echo "API did not return an array, skipping sync."
             else
-              list=$(echo "$list" | jq '[.[] | select(.pull_request | not)]')
+              list=$(echo "$list" | jq '[.[] | select(type=="object" and (.pull_request|not))]')
               count=$(jq 'length' <<<"$list")
               if [ "$count" -gt 0 ]; then
                 jq -r '.[].number' <<<"$list" | while read num; do write_issue "$num"; done
