@@ -142,7 +142,7 @@ jobs:
           if [ "${{ github.event_name }}" = "schedule" ]; then
             # Only sync last 25 updated issues in scheduled runs
             echo "Scheduled run: syncing last 25 updated issues"
-            list=$(gh api repos/$REPO/issues -f state=all -f per_page=25 -f sort=updated)
+            list=$(gh api repos/$REPO/issues -f state=all -f per_page=25 -f sort=updated | jq '[.[] | select(.pull_request | not)]')
             count=$(jq 'length' <<<"$list")
             if [ "$count" -gt 0 ]; then
               jq -r '.[].number' <<<"$list" | while read num; do write_issue "$num"; done
@@ -152,7 +152,7 @@ jobs:
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             # Manual dispatch: sync last 10 updated issues
             echo "Manual dispatch: syncing last 10 updated issues"
-            list=$(gh api repos/$REPO/issues -f state=all -f per_page=10 -f sort=updated)
+            list=$(gh api repos/$REPO/issues -f state=all -f per_page=10 -f sort=updated | jq '[.[] | select(.pull_request | not)]')
             count=$(jq 'length' <<<"$list")
             if [ "$count" -gt 0 ]; then
               jq -r '.[].number' <<<"$list" | while read num; do write_issue "$num"; done
