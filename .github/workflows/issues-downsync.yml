@@ -142,22 +142,32 @@ jobs:
           if [ "${{ github.event_name }}" = "schedule" ]; then
             # Only sync last 25 updated issues in scheduled runs
             echo "Scheduled run: syncing last 25 updated issues"
-            list=$(gh api repos/$REPO/issues -f state=all -f per_page=25 -f sort=updated | jq '[.[] | select(.pull_request | not)]')
-            count=$(jq 'length' <<<"$list")
-            if [ "$count" -gt 0 ]; then
-              jq -r '.[].number' <<<"$list" | while read num; do write_issue "$num"; done
+            list=$(gh api repos/$REPO/issues -f state=all -f per_page=25 -f sort=updated || echo '[]')
+            if ! echo "$list" | jq 'type=="array"' | grep -q true; then
+              echo "API did not return an array, skipping sync."
             else
-              echo "No issues found to sync"
+              list=$(echo "$list" | jq '[.[] | select(.pull_request | not)]')
+              count=$(jq 'length' <<<"$list")
+              if [ "$count" -gt 0 ]; then
+                jq -r '.[].number' <<<"$list" | while read num; do write_issue "$num"; done
+              else
+                echo "No issues found to sync"
+              fi
             fi
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             # Manual dispatch: sync last 10 updated issues
             echo "Manual dispatch: syncing last 10 updated issues"
-            list=$(gh api repos/$REPO/issues -f state=all -f per_page=10 -f sort=updated | jq '[.[] | select(.pull_request | not)]')
-            count=$(jq 'length' <<<"$list")
-            if [ "$count" -gt 0 ]; then
-              jq -r '.[].number' <<<"$list" | while read num; do write_issue "$num"; done
+            list=$(gh api repos/$REPO/issues -f state=all -f per_page=10 -f sort=updated || echo '[]')
+            if ! echo "$list" | jq 'type=="array"' | grep -q true; then
+              echo "API did not return an array, skipping sync."
             else
-              echo "No issues found to sync"
+              list=$(echo "$list" | jq '[.[] | select(.pull_request | not)]')
+              count=$(jq 'length' <<<"$list")
+              if [ "$count" -gt 0 ]; then
+                jq -r '.[].number' <<<"$list" | while read num; do write_issue "$num"; done
+              else
+                echo "No issues found to sync"
+              fi
             fi
           else
             # Event-driven: sync specific issue
