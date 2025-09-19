@@ -79,7 +79,7 @@ def upsert_issue(md_path: str):
 
     if number is None:
         payload = {}
-        if title: payload["title"] = title
+        payload["title"] = title or f"Issue from {os.path.basename(md_path)}"
         if body is not None: payload["body"] = body
         if labels: payload["labels"] = labels
         # optional parity: resolve milestone title -> number on create
