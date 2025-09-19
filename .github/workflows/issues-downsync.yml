@@ -73,7 +73,11 @@ jobs:
               fi
             done
             
-            title=$(jq -r '.title // "Untitled"' <<<"$issue_json")
+            title=$(jq -r '.title // empty' <<<"$issue_json")
+            if [ -z "$title" ]; then
+              echo "SKIP: Issue #$num missing title, skipping."
+              return 0
+            fi
             state=$(jq -r '.state // "open"' <<<"$issue_json")
             body=$(jq -r '.body // ""' <<<"$issue_json")
             labels=$(jq -r '[.labels[].name] // []' <<<"$issue_json")
