@@ -11,31 +11,33 @@ New-Item -ItemType Directory -Path (Join-Path $Work 'content/ij-shared-indexes-t
 New-Item -ItemType Directory -Path (Join-Path $Work 'content/ij-shared-indexes-tool-cli/bin') -Force | Out-Null
 Set-Content -LiteralPath (Join-Path $Work 'content/.shared-indexes/index.info') -Value 'ok'
 Set-Content -LiteralPath (Join-Path $Work 'content/ij-shared-indexes-tool-cli/bin/ijSharedIndexesTool') -Value 'ok'
-# zip with error handling
-Write-Host "Creating ZIP files..."
+Write-Host "Creating ZIP files with immediate validation..."
+$zipData = @()
+
+# Create and immediately hash each ZIP file
 try {
     Compress-Archive -Path (Join-Path $Work 'content/.shared-indexes/*') -DestinationPath (Join-Path $Work 'artifacts/shared.zip') -Force
-    Write-Host "Created shared.zip"
-} catch {
-    Write-Error "Failed to create shared.zip: $_"
-    exit 1
-}
+    $sharedPath = Join-Path $Work 'artifacts/shared.zip'
+    $sharedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $sharedPath).Hash.ToLower()
+    $zipData += @{Name="shared.zip"; Path=$sharedPath; Hash=$sharedHash}
+    Write-Host "✅ shared.zip: $sharedHash"
+} catch { Write-Error "Failed to create/hash shared.zip: $_"; exit 1 }
 
 try {
     Compress-Archive -Path (Join-Path $Work 'content/ij-shared-indexes-tool-data/*') -DestinationPath (Join-Path $Work 'artifacts/tool-data.zip') -Force
-    Write-Host "Created tool-data.zip"
-} catch {
-    Write-Error "Failed to create tool-data.zip: $_"
-    exit 1
-}
+    $dataPath = Join-Path $Work 'artifacts/tool-data.zip'
+    $dataHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $dataPath).Hash.ToLower()
+    $zipData += @{Name="tool-data.zip"; Path=$dataPath; Hash=$dataHash}
+    Write-Host "✅ tool-data.zip: $dataHash"
+} catch { Write-Error "Failed to create/hash tool-data.zip: $_"; exit 1 }
 
 try {
     Compress-Archive -Path (Join-Path $Work 'content/ij-shared-indexes-tool-cli/*') -DestinationPath (Join-Path $Work 'artifacts/cli.zip') -Force
-    Write-Host "Created cli.zip"
-} catch {
-    Write-Error "Failed to create cli.zip: $_"
-    exit 1
-}
+    $cliPath = Join-Path $Work 'artifacts/cli.zip'
+    $cliHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $cliPath).Hash.ToLower()
+    $zipData += @{Name="cli.zip"; Path=$cliPath; Hash=$cliHash}
+    Write-Host "✅ cli.zip: $cliHash"
+} catch { Write-Error "Failed to create/hash cli.zip: $_"; exit 1 }
 
 function Get-SHA256([string]$f){ 
     # Add explicit path validation and retry logic
@@ -82,9 +84,10 @@ foreach ($zipFile in $zipFiles) {
     Write-Host "Found $(Split-Path $zipFile -Leaf): $size bytes"
 }
 
-$shaShared = Get-SHA256 (Join-Path $Work 'artifacts/shared.zip')
-$shaData = Get-SHA256 (Join-Path $Work 'artifacts/tool-data.zip')
-$shaCli = Get-SHA256 (Join-Path $Work 'artifacts/cli.zip')
+# Use pre-calculated hashes for manifest
+$shaShared = $zipData[0].Hash
+$shaData = $zipData[1].Hash  
+$shaCli = $zipData[2].Hash
 $manifest = @"
 installRootName: github
 expectedFiles:

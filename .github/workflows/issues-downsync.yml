@@ -55,17 +55,23 @@ jobs:
             local num="$1"
             echo "Processing issue #$num..."
             
-            # Add error handling for GitHub API calls
-            if ! issue_json=$(gh api repos/$REPO/issues/$num 2>/dev/null); then
-              echo "WARNING: Failed to fetch issue #$num, skipping..."
-              return 0
-            fi
-            
-            # Validate JSON response
-            if ! echo "$issue_json" | jq empty 2>/dev/null; then
-              echo "WARNING: Invalid JSON response for issue #$num, skipping..."
-              return 0
-            fi
+            # Robust API call with multiple retry attempts
+            for attempt in {1..3}; do
+              if issue_json=$(gh api repos/$REPO/issues/$num 2>/dev/null); then
+                # Validate essential fields exist
+                if echo "$issue_json" | jq -e '.title and .state and .created_at' >/dev/null 2>&1; then
+                  break  # Success - all required fields present
+                else
+                  echo "WARNING: Issue #$num missing essential fields (attempt $attempt/3)"
+                  [[ $attempt -eq 3 ]] && { echo "SKIP: Issue #$num has incomplete data"; return 0; }
+                  sleep $((attempt * 2))
+                fi
+              else
+                echo "WARNING: API call failed for issue #$num (attempt $attempt/3)"
+                [[ $attempt -eq 3 ]] && { echo "SKIP: Cannot fetch issue #$num"; return 0; }
+                sleep $((attempt * 2))
+              fi
+            done
             
             title=$(jq -r '.title // "Untitled"' <<<"$issue_json")
             state=$(jq -r '.state // "open"' <<<"$issue_json")

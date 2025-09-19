@@ -12,6 +12,7 @@ on:
       - 'shared-index/**'
       - 'scripts/shared-index/**'
       - 'scripts/ci/**'
+  workflow_dispatch:
 
 permissions: { contents: read }
 
