@@ -844,84 +844,15 @@ class MotionLawEngine {
                 }
             }
 
-            // 2) If no native tables, use Kotlin-generated motion samples for a simple prototype visualization
-            motionSamples?.let { ml ->
-                val step = ml.stepDeg.coerceAtLeast(1e-6)
-                val n = ml.samples.size
-                if (n > 0) {
-                    val idx = (((angle / step).roundToInt() % n) + n) % n
-                    val x = ml.samples[idx].xMm.toFloat()
-                    val positions =
-                        ComponentPositions(
-                            pistonPosition = Offset(0f, x),
-                            rodPosition = Offset(0f, x),
-                            camPosition = Offset(0f, 0f),
-                        )
-                    positionCache[cacheKey] = positions
-                    return positions
-                }
-            }
-
-            // 3) Legacy radial-cam fallback (previous behavior)
-            // Convert angle to radians
-            val angleRad = Math.toRadians(angle)
-
-            // Get parameters from the motion law with proper defaults
-            val baseCircleRadius = baseCircleRadius.toFloat()
-
-            // Get rod length and piston diameter from parameters or use defaults
-            val rodLength =
-                try {
-                    parameters["rod_length"]?.toFloatOrNull() ?: 40f
-                } catch (e: Exception) {
-                    40f
-                }
-            val pistonDiameter =
-                try {
-                    parameters["piston_diameter"]?.toFloatOrNull() ?: 70f
-                } catch (e: Exception) {
-                    70f
-                }
-            val followerOffset =
-                try {
-                    parameters["follower_offset"]?.toFloatOrNull() ?: 0f
-                } catch (e: Exception) {
-                    0f
-                }
-            val camOffset =
-                try {
-                    parameters["cam_offset"]?.toFloatOrNull() ?: 0f
-                } catch (e: Exception) {
-                    0f
-                }
-
-            val camPosition = Offset(camOffset, 0f)
-
-            val baseCircleX = (baseCircleRadius * cos(angleRad)).toFloat() + camOffset
-            val baseCircleY = (baseCircleRadius * sin(angleRad)).toFloat()
-
-            val followerX = baseCircleX + followerOffset
-            val followerY = baseCircleY + displacement.toFloat()
-
-            val rodAngle =
-                try {
-                    Math.atan2((pistonDiameter / 2 - followerX).toDouble(), (rodLength - (followerY - baseCircleY)).toDouble())
-                } catch (_: Exception) {
-                    0.0
-                }
-
-            val pistonX = followerX
-            val pistonY = followerY + rodLength * Math.cos(rodAngle).toFloat()
-
-            val positions =
+            // 2) Data unavailable: return neutral posture (no fallback visuals)
+            val neutral =
                 ComponentPositions(
-                    pistonPosition = Offset(pistonX, pistonY),
-                    rodPosition = Offset(followerX, followerY),
-                    camPosition = camPosition,
+                    pistonPosition = Offset(0f, 0f),
+                    rodPosition = Offset(0f, 0f),
+                    camPosition = Offset(0f, 0f),
                 )
-
-            positionCache[cacheKey] = positions
-            return positions
+            positionCache[cacheKey] = neutral
+            return neutral
         } catch (e: Exception) {
             logger.error("Failed to calculate component positions: {}", e.message, e)
             return ComponentPositions(

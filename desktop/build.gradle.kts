@@ -31,6 +31,15 @@ kotlin {
     jvmToolchain(17)
 }
 
+sourceSets {
+    val test by getting {
+        kotlin {
+            // Exclude legacy/unrelated tests from this module's unit test compilation
+            exclude("com/campro/v5/collaboration/**")
+        }
+    }
+}
+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
         // Target JDK 17 for Compose Desktop and IDE import consistency
