@@ -15,7 +15,11 @@ fun validateParams(p: LitvinUserParams): List<String> {
 
 /** Construct params from a generic map; tolerates missing keys with defaults. */
 fun litvinParamsFromMap(m: Map<String, Any?>): LitvinUserParams {
-    fun num(key: String, def: Double) = (m[key] as? Number)?.toDouble() ?: def
+    fun num(key: String, def: Double) = when (val value = m[key]) {
+        is Number -> value.toDouble()
+        is String -> value.toDoubleOrNull() ?: def
+        else -> def
+    }
     fun ramp(key: String, def: RampProfile) =
         (m[key] as? String)?.let {
             runCatching { RampProfile.valueOf(it) }.getOrNull()

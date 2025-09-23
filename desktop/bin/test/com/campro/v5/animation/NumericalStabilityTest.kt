@@ -313,7 +313,7 @@ class NumericalStabilityTest {
     
     @Test
     fun `motion law engine handles parameter edge cases`() {
-        val engine = MotionLawEngine()
+        val engine = MotionLawEngine.getInstance()
         
         val edgeCases = listOf(
             // Minimal parameters

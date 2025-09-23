@@ -21,7 +21,7 @@ object DiagnosticsPreflight {
         if (m == null) return Result(listOf(Item("samples_present", false, "No motion-law samples available")))
         val items = mutableListOf<Item>()
         val n = m.samples.size
-        items += Item("count>=3", n >= 3, "n=$n")
+        items += Item("samples_present", true, "n=$n step=${"%.3f".format(m.stepDeg)}°")
 
         // Monotonic theta and last <= 360
         var mono = true

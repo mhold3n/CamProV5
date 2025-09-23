@@ -15,7 +15,7 @@ class KinematicConsistencyTest {
 
     @Test
     fun `getComponentPositions aligns with Litvin frame state`() {
-        val engine = MotionLawEngine()
+        val engine = MotionLawEngine.getInstance()
         val planet = PlanetDTO(
             centerX = listOf(10.0),
             centerY = listOf(20.0),

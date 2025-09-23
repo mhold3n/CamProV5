@@ -53,7 +53,7 @@ class CollocationPythonBridgeIntegrationTest {
         FeatureFlags.setFlag("collocation.enabled", false)
         FeatureFlags.setFlag("collocation.force_fallback", false)
 
-        val engine = MotionLawEngine()
+        val engine = MotionLawEngine.getInstance()
         val params = mapOf(
             "Profile Solver" to "Collocation", // user selected collocation
             "strokeLengthMm" to "10.0",

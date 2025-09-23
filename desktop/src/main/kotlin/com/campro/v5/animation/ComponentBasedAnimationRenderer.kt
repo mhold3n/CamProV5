@@ -99,6 +99,7 @@ object ComponentBasedAnimationRenderer {
         parameters: Map<String, String>,
         assemblies: List<ComponentPositions>,
     ) {
+        println("DEBUG: ComponentBasedAnimationRenderer.drawFrame called - canvas: ${canvasWidth}x${canvasHeight}, scale: $scale, angle: $angle, assemblies: ${assemblies.size}")
         // Extract key parameters with defaults if not present
         val pistonDiameter = ParameterResolver.float(parameters, "piston_diameter", 70f, "Piston Diameter")
         val baseCircleRadius = ParameterResolver.float(parameters, "base_circle_radius", 25f)

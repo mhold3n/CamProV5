@@ -14,6 +14,9 @@ import java.nio.file.Path
  */
 class FeaEngine {
     companion object {
+        // Flag to track whether the native library is available
+        private var nativeLibraryAvailable = false
+
         // Load the native library
         init {
             try {
@@ -38,6 +41,9 @@ class FeaEngine {
                     }
                 println("Failed to load Rust FEA engine native library: $errorMessage")
                 e.printStackTrace()
+                // Don't re-throw the exception - allow the application to continue
+                // without FEA functionality. Set flag to indicate library is not available
+                nativeLibraryAvailable = false
             }
         }
 
@@ -120,6 +126,8 @@ class FeaEngine {
          * The Rust implementation should return 42.
          */
         private external fun testNativeLibraryNative(): Int
+
+        @JvmStatic fun isNativeAvailable(): Boolean = nativeLibraryAvailable
     }
 
     /**
@@ -359,4 +367,16 @@ class FeaEngine {
      * The Rust implementation should return 42.
      */
     private external fun testNativeLibraryNative(): Int
+
+    /**
+     * Check if this FEA engine instance is functional.
+     * This verifies that the native methods are available and working.
+     */
+    fun isFunctional(): Boolean {
+        return try {
+            testNativeLibraryNative() == 42
+        } catch (_: Throwable) {
+            false
+        }
+    }
 }

@@ -323,10 +323,16 @@ object CollocationMotionSolver {
      * Find the Python collocation solver script.
      */
     private fun findPythonSolverScript(): File? {
-        // Look for the solver script in the campro module
+        // Look for the solver script in multiple possible locations
         val possiblePaths = listOf(
-            "campro/scripts/collocation_solver_cli.py",
+            "scripts/collocation_solver_cli_fixed.py",  // Use the fixed version
+            "scripts/collocation_solver_cli.py",
+            "campro/scripts/collocation_solver_cli.py", 
+            "../scripts/collocation_solver_cli_fixed.py",
+            "../scripts/collocation_solver_cli.py",
             "../campro/scripts/collocation_solver_cli.py",
+            "../../scripts/collocation_solver_cli_fixed.py",
+            "../../scripts/collocation_solver_cli.py",
             "../../campro/scripts/collocation_solver_cli.py"
         )
         

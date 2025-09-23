@@ -30,6 +30,9 @@ class FeatureFlagIntegrationTest {
     
     @BeforeEach
     fun setUp() {
+        // Reset MotionLawEngine singleton for clean test state
+        MotionLawEngine.resetInstance()
+        
         // Create test config directory
         Files.createDirectories(Paths.get(testConfigDir))
         
@@ -89,18 +92,21 @@ class FeatureFlagIntegrationTest {
         )
         
         // Test that solver respects disabled flag
-        // Note: We can't easily mock FeatureFlags, so we test the behavior indirectly
+        // Disable collocation feature flag
+        FeatureFlags.setFlag("collocation.enabled", false)
+        
         val exception = assertThrows<UnsupportedOperationException> {
-            // This should fail if collocation is not properly set up
             CollocationMotionSolver.solve(testParams)
         }
         
         assertTrue(
             exception.message?.contains("feature") == true ||
-            exception.message?.contains("development") == true ||
-            exception.message?.contains("fallback") == true,
-            "Exception should mention feature flags, development status, or fallback: ${exception.message}"
+            exception.message?.contains("disabled") == true,
+            "Exception should mention feature flags or disabled: ${exception.message}"
         )
+        
+        // Clean up - re-enable for other tests
+        FeatureFlags.clearFlag("collocation.enabled")
     }
     
     @Test
@@ -118,9 +124,6 @@ class FeatureFlagIntegrationTest {
     
     @Test
     fun `solver availability check is consistent with actual solve attempt`() {
-        // Test that isAvailable() and solve() are consistent
-        val available = CollocationMotionSolver.isAvailable()
-        
         val testParams = LitvinUserParams(
             samplingStepDeg = 5.0, // Larger step for faster test
             profileSolverMode = ProfileSolverMode.Collocation,
@@ -128,34 +131,49 @@ class FeatureFlagIntegrationTest {
             rampProfile = RampProfile.Cycloidal
         )
         
-        if (available) {
-            // If available, solve should not throw feature flag related exceptions
-            val exception = assertThrows<UnsupportedOperationException> {
-                CollocationMotionSolver.solve(testParams)
-            }
-            // Should be a different error (like "not yet implemented" or Python not found)
-            assertTrue(
-                exception.message?.contains("development") == true ||
-                exception.message?.contains("Python") == true ||
-                exception.message?.contains("not yet implemented") == true,
-                "When available, should fail for implementation reasons, not feature flags: ${exception.message}"
-            )
-        } else {
-            // If not available, solve should throw feature flag related exception
-            val exception = assertThrows<UnsupportedOperationException> {
-                CollocationMotionSolver.solve(testParams)
-            }
-            assertTrue(
-                exception.message?.contains("feature") == true ||
-                exception.message?.contains("disabled") == true,
-                "When not available, should fail due to feature flags: ${exception.message}"
-            )
+        // Test with collocation disabled
+        FeatureFlags.setFlag("collocation.enabled", false)
+        val availableWhenDisabled = CollocationMotionSolver.isAvailable()
+        assertFalse(availableWhenDisabled, "Solver should not be available when disabled")
+        
+        val exceptionWhenDisabled = assertThrows<UnsupportedOperationException> {
+            CollocationMotionSolver.solve(testParams)
         }
+        assertTrue(
+            exceptionWhenDisabled.message?.contains("feature") == true ||
+            exceptionWhenDisabled.message?.contains("disabled") == true,
+            "When disabled, should fail due to feature flags: ${exceptionWhenDisabled.message}"
+        )
+        
+        // Test with collocation enabled
+        FeatureFlags.setFlag("collocation.enabled", true)
+        FeatureFlags.setFlag("collocation.force_fallback", false)
+        val availableWhenEnabled = CollocationMotionSolver.isAvailable()
+        
+        if (availableWhenEnabled) {
+            // If available, solve should work or fail for implementation reasons, not feature flags
+            try {
+                CollocationMotionSolver.solve(testParams)
+                // If it succeeds, that's fine too
+            } catch (e: UnsupportedOperationException) {
+                // Should be a different error (like "not yet implemented" or Python not found)
+                assertTrue(
+                    e.message?.contains("development") == true ||
+                    e.message?.contains("Python") == true ||
+                    e.message?.contains("not yet implemented") == true,
+                    "When available, should fail for implementation reasons, not feature flags: ${e.message}"
+                )
+            }
+        }
+        
+        // Clean up
+        FeatureFlags.clearFlag("collocation.enabled")
+        FeatureFlags.clearFlag("collocation.force_fallback")
     }
     
     @Test
     fun `engine branching respects solver mode and availability`() {
-        val engine = MotionLawEngine()
+        val engine = MotionLawEngine.getInstance()
         
         // Test piecewise mode (should always work)
         val piecewiseParams = LitvinUserParams(

@@ -15,7 +15,14 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class ComputationManager {
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private val feaEngine = FeaEngine()
+    private val feaEngine: FeaEngine? by lazy {
+        try {
+            FeaEngine()
+        } catch (e: Exception) {
+            println("Failed to initialize FEA engine: ${e.message}")
+            null
+        }
+    }
     private val jobs = ConcurrentHashMap<String, Job>()
     private val progressMap = ConcurrentHashMap<String, MutableStateFlow<Float>>()
     private val resultMap = ConcurrentHashMap<String, MutableStateFlow<ComputationResult?>>()
@@ -46,13 +53,19 @@ class ComputationManager {
                     // Update progress to indicate job has started
                     progressFlow.value = 0.1f
 
+                    // Check if FEA engine is available and functional
+                    val engine = feaEngine
+                    if (engine == null || !engine.isFunctional()) {
+                        throw IllegalStateException("FEA engine not available - native library not loaded or not functional")
+                    }
+
                     // Run the appropriate analysis based on the type
                     val resultsFile =
                         when (type) {
-                            ComputationType.GENERAL -> feaEngine.runAnalysis(modelFile, parameters)
-                            ComputationType.STRESS -> feaEngine.runStressAnalysis(modelFile, parameters)
-                            ComputationType.VIBRATION -> feaEngine.runVibrationAnalysis(modelFile, parameters)
-                            ComputationType.MESH_GENERATION -> feaEngine.generateMesh(modelFile, parameters)
+                            ComputationType.GENERAL -> engine.runAnalysis(modelFile, parameters)
+                            ComputationType.STRESS -> engine.runStressAnalysis(modelFile, parameters)
+                            ComputationType.VIBRATION -> engine.runVibrationAnalysis(modelFile, parameters)
+                            ComputationType.MESH_GENERATION -> engine.generateMesh(modelFile, parameters)
                         }
 
                     // Update progress to indicate job has completed

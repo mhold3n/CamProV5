@@ -20,7 +20,7 @@ class MockBasedComponentTest {
     @Test
     fun `motion law engine with mocked native calls`() {
         // Test MotionLawEngine behavior when native/JNI calls are mocked
-        val engine = MotionLawEngine()
+        val engine = MotionLawEngine.getInstance()
         
         val testParams = mapOf(
             "samplingStepDeg" to "2.0",
@@ -109,7 +109,7 @@ class MockBasedComponentTest {
     @Test
     fun `motion generation fallback chain works correctly`() {
         // Test the fallback behavior when collocation is requested but unavailable
-        val engine = MotionLawEngine()
+        val engine = MotionLawEngine.getInstance()
         
         // Try collocation first
         val collocationParams = mapOf(
@@ -257,7 +257,7 @@ class MockBasedComponentTest {
             "Profile Solver" to "InvalidMode"
         )
         
-        val engine = MotionLawEngine()
+        val engine = MotionLawEngine.getInstance()
         
         try {
             engine.updateParameters(invalidParams)

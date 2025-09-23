@@ -21,6 +21,8 @@ import androidx.compose.ui.window.rememberWindowState
 import com.campro.v5.layout.LayoutManager
 import com.campro.v5.layout.rememberLayoutManager
 import com.campro.v5.ui.*
+import com.campro.v5.ui.ModernTileLayout
+import com.campro.v5.animation.MotionLawEngine
 import com.google.gson.Gson
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -173,6 +175,11 @@ fun main(args: Array<String>) {
                 title = "CamProV5",
                 state = windowState,
             ) {
+                // Handle window resize events to trigger responsive updates
+                LaunchedEffect(windowState.size) {
+                    // Force recomposition of responsive components when window size changes
+                    println("DEBUG: Window resized to ${windowState.size.width}x${windowState.size.height}")
+                }
                 val layoutManager = rememberLayoutManager()
                 val density = LocalDensity.current
 
@@ -225,20 +232,78 @@ fun CamProV5App(
         var animationStarted by remember { mutableStateOf(false) }
         var allParameters by remember { mutableStateOf(mapOf<String, String>()) }
 
+        // Initialize MotionLawEngine with default parameters on first composition
+        LaunchedEffect(Unit) {
+            if (allParameters.isEmpty()) {
+                // Load default parameters from ParameterInputForm
+                val defaultParams = mapOf(
+                    "Piston Diameter" to "70.0",
+                    "Stroke" to "20",
+                    "Chamber CC" to "5.0",
+                    "TDC Angle" to "90",
+                    "BDC Dwell" to "8",
+                    "TDC Dwell" to "12",
+                    "Enable Smoothing" to "1",
+                    "Cam Timestep" to "1.0",
+                    "Rod Length" to "40",
+                    "TDC Offset" to "40.0",
+                    "Cycle Ratio" to "2",
+                    "Envelope Wall Thickness" to "10.0",
+                    "Piston Mass" to "0.2",
+                    "Manifold Pressure" to "101325.0",
+                    "Ignition Timing BTDC" to "15.0",
+                    "Ignition Duration" to "1.0",
+                    "Equivalence Ratio (phi)" to "1.0",
+                    "Gamma (Air)" to "1.4",
+                    "Initial Temp BDC" to "300.0",
+                    "Fuel Type" to "Diesel",
+                    "IVO deg ABD" to "0.0",
+                    "IVC deg ABD" to "15.0",
+                    "EVO deg BBD" to "15.0",
+                    "EVC deg ABD" to "0.0",
+                    "Assembly RPM" to "1000",
+                    "Mount Mass" to "5.0",
+                    "Mount Stiffness X" to "1e6",
+                    "Mount Stiffness Y" to "1e6",
+                    "Mount Damping Ratio X" to "0.05",
+                    "Mount Damping Ratio Y" to "0.05",
+                    "Cam Material" to "Steel",
+                    "Rod Material" to "Steel",
+                    "Piston Material" to "Aluminum",
+                    "Envelope Material" to "Steel",
+                    "Profile Solver Mode" to "Piecewise",
+                    "Sampling Step" to "1.0",
+                    "Journal Radius" to "10.0",
+                    "Journal Phase Beta" to "0.0",
+                    "Up Fraction" to "0.5",
+                    "Ramp Before TDC" to "5.0",
+                    "Ramp After TDC" to "5.0",
+                    "Ramp Before BDC" to "5.0",
+                    "Ramp After BDC" to "5.0",
+                    "Acceleration Limit" to "1000.0",
+                    "Jerk Limit" to "10000.0"
+                )
+                allParameters = defaultParams
+                MotionLawEngine.getInstance().updateParameters(defaultParams)
+            }
+        }
+
         // Simplified architecture - removed complex management layers
 
-        // Use new responsive layout that automatically adapts to screen size
-        ResponsiveLayout(
+        // Use modern tile-based environment for better UX and scaling
+        ModernTileLayout(
             testingMode = testingMode,
             animationStarted = animationStarted,
             allParameters = allParameters,
             layoutManager = layoutManager,
             onParametersChanged = { parameters ->
                 allParameters = parameters
+                // Update the global MotionLawEngine singleton with parameter changes
+                MotionLawEngine.getInstance().updateParameters(parameters)
                 if (parameters.containsKey("animationStarted") && parameters["animationStarted"] == "true") {
                     animationStarted = true
                 }
-            },
+            }
         )
     }
 }

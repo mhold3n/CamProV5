@@ -23,11 +23,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.campro.v5.animation.*
+import com.campro.v5.animation.MotionLawEngine
 import com.campro.v5.fea.ComputationManager
 import com.campro.v5.fea.ComputationResult
 import com.campro.v5.fea.ComputationType
 import com.campro.v5.fea.getResultsFile
-import com.campro.v5.ui.PreviewsPanel
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -410,14 +410,18 @@ fun AnimationWidget(
                 val boxWidth = constraints.maxWidth.toFloat()
                 val boxHeight = constraints.maxHeight.toFloat()
 
-                // Log canvas dimensions for debugging
+                // Log canvas dimensions for debugging and trigger responsive updates
                 LaunchedEffect(boxWidth, boxHeight) {
                     println("DEBUG: Canvas container size: ${boxWidth}x$boxHeight")
+                    // Force animation engine to recalculate for new size
+                    animationManager.getCurrentEngine()?.updateParameters(parameters)
                 }
 
                 Canvas(
                     modifier = Modifier.matchParentSize(),
                 ) {
+                    // Force recomposition when animation value changes
+                    val animationValue = currentAnimationValue
                     val canvasWidth = size.width
                     val canvasHeight = size.height
 
@@ -440,6 +444,7 @@ fun AnimationWidget(
 
                         if (currentEngine != null) {
                             // Draw the animation frame
+                            println("DEBUG: Drawing animation frame - canvas: ${canvasWidth}x${canvasHeight}, scale: $scale, offset: $offset, engine type: ${currentEngine.getType()}")
                             currentEngine.drawFrame(
                                 drawScope = this,
                                 canvasWidth = canvasWidth,
@@ -568,16 +573,13 @@ fun AnimationWidget(
                 }
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        val compEngine = animationManager.getCurrentEngine() as? com.campro.v5.animation.ComponentBasedAnimationEngine
-        compEngine?.let { PreviewsPanel(it.motionEngine(), Modifier.fillMaxWidth()) }
 
         // Diagnostics panel (dev-in-the-loop)
         Spacer(modifier = Modifier.height(8.dp))
         Card(Modifier.fillMaxWidth().padding(4.dp)) {
             Column(Modifier.fillMaxWidth().padding(8.dp)) {
                 Text("Diagnostics", style = MaterialTheme.typography.titleSmall)
-                val motion = compEngine?.motionEngine()?.getMotionLawSamples()
+                val motion = MotionLawEngine.getInstance().getMotionLawSamples()
                 val preflight =
                     com.campro.v5.animation.DiagnosticsPreflight
                         .validateMotionLaw(motion)
@@ -616,8 +618,8 @@ fun AnimationWidget(
                         .isNativeAvailable()
                 if (!nativeAvail) {
                     Text(
-                        "Native library unavailable. Set FEA_ENGINE_LIB_DIR or adjust PATH.",
-                        color = Color(0xFFC62828),
+                        "FEA engine unavailable (motion law generation still works)",
+                        color = Color(0xFF9E9E9E),
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }

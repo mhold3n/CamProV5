@@ -453,7 +453,6 @@ tasks.test {
     }
     // Disable Kotest autoscan to speed startup and silence warning
     systemProperty("kotest.framework.classpath.scanning.autoscan.disable", "true")
-    
     // Add test filters for problematic tests (until mathematical core is stabilized)
     filter {
         // Both CollocationMathTest and CollocationSpecificValidationTest are now stable
@@ -504,7 +503,6 @@ tasks.jacocoTestReport {
         csv.required.set(false)
     }
     executionData.setFrom(fileTree(layout.buildDirectory).include("/jacoco/*.exec"))
-    
     // Set minimum coverage thresholds
     finalizedBy(tasks.jacocoTestCoverageVerification)
 }

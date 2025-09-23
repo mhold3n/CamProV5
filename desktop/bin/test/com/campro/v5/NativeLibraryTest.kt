@@ -43,7 +43,7 @@ class NativeLibraryTest {
         println("[DEBUG_LOG] Testing Motion Law engine library loading...")
 
         try {
-            val motionEngine = MotionLawEngine()
+            val motionEngine = MotionLawEngine.getInstance()
             println("[DEBUG_LOG] Motion Law engine instance created successfully")
 
             // Try to get component positions (this should work with fallback if native fails)

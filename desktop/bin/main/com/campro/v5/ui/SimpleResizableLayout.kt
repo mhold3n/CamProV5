@@ -116,9 +116,9 @@ fun SimpleResizableLayout(
                         icon = Icons.Default.BarChart,
                     )
                 } else {
-                    PlotCarouselWidget(
-                        parameters = allParameters,
-                        testingMode = testingMode,
+                    PreviewsPanel(
+                        engine = com.campro.v5.animation.MotionLawEngine.getInstance(),
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
             }

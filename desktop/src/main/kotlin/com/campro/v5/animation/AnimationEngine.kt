@@ -102,7 +102,8 @@ class ComponentBasedAnimationEngine(
     private var parameters: Map<String, String>,
 ) : AnimationEngine {
     private var currentAngle: Float = 0f
-    private val motionLawEngine = MotionLawEngine()
+    // Use the global MotionLawEngine singleton that receives samples from parameter updates
+    private val motionLawEngine: MotionLawEngine = MotionLawEngine.getInstance()
     private var lastDrawnAngle: Float = -1f
     private var cachedComponentPositions: ComponentPositions? = null
 
@@ -138,6 +139,7 @@ class ComponentBasedAnimationEngine(
         scale: Float,
         offset: Offset,
     ) {
+        println("DEBUG: ComponentBasedAnimationEngine.drawFrame called - Litvin active: ${motionLawEngine.isLitvinActive()}, tables: ${motionLawEngine.getLitvinTables() != null}, curves: ${motionLawEngine.getLitvinCurves() != null}")
         // Litvin rendering path (if enabled and data available)
         if (motionLawEngine.isLitvinActive() && motionLawEngine.getLitvinTables() != null && motionLawEngine.getLitvinCurves() != null) {
             LitvinRenderer.drawFrame(
@@ -182,8 +184,10 @@ class ComponentBasedAnimationEngine(
                 }
             positionsList.add(pos)
         }
+        println("DEBUG: ComponentBasedAnimationEngine.drawFrame - calculated ${positionsList.size} positions for angle $currentAngle")
 
         // Draw the components (ring + multiple assemblies)
+        println("DEBUG: ComponentBasedAnimationEngine.drawFrame - positionsList size: ${positionsList.size}, currentAngle: $currentAngle")
         ComponentBasedAnimationRenderer.drawFrame(
             drawScope,
             canvasWidth,
