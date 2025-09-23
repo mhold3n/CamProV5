@@ -13,6 +13,7 @@ plugins {
     id("org.jetbrains.compose") version "1.5.11"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
+    jacoco
 }
 
 ktlint {
@@ -452,6 +453,14 @@ tasks.test {
     }
     // Disable Kotest autoscan to speed startup and silence warning
     systemProperty("kotest.framework.classpath.scanning.autoscan.disable", "true")
+    
+    // Add test filters for problematic tests (until mathematical core is stabilized)
+    filter {
+        // Both CollocationMathTest and CollocationSpecificValidationTest are now stable
+        // Re-enabling CollocationFullIntegrationTest for Phase 2 Task 3
+        // excludeTestsMatching("*CollocationSpecificValidationTest*")  // Re-enabled and fixed
+        // excludeTestsMatching("*CollocationFullIntegrationTest*")  // Re-enabled for Phase 2
+    }
     if (includeNative) {
         // Ensure native libs are copied into resources
         dependsOn("copyRustLibraries", "processResources")
@@ -481,4 +490,42 @@ tasks.test {
         // If the generator task exists (only when includeNative=true), run it before tests
         dependsOn("generateLitvinGolden")
     }
+}
+
+// JaCoCo test coverage configuration
+jacoco {
+    toolVersion = "0.8.8"
+}
+
+tasks.jacocoTestReport {
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+    executionData.setFrom(fileTree(layout.buildDirectory).include("/jacoco/*.exec"))
+    
+    // Set minimum coverage thresholds
+    finalizedBy(tasks.jacocoTestCoverageVerification)
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = "0.10".toBigDecimal() // 10% minimum coverage (realistic baseline)
+            }
+        }
+        rule {
+            limit {
+                counter = "BRANCH"
+                minimum = "0.08".toBigDecimal() // 8% branch coverage (realistic baseline)
+            }
+        }
+    }
+}
+
+// Make test run coverage report
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport)
 }

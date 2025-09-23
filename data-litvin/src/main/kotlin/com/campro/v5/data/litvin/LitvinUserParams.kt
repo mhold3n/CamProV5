@@ -3,6 +3,7 @@ package com.campro.v5.data.litvin
 data class LitvinUserParams(
     // Core sampling/motion controls
     val samplingStepDeg: Double = 1.0,
+    val profileSolverMode: ProfileSolverMode = ProfileSolverMode.Piecewise,
     val rampProfile: RampProfile = RampProfile.S5,
     val dwellTdcDeg: Double = 0.0,
     val dwellBdcDeg: Double = 0.0,

@@ -20,9 +20,14 @@ fun litvinParamsFromMap(m: Map<String, Any?>): LitvinUserParams {
         (m[key] as? String)?.let {
             runCatching { RampProfile.valueOf(it) }.getOrNull()
         } ?: def
+    fun solverMode(key: String, def: ProfileSolverMode) =
+        (m[key] as? String)?.let {
+            runCatching { ProfileSolverMode.valueOf(it) }.getOrNull()
+        } ?: def
     return LitvinUserParams(
         strokeLengthMm = num("strokeLengthMm", 10.0),
         samplingStepDeg = num("samplingStepDeg", 1.0),
+        profileSolverMode = solverMode("Profile Solver", ProfileSolverMode.Piecewise),
         rampProfile = ramp("rampProfile", RampProfile.Cycloidal),
         dwellTdcDeg = num("dwellTdcDeg", 0.0),
         rampAfterTdcDeg = num("rampAfterTdcDeg", 0.0),

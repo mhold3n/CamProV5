@@ -488,7 +488,23 @@ class MotionLawEngine {
                     } else {
                         // Phase 1a/1b Kotlin-side generation (always available for UI)
                         try {
-                            motionSamples = MotionLawGenerator.generateMotion(litvinParams)
+                            // Branch motion generation based on solver mode
+                            motionSamples = when (litvinParams.profileSolverMode) {
+                                com.campro.v5.data.litvin.ProfileSolverMode.Piecewise -> {
+                                    logger.info("Using piecewise motion law generator")
+                                    MotionLawGenerator.generateMotion(litvinParams)
+                                }
+                                com.campro.v5.data.litvin.ProfileSolverMode.Collocation -> {
+                                    logger.info("Using collocation motion law solver")
+                                    try {
+                                        CollocationMotionSolver.solve(litvinParams)
+                                    } catch (e: UnsupportedOperationException) {
+                                        logger.warn("Collocation solver not available, falling back to piecewise: ${e.message}")
+                                        emitError("Collocation solver not yet implemented. Using piecewise fallback.")
+                                        MotionLawGenerator.generateMotion(litvinParams)
+                                    }
+                                }
+                            }
                             // Phase 1a baseline diagnostics from motion-law (accel/jerk maxima)
                             motionSamples?.let { ms ->
                                 val md = MotionDiagnosticsComputer.compute(ms)
