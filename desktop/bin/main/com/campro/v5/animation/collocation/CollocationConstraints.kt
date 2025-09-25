@@ -41,6 +41,9 @@ class CollocationConstraints(
         // 5. Stroke boundary constraints
         constraints.addAll(generateStrokeBoundaryConstraints())
         
+        // 6. Planetary gearset constraints (UNIFIED CONSTRAINT SYSTEM)
+        constraints.addAll(generatePlanetaryGearsetConstraints())
+        
         return constraints
     }
     
@@ -345,6 +348,119 @@ class CollocationConstraints(
         )
     }
     
+    /**
+     * Generate planetary gearset constraints (UNIFIED CONSTRAINT SYSTEM).
+     * 
+     * The most critical constraint is: R_ring(θ) = R_sun(θ) + 2*R_planet(θ)
+     * This ensures planets are tangent to BOTH sun and ring surfaces.
+     */
+    private fun generatePlanetaryGearsetConstraints(): List<MotionConstraint> {
+        val constraints = mutableListOf<MotionConstraint>()
+        
+        // UNIFIED CONSTRAINT SYSTEM: R_ring(θ) = R_sun(θ) + 2*R_planet(θ)
+        // This is derived from: contact_point_ring_planet = contact_point_sun_planet
+        // For each angle θ, enforce contact point constraint:
+        // contact_point_ring_planet(θ) = contact_point_sun_planet(θ)
+        // This automatically ensures no overlap and proper meshing
+        
+        // Generate evaluation points across the 180° ring rotation
+        val evaluationPoints = generateConstraintPoints(0.0, PI, 36) // 36 points for 180° (5° intervals)
+        
+        // Constraint: Ring inner radius = Sun radius + 2 * Planet radius
+        constraints.add(
+            MotionConstraint.Equality(
+                name = "unified_contact_constraint",
+                description = "UNIFIED CONSTRAINT: R_ring(θ) = R_sun(θ) + 2*R_planet(θ)",
+                evaluationPoints = evaluationPoints,
+                constraintType = ConstraintType.UNIFIED_CONTACT_CONSTRAINT,
+                targetValue = 0.0,
+                tolerance = constraintTolerance
+            )
+        )
+        
+        // Constraint: Ring inner radius > Planet radius (no interference)
+        constraints.add(
+            MotionConstraint.Inequality(
+                name = "ring_planet_clearance",
+                description = "Ring inner radius must be greater than planet radius",
+                evaluationPoints = evaluationPoints,
+                constraintType = ConstraintType.RING_PLANET_CLEARANCE,
+                upperBound = Double.POSITIVE_INFINITY,
+                lowerBound = params.interferenceBuffer, // Minimum clearance
+                tolerance = constraintTolerance
+            )
+        )
+        
+        // Constraint: Ring outer radius > Ring inner radius
+        constraints.add(
+            MotionConstraint.Inequality(
+                name = "ring_thickness_constraint",
+                description = "Ring outer radius must be greater than inner radius",
+                evaluationPoints = evaluationPoints,
+                constraintType = ConstraintType.RING_THICKNESS_CONSTRAINT,
+                upperBound = Double.POSITIVE_INFINITY,
+                lowerBound = params.ringThickness, // Minimum ring thickness
+                tolerance = constraintTolerance
+            )
+        )
+        
+        // Constraint: Gear ratio enforcement through φ(θ) mapping
+        // For 2:1 gear ratio: planet rotates 2x faster than ring
+        // φ(θ) = 2θ (planet angle vs ring angle)
+        constraints.add(
+            MotionConstraint.Equality(
+                name = "gear_ratio_constraint",
+                description = "Gear ratio constraint: φ(θ) = 2θ for 2:1 ratio",
+                evaluationPoints = evaluationPoints,
+                constraintType = ConstraintType.GEAR_RATIO_CONSTRAINT,
+                targetValue = 0.0,
+                tolerance = constraintTolerance
+            )
+        )
+        
+        // Constraint: Arc-length conjugacy for proper tooth meshing
+        // Both gears should have similar arc-lengths because they complete their respective cycles
+        constraints.add(
+            MotionConstraint.Equality(
+                name = "arc_length_conjugacy",
+                description = "Arc-length ratio should be ~1.0 for proper meshing",
+                evaluationPoints = evaluationPoints,
+                constraintType = ConstraintType.ARC_LENGTH_CONJUGACY,
+                targetValue = 0.0,
+                tolerance = constraintTolerance * 10.0 // Slightly more tolerance for arc-length
+            )
+        )
+        
+        // Constraint: Ring symmetry about 0-180° line for 2:1 gear ratio
+        // The ring profile should be symmetric because planet rotates 2x faster than ring
+        constraints.add(
+            MotionConstraint.Equality(
+                name = "ring_symmetry_constraint",
+                description = "Ring profile symmetry: R_ring(θ) = R_ring(θ + 180°)",
+                evaluationPoints = generateConstraintPoints(0.0, PI, 18), // 18 points for 0-180°
+                constraintType = ConstraintType.RING_SYMMETRY_CONSTRAINT,
+                targetValue = 0.0,
+                tolerance = constraintTolerance
+            )
+        )
+        
+        // Constraint: Stroke achievability
+        // The gearset must be large enough to accommodate the full stroke
+        constraints.add(
+            MotionConstraint.Inequality(
+                name = "stroke_achievability",
+                description = "Gearset capacity must accommodate stroke length",
+                evaluationPoints = evaluationPoints,
+                constraintType = ConstraintType.STROKE_ACHIEVABILITY,
+                upperBound = Double.POSITIVE_INFINITY,
+                lowerBound = params.strokeLengthMm * 0.8, // 80% of stroke must be achievable
+                tolerance = constraintTolerance
+            )
+        )
+        
+        return constraints
+    }
+
     private fun generateConstraintPoints(startRad: Double, endRad: Double, numPoints: Int): DoubleArray {
         return DoubleArray(numPoints) { i ->
             val t = i.toDouble() / (numPoints - 1)
@@ -418,5 +534,14 @@ enum class ConstraintType {
     ACCELERATION_DIFFERENCE,// a(θ1) - a(θ2) = 0
     ACCELERATION_MAGNITUDE, // |a(θ)| ≤ bound
     JERK_MAGNITUDE,        // |da/dθ(θ)| ≤ bound
-    VELOCITY_MAGNITUDE     // |v(θ)| ≤ bound
+    VELOCITY_MAGNITUDE,    // |v(θ)| ≤ bound
+    
+    // Planetary gearset constraint types
+    UNIFIED_CONTACT_CONSTRAINT,  // R_ring(θ) = R_sun(θ) + 2*R_planet(θ)
+    RING_PLANET_CLEARANCE,       // R_ring(θ) - R_planet(θ) ≥ clearance
+    RING_THICKNESS_CONSTRAINT,   // R_ring_outer(θ) - R_ring_inner(θ) ≥ thickness
+    GEAR_RATIO_CONSTRAINT,       // φ(θ) = gear_ratio * θ
+    ARC_LENGTH_CONJUGACY,        // s_planet(θ) / s_ring(θ) ≈ 1.0
+    RING_SYMMETRY_CONSTRAINT,    // R_ring(θ) = R_ring(θ + 180°)
+    STROKE_ACHIEVABILITY         // gearset_capacity ≥ stroke_length
 }

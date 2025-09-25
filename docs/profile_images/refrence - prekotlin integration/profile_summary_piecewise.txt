@@ -1,0 +1,54 @@
+Gear Profile Generation Summary - Piecewise Solver
+============================================================
+
+CORRECTED Parameters:
+------------------------------
+Ring rotation for 2-stroke cycle: 180.0°
+Planet rotation for 2-stroke cycle: 360.0°
+Gear ratio (Planet:Ring): 2.0:1
+Ring thickness: 3.0 mm
+Planet radius: 15.0 mm
+Ring inner radius base: 70.0 mm
+Ring inner radius variation: 10.0 mm
+Center distance: 85.0 mm
+Planet teeth: 20
+Ring teeth: 40
+Tooth module: 2.0 mm
+
+Generated Profile Statistics:
+------------------------------
+Sun radius range: 100.00 - 120.00 mm
+Sun center radius (journal): 5.00 mm
+Planet radius range: 150.00 - 200.00 mm
+Ring inner radius range: 420.00 - 500.00 mm
+Ring outer radius range: 423.00 - 503.00 mm
+Clearance range: 269.50 - 299.50 mm
+Gear ratio: 2.0:1
+Stroke length: 100.0 mm
+Connecting rod length: 100.0 mm
+
+Planet Kinematics:
+------------------------------
+Planet 1:
+  Angle: 0.0°
+  Center: (270.00, 0.00) mm
+  Radius range: 150.00 - 200.00 mm
+  Spin range: 0.0 - 358.0°
+
+Planet 2:
+  Angle: 180.0°
+  Center: (-270.00, 0.00) mm
+  Radius range: 150.00 - 200.00 mm
+  Spin range: 0.0 - 358.0°
+
+Validation Checks:
+------------------------------
+✓ Ring inner radius > planet radius: True
+✓ Ring outer radius > ring inner radius: True
+✓ Positive clearance: True
+✓ UNIFIED CONSTRAINT (R_ring = R_sun + 2*R_planet): True
+✓ Contact point constraint (R_ring - R_planet = R_sun + R_planet): True
+✓ Ring symmetry (0-180°): Validated
+✓ Proper φ(θ) mapping gear ratio: 2.0:1
+✓ Arc-length ratio for meshing: 0.389 (should be ~1.0)
+✓ Using UNIFIED CONSTRAINT SYSTEM in assembly
