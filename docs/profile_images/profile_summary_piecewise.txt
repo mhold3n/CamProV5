@@ -24,7 +24,7 @@ Sun center radius (journal): 5.00 mm
 Planet radius range: 150.00 - 200.00 mm
 Ring inner radius range: 420.00 - 500.00 mm
 Ring outer radius range: 423.00 - 503.00 mm
-Clearance range: 269.50 - 299.50 mm
+Clearance range: 268.00 - 298.00 mm
 Gear ratio: 2.0:1
 Stroke length: 100.0 mm
 Connecting rod length: 100.0 mm
@@ -52,5 +52,5 @@ Validation Checks:
 ✓ Contact point constraint (R_ring - R_planet = R_sun + R_planet): True
 ✓ Ring symmetry (0-180°): Validated
 ✓ Proper φ(θ) mapping gear ratio: 2.0:1
-✓ Arc-length ratio for meshing: 0.389 (should be ~1.0)
+✓ Arc-length ratio for meshing: 0.388 (should be ~1.0)
 ✓ Using UNIFIED CONSTRAINT SYSTEM in assembly

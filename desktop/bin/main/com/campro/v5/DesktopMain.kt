@@ -18,16 +18,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import com.campro.v5.animation.MotionLawEngine
+import com.campro.v5.animation.MotionLawGenerator
+import com.campro.v5.data.litvin.LitvinUserParams
+import com.campro.v5.data.litvin.ProfileSolverMode
+import com.campro.v5.data.litvin.RampProfile
 import com.campro.v5.layout.LayoutManager
 import com.campro.v5.layout.rememberLayoutManager
 import com.campro.v5.ui.*
 import com.campro.v5.ui.ModernTileLayout
-import com.campro.v5.animation.MotionLawEngine
 import com.google.gson.Gson
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
 fun main(args: Array<String>) {
+    // Handle CLI mode for motion law generation
+    if (args.contains("--input") && args.contains("--output")) {
+        handleCliMode(args)
+        return
+    }
+    
     val testingMode = args.contains("--testing-mode")
     val enableAgent = args.contains("--enable-agent")
 
@@ -236,53 +246,54 @@ fun CamProV5App(
         LaunchedEffect(Unit) {
             if (allParameters.isEmpty()) {
                 // Load default parameters from ParameterInputForm
-                val defaultParams = mapOf(
-                    "Piston Diameter" to "70.0",
-                    "Stroke" to "20",
-                    "Chamber CC" to "5.0",
-                    "TDC Angle" to "90",
-                    "BDC Dwell" to "8",
-                    "TDC Dwell" to "12",
-                    "Enable Smoothing" to "1",
-                    "Cam Timestep" to "1.0",
-                    "Rod Length" to "40",
-                    "TDC Offset" to "40.0",
-                    "Cycle Ratio" to "2",
-                    "Envelope Wall Thickness" to "10.0",
-                    "Piston Mass" to "0.2",
-                    "Manifold Pressure" to "101325.0",
-                    "Ignition Timing BTDC" to "15.0",
-                    "Ignition Duration" to "1.0",
-                    "Equivalence Ratio (phi)" to "1.0",
-                    "Gamma (Air)" to "1.4",
-                    "Initial Temp BDC" to "300.0",
-                    "Fuel Type" to "Diesel",
-                    "IVO deg ABD" to "0.0",
-                    "IVC deg ABD" to "15.0",
-                    "EVO deg BBD" to "15.0",
-                    "EVC deg ABD" to "0.0",
-                    "Assembly RPM" to "1000",
-                    "Mount Mass" to "5.0",
-                    "Mount Stiffness X" to "1e6",
-                    "Mount Stiffness Y" to "1e6",
-                    "Mount Damping Ratio X" to "0.05",
-                    "Mount Damping Ratio Y" to "0.05",
-                    "Cam Material" to "Steel",
-                    "Rod Material" to "Steel",
-                    "Piston Material" to "Aluminum",
-                    "Envelope Material" to "Steel",
-                    "Profile Solver Mode" to "Piecewise",
-                    "Sampling Step" to "1.0",
-                    "Journal Radius" to "10.0",
-                    "Journal Phase Beta" to "0.0",
-                    "Up Fraction" to "0.5",
-                    "Ramp Before TDC" to "5.0",
-                    "Ramp After TDC" to "5.0",
-                    "Ramp Before BDC" to "5.0",
-                    "Ramp After BDC" to "5.0",
-                    "Acceleration Limit" to "1000.0",
-                    "Jerk Limit" to "10000.0"
-                )
+                val defaultParams =
+                    mapOf(
+                        "Piston Diameter" to "70.0",
+                        "Stroke" to "20",
+                        "Chamber CC" to "5.0",
+                        "TDC Angle" to "90",
+                        "BDC Dwell" to "8",
+                        "TDC Dwell" to "12",
+                        "Enable Smoothing" to "1",
+                        "Cam Timestep" to "1.0",
+                        "Rod Length" to "40",
+                        "TDC Offset" to "40.0",
+                        "Cycle Ratio" to "2",
+                        "Envelope Wall Thickness" to "10.0",
+                        "Piston Mass" to "0.2",
+                        "Manifold Pressure" to "101325.0",
+                        "Ignition Timing BTDC" to "15.0",
+                        "Ignition Duration" to "1.0",
+                        "Equivalence Ratio (phi)" to "1.0",
+                        "Gamma (Air)" to "1.4",
+                        "Initial Temp BDC" to "300.0",
+                        "Fuel Type" to "Diesel",
+                        "IVO deg ABD" to "0.0",
+                        "IVC deg ABD" to "15.0",
+                        "EVO deg BBD" to "15.0",
+                        "EVC deg ABD" to "0.0",
+                        "Assembly RPM" to "1000",
+                        "Mount Mass" to "5.0",
+                        "Mount Stiffness X" to "1e6",
+                        "Mount Stiffness Y" to "1e6",
+                        "Mount Damping Ratio X" to "0.05",
+                        "Mount Damping Ratio Y" to "0.05",
+                        "Cam Material" to "Steel",
+                        "Rod Material" to "Steel",
+                        "Piston Material" to "Aluminum",
+                        "Envelope Material" to "Steel",
+                        "Profile Solver Mode" to "Piecewise",
+                        "Sampling Step" to "1.0",
+                        "Journal Radius" to "10.0",
+                        "Journal Phase Beta" to "0.0",
+                        "Up Fraction" to "0.5",
+                        "Ramp Before TDC" to "5.0",
+                        "Ramp After TDC" to "5.0",
+                        "Ramp Before BDC" to "5.0",
+                        "Ramp After BDC" to "5.0",
+                        "Acceleration Limit" to "1000.0",
+                        "Jerk Limit" to "10000.0",
+                    )
                 allParameters = defaultParams
                 MotionLawEngine.getInstance().updateParameters(defaultParams)
             }
@@ -303,7 +314,7 @@ fun CamProV5App(
                 if (parameters.containsKey("animationStarted") && parameters["animationStarted"] == "true") {
                     animationStarted = true
                 }
-            }
+            },
         )
     }
 }
@@ -796,5 +807,74 @@ class CommandProcessor {
         } catch (e: Exception) {
             println("EVENT:{\"type\":\"error\",\"message\":\"Error processing command: ${e.message}\"}")
         }
+    }
+}
+
+/**
+ * Handle CLI mode for motion law generation.
+ * Reads input JSON file, generates motion law, and writes output JSON file.
+ */
+private fun handleCliMode(args: Array<String>) {
+    try {
+        // Parse command line arguments
+        val inputIndex = args.indexOf("--input")
+        val outputIndex = args.indexOf("--output")
+        
+        if (inputIndex == -1 || outputIndex == -1 || inputIndex + 1 >= args.size || outputIndex + 1 >= args.size) {
+            System.err.println("Usage: --input <input.json> --output <output.json>")
+            System.exit(1)
+        }
+        
+        val inputFile = args[inputIndex + 1]
+        val outputFile = args[outputIndex + 1]
+        
+        // Read input JSON
+        val inputJson = java.io.File(inputFile).readText()
+        val gson = Gson()
+        
+        // Parse input parameters (assuming it's a map of parameters)
+        val inputParams = gson.fromJson(inputJson, Map::class.java) as Map<String, Any>
+        
+        // Convert to LitvinUserParams
+        val litvinParams = com.campro.v5.data.litvin.LitvinUserParams(
+            samplingStepDeg = (inputParams["samplingStepDeg"] as? Number)?.toDouble() ?: 1.0,
+            strokeLengthMm = (inputParams["strokeLengthMm"] as? Number)?.toDouble() ?: 100.0,
+            dwellTdcDeg = (inputParams["dwellTdcDeg"] as? Number)?.toDouble() ?: 4.0,
+            dwellBdcDeg = (inputParams["dwellBdcDeg"] as? Number)?.toDouble() ?: 3.0,
+            rampBeforeTdcDeg = (inputParams["rampBeforeTdcDeg"] as? Number)?.toDouble() ?: 6.0,
+            rampAfterTdcDeg = (inputParams["rampAfterTdcDeg"] as? Number)?.toDouble() ?: 5.0,
+            rampBeforeBdcDeg = (inputParams["rampBeforeBdcDeg"] as? Number)?.toDouble() ?: 7.0,
+            rampAfterBdcDeg = (inputParams["rampAfterBdcDeg"] as? Number)?.toDouble() ?: 4.0,
+            upFraction = (inputParams["upFraction"] as? Number)?.toDouble() ?: 110.0 / 180.0,
+            rpm = (inputParams["rpm"] as? Number)?.toDouble() ?: 3000.0,
+            rodLength = (inputParams["rodLength"] as? Number)?.toDouble() ?: 100.0,
+            camR0 = (inputParams["camR0"] as? Number)?.toDouble() ?: 40.0,
+            camKPerUnit = (inputParams["camKPerUnit"] as? Number)?.toDouble() ?: 1.0,
+            centerDistanceBias = (inputParams["centerDistanceBias"] as? Number)?.toDouble() ?: 50.0,
+            centerDistanceScale = (inputParams["centerDistanceScale"] as? Number)?.toDouble() ?: 1.0,
+            profileSolverMode = when (inputParams["profileSolverMode"] as? String) {
+                "Collocation" -> com.campro.v5.data.litvin.ProfileSolverMode.Collocation
+                else -> com.campro.v5.data.litvin.ProfileSolverMode.Piecewise
+            },
+            rampProfile = when (inputParams["rampProfile"] as? String) {
+                "Cycloidal" -> com.campro.v5.data.litvin.RampProfile.Cycloidal
+                "S5" -> com.campro.v5.data.litvin.RampProfile.S5
+                else -> com.campro.v5.data.litvin.RampProfile.S5
+            }
+        )
+        
+        // Generate motion law using MotionLawGenerator
+        val motionSamples = com.campro.v5.animation.MotionLawGenerator.generateMotion(litvinParams)
+        
+        // Convert to JSON and write output
+        val outputJson = gson.toJson(motionSamples)
+        java.io.File(outputFile).writeText(outputJson)
+        
+        println("Motion law generated successfully: ${motionSamples.samples.size} samples")
+        
+    } catch (e: Exception) {
+        System.err.println("Error in CLI mode: ${e.message}")
+        e.printStackTrace()
+        System.exit(1)
     }
 }

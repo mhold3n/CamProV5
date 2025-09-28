@@ -18,7 +18,10 @@ class ErrorHandlingTest {
         // Use reflection to call internal parser if needed; here we just expect our loader to fail when missing keys
         assertThrows(Exception::class.java) {
             // Write to a temp file to reuse loader
-            val tmp = kotlin.io.path.createTempFile(suffix = ".json").toFile()
+            val tmp =
+                kotlin.io.path
+                    .createTempFile(suffix = ".json")
+                    .toFile()
             tmp.writeText(badContent)
             try {
                 FixtureLoader.loadMotionSamples(tmp.absolutePath)
@@ -28,5 +31,3 @@ class ErrorHandlingTest {
         }
     }
 }
-
-

@@ -1,6 +1,5 @@
 package com.campro.v5.animation
 
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
@@ -24,5 +23,3 @@ class FixtureLoaderTest {
         assertTrue(text.contains("\"stepDeg\""))
     }
 }
-
-

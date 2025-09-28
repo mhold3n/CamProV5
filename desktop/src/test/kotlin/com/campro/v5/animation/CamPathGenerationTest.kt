@@ -23,7 +23,13 @@ class CamPathGenerationTest {
         val fallStart = tdcAngle + halfTDC
         val fallEnd = (360.0 - halfBDC).coerceAtLeast(fallStart + 1e-4)
 
-        fun shmDisp(theta: Double, startDeg: Double, endDeg: Double, s0: Double, s1: Double): Double {
+        fun shmDisp(
+            theta: Double,
+            startDeg: Double,
+            endDeg: Double,
+            s0: Double,
+            s1: Double,
+        ): Double {
             val range = (endDeg - startDeg).coerceAtLeast(1e-6)
             val p = ((theta - startDeg) / range).coerceIn(0.0, 1.0)
             return s0 + (s1 - s0) * (1.0 - cos(PI * p)) / 2.0
@@ -33,13 +39,14 @@ class CamPathGenerationTest {
         for (i in 0 until 360) {
             val theta = i.toDouble()
             val thetaRad = Math.toRadians(theta)
-            val s = when {
-                theta < riseStart -> 0.0
-                theta <= riseEnd -> shmDisp(theta, riseStart, riseEnd, 0.0, stroke)
-                theta <= fallStart -> stroke
-                theta <= fallEnd -> shmDisp(theta, fallStart, fallEnd, stroke, 0.0)
-                else -> 0.0
-            }
+            val s =
+                when {
+                    theta < riseStart -> 0.0
+                    theta <= riseEnd -> shmDisp(theta, riseStart, riseEnd, 0.0, stroke)
+                    theta <= fallStart -> stroke
+                    theta <= fallEnd -> shmDisp(theta, fallStart, fallEnd, stroke, 0.0)
+                    else -> 0.0
+                }
             val radius = baseCircleRadius + s
             val x = radius * cos(thetaRad)
             val y = radius * sin(thetaRad)
@@ -61,5 +68,3 @@ class CamPathGenerationTest {
         assertTrue(points.all { it.first.isFinite() && it.second.isFinite() })
     }
 }
-
-

@@ -82,12 +82,25 @@ class CollocationGrid:
             raise ValueError(f"Unknown node type: {self.node_type}")
     
     def _generate_lgl_nodes(self) -> np.ndarray:
-        """Generate Legendre-Gauss-Lobatto nodes mapped to [0, 2π]."""
+        """Generate periodic collocation nodes for [0, 2π).
+
+        Notes
+        -----
+        - For periodic problems on a full cycle, the appropriate collocation
+          nodes are the trigonometric (Fourier) Lobatto nodes, which coincide
+          with equispaced points over the interval with periodic wrap.
+        - Classical polynomial LGL nodes include both endpoints on [-1, 1] and
+          are best suited for non‑periodic problems. Mapping those directly to
+          a periodic domain introduces a duplicated endpoint at 2π and degrades
+          spectral properties for periodic functions.
+        - We therefore return equispaced nodes in [0, 2π) which provide
+          spectral accuracy for periodic functions with the trapezoidal rule
+          and are standard in Fourier collocation.
+        """
         if self.node_count < 3:
             raise ValueError("Need at least 3 nodes for LGL")
-        
-        # For periodic problems, use Fourier nodes for now
-        # TODO: Implement proper periodic LGL nodes
+
+        # Periodic collocation on a full cycle: use equispaced nodes in [0, 2π)
         return self._generate_uniform_nodes()
     
     def _generate_chebyshev_nodes(self) -> np.ndarray:

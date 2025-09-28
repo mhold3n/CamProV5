@@ -1,0 +1,21 @@
+{
+  "samplingStepDeg": 1.0,
+  "ringRotationDeg": 180.0,
+  "gearRatio": 2.0,
+  "strokeLengthMm": 100.0,
+  "rodLength": 100.0,
+  "journalRadius": 5.0,
+  "interferenceBuffer": 0.5,
+  "ringThickness": 3.0,
+  "rpm": 3000.0,
+  "planetCount": 2,
+  "carrierOffsetDeg": 180.0,
+  "rampBeforeTdcDeg": 6.0,
+  "rampAfterTdcDeg": 5.0,
+  "dwellTdcDeg": 4.0,
+  "rampBeforeBdcDeg": 7.0,
+  "rampAfterBdcDeg": 4.0,
+  "dwellBdcDeg": 3.0,
+  "constantVelocityTdcDeg": 30.0,
+  "constantVelocityBdcDeg": 40.0
+}

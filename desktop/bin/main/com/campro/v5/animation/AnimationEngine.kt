@@ -2,6 +2,9 @@ package com.campro.v5.animation
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.google.gson.JsonArray
 import java.io.File
 
 /**
@@ -102,6 +105,7 @@ class ComponentBasedAnimationEngine(
     private var parameters: Map<String, String>,
 ) : AnimationEngine {
     private var currentAngle: Float = 0f
+
     // Use the global MotionLawEngine singleton that receives samples from parameter updates
     private val motionLawEngine: MotionLawEngine = MotionLawEngine.getInstance()
     private var lastDrawnAngle: Float = -1f
@@ -335,19 +339,102 @@ data class ComponentPositions(
  * Placeholder for the FEA results loader.
  */
 object FeaResultsLoader {
+    private val gson = Gson()
+
     /**
-     * Load FEA results from a file.
+     * Load FEA results from a JSON file.
      *
-     * @param resultsFile The FEA results file
-     * @return The loaded analysis data
+     * Expected flexible schema (best-effort parsing):
+     * {
+     *   "displacements": [ { "node": 1, "x": 0.1, "y": -0.02 }, ... ] | { "1": {"x":..,"y":..}, ... }
+     *   "stresses": [ { "element": 5, "vonMises": 120.5 }, ... ] | { "5": 120.5, ... }
+     *   "timeSteps": [ 0.0, 0.01, ... ]
+     * }
      */
     fun loadResults(resultsFile: File): AnalysisData {
-        // Implementation would load and parse the FEA results
-        // For now, return a placeholder
+        require(resultsFile.exists()) { "FEA results file not found: ${resultsFile.absolutePath}" }
+
+        val root = gson.fromJson(resultsFile.readText(), JsonObject::class.java)
+
+        val dispMap = mutableMapOf<Int, Offset>()
+        val stressMap = mutableMapOf<Int, Float>()
+        val timeSteps = mutableListOf<Float>()
+
+        // Displacements
+        root.get("displacements")?.let { dispNode ->
+            when {
+                dispNode.isJsonArray -> {
+                    val arr = dispNode.asJsonArray
+                    arr.forEach { item ->
+                        val obj = item.asJsonObject
+                        val id = obj.get("node")?.asInt ?: return@forEach
+                        val x = obj.get("x")?.asFloat ?: 0f
+                        val y = obj.get("y")?.asFloat ?: 0f
+                        dispMap[id] = Offset(x, y)
+                    }
+                }
+                dispNode.isJsonObject -> {
+                    val obj = dispNode.asJsonObject
+                    obj.entrySet().forEach { (key, value) ->
+                        val id = key.toIntOrNull() ?: return@forEach
+                        val vObj = value.asJsonObject
+                        val x = vObj.get("x")?.asFloat ?: 0f
+                        val y = vObj.get("y")?.asFloat ?: 0f
+                        dispMap[id] = Offset(x, y)
+                    }
+                }
+            }
+        }
+
+        // Stresses
+        root.get("stresses")?.let { stressNode ->
+            when {
+                stressNode.isJsonArray -> {
+                    val arr = stressNode.asJsonArray
+                    arr.forEach { item ->
+                        val obj = item.asJsonObject
+                        val id = obj.get("element")?.asInt ?: return@forEach
+                        // Handle malformed stress values gracefully
+                        val vm = try {
+                            obj.get("vonMises")?.asFloat
+                                ?: obj.get("value")?.asFloat
+                        } catch (e: NumberFormatException) {
+                            // Skip malformed stress values
+                            return@forEach
+                        }
+                        if (vm != null) {
+                            stressMap[id] = vm
+                        }
+                    }
+                }
+                stressNode.isJsonObject -> {
+                    val obj = stressNode.asJsonObject
+                    obj.entrySet().forEach { (key, value) ->
+                        val id = key.toIntOrNull() ?: return@forEach
+                        // Handle malformed stress values gracefully
+                        val vm = try {
+                            value.asFloat
+                        } catch (e: NumberFormatException) {
+                            // Skip malformed stress values
+                            return@forEach
+                        }
+                        stressMap[id] = vm
+                    }
+                }
+            }
+        }
+
+        // timeSteps
+        root.get("timeSteps")?.let { tsNode ->
+            if (tsNode.isJsonArray) {
+                tsNode.asJsonArray.forEach { t -> timeSteps.add(t.asFloat) }
+            }
+        }
+
         return AnalysisData(
-            displacements = emptyMap(),
-            stresses = emptyMap(),
-            timeSteps = emptyList(),
+            displacements = dispMap.toMap(),
+            stresses = stressMap.toMap(),
+            timeSteps = timeSteps.toList(),
         )
     }
 }

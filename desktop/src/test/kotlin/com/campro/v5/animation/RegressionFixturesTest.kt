@@ -6,7 +6,6 @@ import com.campro.v5.data.litvin.RampProfile
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
@@ -14,9 +13,7 @@ import kotlin.math.abs
  * Regression tests against known-good fixtures.
  */
 class RegressionFixturesTest {
-
-    private fun loadSmallFixture(): FixtureMotionSamples =
-        FixtureLoader.loadMotionSamples("fixtures/motion_samples_small.json")
+    private fun loadSmallFixture(): FixtureMotionSamples = FixtureLoader.loadMotionSamples("fixtures/motion_samples_small.json")
 
     @Test
     @Timeout(20, unit = TimeUnit.SECONDS)
@@ -26,9 +23,10 @@ class RegressionFixturesTest {
         val p = fixture.generator?.params ?: emptyMap()
         val strokeFromMeta = (p["strokeLengthMm"] as? Number)?.toDouble()
         val samplingFromMeta = (p["samplingStepDeg"] as? Number)?.toDouble() ?: fixture.stepDeg
-        val rampProfileMeta = (p["rampProfile"] as? String)?.let {
-            runCatching { RampProfile.valueOf(it) }.getOrNull()
-        } ?: RampProfile.Cycloidal
+        val rampProfileMeta =
+            (p["rampProfile"] as? String)?.let {
+                runCatching { RampProfile.valueOf(it) }.getOrNull()
+            } ?: RampProfile.Cycloidal
         val dwellTdc = (p["dwellTdcDeg"] as? Number)?.toDouble() ?: 0.0
         val dwellBdc = (p["dwellBdcDeg"] as? Number)?.toDouble() ?: 0.0
         val rampAfterTdc = (p["rampAfterTdcDeg"] as? Number)?.toDouble() ?: 0.0
@@ -38,33 +36,35 @@ class RegressionFixturesTest {
         val upFraction = (p["upFraction"] as? Number)?.toDouble() ?: 0.5
         val rpm = (p["rpm"] as? Number)?.toDouble() ?: 3000.0
 
-        val params = if (strokeFromMeta != null) {
-            LitvinUserParams(
-                strokeLengthMm = strokeFromMeta,
-                samplingStepDeg = samplingFromMeta,
-                rampProfile = rampProfileMeta,
-                dwellTdcDeg = dwellTdc,
-                dwellBdcDeg = dwellBdc,
-                rampAfterTdcDeg = rampAfterTdc,
-                rampBeforeBdcDeg = rampBeforeBdc,
-                rampAfterBdcDeg = rampAfterBdc,
-                rampBeforeTdcDeg = rampBeforeTdc,
-                upFraction = upFraction,
-                rpm = rpm,
-                profileSolverMode = ProfileSolverMode.Piecewise
-            )
-        } else {
-            val fxVals = fixture.samples.map { it.xMm }
-            val halfStroke = fxVals.maxOrNull()?.let { max ->
-                kotlin.math.max(kotlin.math.abs(max), kotlin.math.abs(fxVals.minOrNull() ?: 0.0))
-            } ?: 7.5
-            LitvinUserParams(
-                strokeLengthMm = halfStroke * 2.0,
-                samplingStepDeg = fixture.stepDeg,
-                rampProfile = RampProfile.Cycloidal,
-                profileSolverMode = ProfileSolverMode.Piecewise
-            )
-        }
+        val params =
+            if (strokeFromMeta != null) {
+                LitvinUserParams(
+                    strokeLengthMm = strokeFromMeta,
+                    samplingStepDeg = samplingFromMeta,
+                    rampProfile = rampProfileMeta,
+                    dwellTdcDeg = dwellTdc,
+                    dwellBdcDeg = dwellBdc,
+                    rampAfterTdcDeg = rampAfterTdc,
+                    rampBeforeBdcDeg = rampBeforeBdc,
+                    rampAfterBdcDeg = rampAfterBdc,
+                    rampBeforeTdcDeg = rampBeforeTdc,
+                    upFraction = upFraction,
+                    rpm = rpm,
+                    profileSolverMode = ProfileSolverMode.Piecewise,
+                )
+            } else {
+                val fxVals = fixture.samples.map { it.xMm }
+                val halfStroke =
+                    fxVals.maxOrNull()?.let { max ->
+                        kotlin.math.max(kotlin.math.abs(max), kotlin.math.abs(fxVals.minOrNull() ?: 0.0))
+                    } ?: 7.5
+                LitvinUserParams(
+                    strokeLengthMm = halfStroke * 2.0,
+                    samplingStepDeg = fixture.stepDeg,
+                    rampProfile = RampProfile.Cycloidal,
+                    profileSolverMode = ProfileSolverMode.Piecewise,
+                )
+            }
 
         val samples = MotionLawGenerator.generateMotion(params)
         assertEquals(fixture.stepDeg, samples.stepDeg, 1e-12)
@@ -95,8 +95,27 @@ class RegressionFixturesTest {
         val sxSeq = thList.map { AngleInterpolator.linear(it, samples.stepDeg, sx) }
 
         fun mean(xs: List<Double>) = xs.average()
-        fun variance(xs: List<Double>): Double { val m = mean(xs); return xs.sumOf { (it - m)*(it - m) } / xs.size }
-        fun covariance(xs: List<Double>, ys: List<Double>): Double { val mx = mean(xs); val my = mean(ys); return xs.indices.sumOf { (xs[it]-mx)*(ys[it]-my) } / xs.size }
+
+        fun variance(xs: List<Double>): Double {
+            val m = mean(xs)
+            return xs.sumOf { (it - m) * (it - m) } / xs.size
+        }
+
+        fun covariance(
+            xs: List<Double>,
+            ys: List<Double>,
+        ): Double {
+            val mx = mean(xs)
+            val my = mean(ys)
+            return xs.indices.sumOf {
+                (
+                    xs[it] -
+                        mx
+                ) *
+                    (ys[it] - my)
+            } /
+                xs.size
+        }
 
         val a = if (variance(sxSeq) > 1e-12) covariance(sxSeq, fxSeq) / variance(sxSeq) else 0.0
         val b = mean(fxSeq) - a * mean(sxSeq)
@@ -123,16 +142,24 @@ class RegressionFixturesTest {
 
         // Also require high shape correlation on displacement after alignment
         val alignedSxSeq = sxSeq.map { a * it + b }
-        fun corr(x: List<Double>, y: List<Double>): Double {
-            val mx = x.average(); val my = y.average()
-            val num = x.indices.sumOf { (x[it]-mx)*(y[it]-my) }
-            val den = kotlin.math.sqrt(x.indices.sumOf { (x[it]-mx)*(x[it]-mx) } * y.indices.sumOf { (y[it]-my)*(y[it]-my) })
+
+        fun corr(
+            x: List<Double>,
+            y: List<Double>,
+        ): Double {
+            val mx = x.average()
+            val my = y.average()
+            val num = x.indices.sumOf { (x[it] - mx) * (y[it] - my) }
+            val den = kotlin.math.sqrt(x.indices.sumOf { (x[it] - mx) * (x[it] - mx) } * y.indices.sumOf { (y[it] - my) * (y[it] - my) })
             return if (den > 1e-12) num / den else 0.0
         }
         val r = corr(fxSeq, alignedSxSeq)
 
         // Normalized RMSE for displacement after alignment
-        fun rmse(x: List<Double>, y: List<Double>): Double {
+        fun rmse(
+            x: List<Double>,
+            y: List<Double>,
+        ): Double {
             val n = x.size
             if (n == 0) return 0.0
             val sse = x.indices.sumOf { (x[it] - y[it]) * (x[it] - y[it]) }
@@ -156,14 +183,16 @@ class RegressionFixturesTest {
         val fixture = FixtureLoader.loadMotionSamples("fixtures/motion_samples_fine.json")
 
         val fxVals = fixture.samples.map { it.xMm }
-        val halfStroke = fxVals.maxOrNull()?.let { max ->
-            kotlin.math.max(kotlin.math.abs(max), kotlin.math.abs(fxVals.minOrNull() ?: 0.0))
-        } ?: 7.5
-        val params = LitvinUserParams(
-            strokeLengthMm = halfStroke * 2.0,
-            samplingStepDeg = fixture.stepDeg,
-            profileSolverMode = ProfileSolverMode.Piecewise
-        )
+        val halfStroke =
+            fxVals.maxOrNull()?.let { max ->
+                kotlin.math.max(kotlin.math.abs(max), kotlin.math.abs(fxVals.minOrNull() ?: 0.0))
+            } ?: 7.5
+        val params =
+            LitvinUserParams(
+                strokeLengthMm = halfStroke * 2.0,
+                samplingStepDeg = fixture.stepDeg,
+                profileSolverMode = ProfileSolverMode.Piecewise,
+            )
 
         val samples = MotionLawGenerator.generateMotion(params)
         assertEquals(fixture.stepDeg, samples.stepDeg, 1e-12)

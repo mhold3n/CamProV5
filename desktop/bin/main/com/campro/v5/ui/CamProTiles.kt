@@ -12,12 +12,12 @@ import androidx.compose.ui.unit.dp
 import com.campro.v5.AnimationWidget
 import com.campro.v5.ParameterInputForm
 import com.campro.v5.animation.MotionLawEngine
-import com.campro.v5.ui.PreviewsPanel
 import com.campro.v5.layout.LayoutManager
+import com.campro.v5.ui.UnifiedOptimizationTile
 
 /**
  * Tile definitions for CamProV5 application
- * 
+ *
  * This file contains all the tile configurations for the tile-based environment,
  * including parameter input, animation display, plots, diagnostics, and controls.
  */
@@ -28,10 +28,9 @@ fun createCamProTiles(
     animationStarted: Boolean,
     allParameters: Map<String, String>,
     onParametersChanged: (Map<String, String>) -> Unit,
-    layoutManager: LayoutManager
-): List<TileConfig> {
-    
-    return listOf(
+    layoutManager: LayoutManager,
+): List<TileConfig> =
+    listOf(
         // Input Tiles
         TileConfig(
             id = "parameters",
@@ -40,15 +39,33 @@ fun createCamProTiles(
             type = TileType.INPUT,
             minSize = TileSize.SMALL,
             maxSize = TileSize.LARGE,
-            defaultSize = TileSize.MEDIUM
+            defaultSize = TileSize.MEDIUM,
         ) {
             ParameterInputForm(
                 testingMode = testingMode,
                 onParametersChanged = onParametersChanged,
-                layoutManager = layoutManager
+                layoutManager = layoutManager,
             )
         },
-        
+        // Unified Optimization Tile
+        TileConfig(
+            id = "unified_optimization",
+            title = "Unified Optimization",
+            icon = Icons.Default.AutoAwesome,
+            type = TileType.GRAPHICS,
+            minSize = TileSize.LARGE,
+            maxSize = TileSize.XLARGE,
+            defaultSize = TileSize.LARGE,
+        ) {
+            UnifiedOptimizationTile(
+                onResultsReceived = { result ->
+                    // Handle optimization results
+                    if (testingMode) {
+                        println("EVENT:{\"type\":\"optimization_completed\",\"status\":\"${result.status}\",\"execution_time\":${result.executionTime}}")
+                    }
+                }
+            )
+        },
         // Graphics Tiles
         TileConfig(
             id = "animation",
@@ -57,21 +74,20 @@ fun createCamProTiles(
             type = TileType.GRAPHICS,
             minSize = TileSize.MEDIUM,
             maxSize = TileSize.XLARGE,
-            defaultSize = TileSize.LARGE
+            defaultSize = TileSize.LARGE,
         ) {
             if (animationStarted) {
                 AnimationWidget(
                     parameters = allParameters,
-                    testingMode = testingMode
+                    testingMode = testingMode,
                 )
             } else {
                 EmptyStateWidget(
                     message = "Set parameters and start animation to see the cam profile",
-                    icon = Icons.Default.Animation
+                    icon = Icons.Default.Animation,
                 )
             }
         },
-        
         TileConfig(
             id = "plots",
             title = "Motion Profiles",
@@ -79,21 +95,20 @@ fun createCamProTiles(
             type = TileType.GRAPHICS,
             minSize = TileSize.SMALL,
             maxSize = TileSize.LARGE,
-            defaultSize = TileSize.MEDIUM
+            defaultSize = TileSize.MEDIUM,
         ) {
             if (animationStarted) {
                 PreviewsPanel(
                     engine = MotionLawEngine.getInstance(),
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
                 )
             } else {
                 EmptyStateWidget(
                     message = "Motion profiles will appear here after animation starts",
-                    icon = Icons.Default.BarChart
+                    icon = Icons.Default.BarChart,
                 )
             }
         },
-        
         // Output Tiles
         TileConfig(
             id = "diagnostics",
@@ -102,11 +117,10 @@ fun createCamProTiles(
             type = TileType.OUTPUT,
             minSize = TileSize.SMALL,
             maxSize = TileSize.MEDIUM,
-            defaultSize = TileSize.SMALL
+            defaultSize = TileSize.SMALL,
         ) {
             DiagnosticsTile()
         },
-        
         TileConfig(
             id = "performance",
             title = "Performance",
@@ -114,11 +128,10 @@ fun createCamProTiles(
             type = TileType.OUTPUT,
             minSize = TileSize.SMALL,
             maxSize = TileSize.MEDIUM,
-            defaultSize = TileSize.SMALL
+            defaultSize = TileSize.SMALL,
         ) {
             PerformanceTile()
         },
-        
         // Control Tiles
         TileConfig(
             id = "playback",
@@ -127,14 +140,13 @@ fun createCamProTiles(
             type = TileType.CONTROL,
             minSize = TileSize.SMALL,
             maxSize = TileSize.SMALL,
-            defaultSize = TileSize.SMALL
+            defaultSize = TileSize.SMALL,
         ) {
             PlaybackControlsTile(
                 parameters = allParameters,
-                onParametersChanged = onParametersChanged
+                onParametersChanged = onParametersChanged,
             )
         },
-        
         TileConfig(
             id = "view_settings",
             title = "View Settings",
@@ -142,49 +154,50 @@ fun createCamProTiles(
             type = TileType.CONTROL,
             minSize = TileSize.SMALL,
             maxSize = TileSize.SMALL,
-            defaultSize = TileSize.SMALL
+            defaultSize = TileSize.SMALL,
         ) {
             ViewSettingsTile()
-        }
+        },
     )
-}
 
 @Composable
 private fun DiagnosticsTile() {
     val motion = MotionLawEngine.getInstance().getMotionLawSamples()
-    val preflight = com.campro.v5.animation.DiagnosticsPreflight.validateMotionLaw(motion)
-    
+    val preflight =
+        com.campro.v5.animation.DiagnosticsPreflight
+            .validateMotionLaw(motion)
+
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
             "System Status",
             style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
-        
+
         preflight.items.forEach { item ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(
                     imageVector = if (item.ok) Icons.Default.CheckCircle else Icons.Default.Error,
                     contentDescription = null,
                     tint = if (item.ok) Color(0xFF4CAF50) else Color(0xFFF44336),
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(16.dp),
                 )
                 Text(
                     text = item.name,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 if (item.detail.isNotBlank()) {
                     Text(
                         text = "(${item.detail})",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -197,33 +210,33 @@ private fun PerformanceTile() {
     val fps = com.campro.v5.animation.PerfDiag.fps
     val accelMax = com.campro.v5.animation.PerfDiag.accelMaxAbs
     val jerkMax = com.campro.v5.animation.PerfDiag.jerkMaxAbs
-    
+
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
             "Performance Metrics",
             style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
-        
+
         PerformanceMetric(
             label = "FPS",
             value = String.format("%.1f", fps),
-            unit = "fps"
+            unit = "fps",
         )
-        
+
         PerformanceMetric(
             label = "Max Acceleration",
             value = String.format("%.2f", accelMax ?: 0.0),
-            unit = "mm/ω²"
+            unit = "mm/ω²",
         )
-        
+
         PerformanceMetric(
             label = "Max Jerk",
             value = String.format("%.2f", jerkMax ?: 0.0),
-            unit = "mm/ω³"
+            unit = "mm/ω³",
         )
     }
 }
@@ -232,32 +245,32 @@ private fun PerformanceTile() {
 private fun PerformanceMetric(
     label: String,
     value: String,
-    unit: String
+    unit: String,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
             )
             Text(
                 text = unit,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -266,49 +279,49 @@ private fun PerformanceMetric(
 @Composable
 private fun PlaybackControlsTile(
     parameters: Map<String, String>,
-    onParametersChanged: (Map<String, String>) -> Unit
+    onParametersChanged: (Map<String, String>) -> Unit,
 ) {
     var isPlaying by remember { mutableStateOf(parameters["animationStarted"] == "true") }
     var animationSpeed by remember { mutableStateOf(1.0f) }
-    
+
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
             "Playback",
             style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
-        
+
         // Play/Pause button
         Button(
             onClick = {
                 isPlaying = !isPlaying
                 onParametersChanged(parameters + ("animationStarted" to isPlaying.toString()))
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Icon(
                 imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                contentDescription = if (isPlaying) "Pause" else "Play"
+                contentDescription = if (isPlaying) "Pause" else "Play",
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(if (isPlaying) "Pause" else "Play")
         }
-        
+
         // Speed control
         Column {
             Text(
                 text = "Speed: ${String.format("%.1f", animationSpeed)}x",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Slider(
                 value = animationSpeed,
                 onValueChange = { animationSpeed = it },
                 valueRange = 0.1f..5.0f,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -318,46 +331,46 @@ private fun PlaybackControlsTile(
 private fun ViewSettingsTile() {
     var showGrid by remember { mutableStateOf(true) }
     var showDiagnostics by remember { mutableStateOf(true) }
-    
+
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
             "View Options",
             style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
-        
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = "Show Grid",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Switch(
                 checked = showGrid,
-                onCheckedChange = { showGrid = it }
+                onCheckedChange = { showGrid = it },
             )
         }
-        
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = "Show Diagnostics",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Switch(
                 checked = showDiagnostics,
-                onCheckedChange = { showDiagnostics = it }
+                onCheckedChange = { showDiagnostics = it },
             )
         }
     }
@@ -366,25 +379,25 @@ private fun ViewSettingsTile() {
 @Composable
 private fun EmptyStateWidget(
     message: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(48.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
     }
 }

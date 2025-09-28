@@ -171,7 +171,7 @@ class DenseValidator:
         if center_distance > 0:
             self._validate_gear_geometry(
                 theta_grid, position, velocity, acceleration,
-                center_distance, report
+                center_distance, report, motion_params
             )
         
         # 3. Motion law specific validation
@@ -232,17 +232,33 @@ class DenseValidator:
     
     def _validate_gear_geometry(self, theta_grid: np.ndarray, position: np.ndarray,
                               velocity: np.ndarray, acceleration: np.ndarray,
-                              center_distance: float, report: DenseValidationReport):
+                              center_distance: float, report: DenseValidationReport, 
+                              motion_params: Dict[str, Any] = None):
         """Validate gear geometry constraints."""
         
         # Estimate gear radii from velocity profile
         v_max = np.max(np.abs(velocity))
         v_normalized = velocity / (v_max + 1e-12)
         
-        # Simplified gear radius estimation
-        cam_radius_variation = 5.0  # mm
-        cam_base_radius = 40.0  # mm
-        cam_radius = cam_base_radius + cam_radius_variation * v_normalized
+        # Use robust gear design for radius estimation
+        from campro.solvers.robust_gear_design import RobustGearDesign, GearMaterialProperties, GearDesignParameters
+        
+        # Create robust gear design calculator
+        material = GearMaterialProperties()
+        design_params = GearDesignParameters()
+        gear_design = RobustGearDesign(material, design_params)
+        
+        # Estimate torque from motion parameters
+        if motion_params is None:
+            motion_params = {}
+        estimated_torque = motion_params.get('max_torque', 500.0)  # N⋅m
+        estimated_rpm = motion_params.get('rpm', 1500.0)  # RPM
+        
+        # Calculate gear radius using robust method
+        cam_radius = gear_design.calculate_gear_radius(
+            np.full_like(theta_grid, estimated_torque),
+            np.full_like(theta_grid, estimated_rpm)
+        )
         ring_radius = center_distance - cam_radius
         
         # Ensure positive radii
@@ -256,9 +272,10 @@ class DenseValidator:
             report.num_violations += 1
             self.logger.warning("Ring radius too small in some regions")
         
-        # Pressure angle estimation
-        dr_dtheta = np.gradient(cam_radius, theta_grid)
-        pressure_angles = np.arctan2(np.abs(dr_dtheta), cam_radius)
+        # Calculate pressure angle using robust gear design
+        pressure_angles = gear_design.calculate_pressure_angle(
+            cam_radius, ring_radius, center_distance
+        )
         
         # Check pressure angle limits
         pressure_angle_violations = np.sum(pressure_angles > self.limits.pressure_angle_max)
@@ -282,12 +299,16 @@ class DenseValidator:
                 )
                 report.pressure_angle_results.append(result)
         
-        # Estimate contact ratio (simplified)
-        avg_contact_length = np.mean(np.sqrt((cam_radius + ring_radius)**2 - 
-                                           (cam_radius * np.cos(pressure_angles) + 
-                                            ring_radius * np.cos(pressure_angles))**2))
-        avg_circular_pitch = 2 * np.pi * np.mean(cam_radius) / 20.0  # Assume 20 teeth
-        contact_ratio = avg_contact_length / avg_circular_pitch
+        # Calculate contact ratio using robust gear design
+        addendum = 2.0  # mm (standard)
+        dedendum = 2.5  # mm (standard)
+        contact_ratios = gear_design.calculate_contact_ratio(
+            cam_radius, ring_radius, pressure_angles,
+            np.full_like(cam_radius, addendum),
+            np.full_like(cam_radius, dedendum)
+        )
+        avg_contact_ratio = np.mean(contact_ratios)
+        contact_ratio = avg_contact_ratio
         
         contact_passed = (contact_ratio >= self.limits.contact_ratio_min and 
                          contact_ratio <= self.limits.contact_ratio_max)

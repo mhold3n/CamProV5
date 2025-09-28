@@ -3,9 +3,16 @@ package com.campro.v5.animation
 import kotlin.math.floor
 
 object AngleInterpolator {
-    fun wrapIndex(i: Int, n: Int): Int = ((i % n) + n) % n
+    fun wrapIndex(
+        i: Int,
+        n: Int,
+    ): Int = ((i % n) + n) % n
 
-    fun linear(theta: Double, stepDeg: Double, values: List<Double>): Double {
+    fun linear(
+        theta: Double,
+        stepDeg: Double,
+        values: List<Double>,
+    ): Double {
         val n = values.size
         if (n == 0) return 0.0
         if (n == 1) return values[0]
@@ -20,5 +27,3 @@ object AngleInterpolator {
         return v0 + (v1 - v0) * w
     }
 }
-
-

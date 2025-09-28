@@ -1,8 +1,8 @@
 package com.campro.v5.animation
 
+import com.campro.v5.data.litvin.LitvinUserParams
 import com.campro.v5.data.litvin.MotionLawSample
 import com.campro.v5.data.litvin.MotionLawSamples
-import com.campro.v5.data.litvin.LitvinUserParams
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -16,7 +16,7 @@ class TransmissionUsageTest {
         // Reset singleton state for clean test isolation
         MotionLawEngine.resetInstance()
     }
-    
+
     /** Build a tiny synthetic motion with a near-singularity region for denominator handling. */
     private fun syntheticMotion(stepDeg: Double = 10.0): MotionLawSamples {
         val samples = mutableListOf<MotionLawSample>()
@@ -32,12 +32,13 @@ class TransmissionUsageTest {
     @Test
     fun `denominator guard avoids NaN and preserves mean near unity`() {
         val motion = syntheticMotion(10.0)
-        val params = LitvinUserParams(
-            samplingStepDeg = motion.stepDeg,
-            sliderAxisDeg = 0.0,
-            journalPhaseBetaDeg = 0.0,
-            journalRadius = 10.0,
-        )
+        val params =
+            LitvinUserParams(
+                samplingStepDeg = motion.stepDeg,
+                sliderAxisDeg = 0.0,
+                journalPhaseBetaDeg = 0.0,
+                journalRadius = 10.0,
+            )
 
         val tp = TransmissionSynthesis.computeTransmissionAndPitch(motion, params)
 
@@ -56,5 +57,3 @@ class TransmissionUsageTest {
         }
     }
 }
-
-

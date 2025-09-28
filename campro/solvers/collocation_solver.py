@@ -250,7 +250,7 @@ class CollocationSolver:
     
     def _solve_with_continuation(self, nlp: MotionNLP, motion_params: Dict[str, Any],
                                base_solver_options: Dict[str, Any]) -> Dict[str, Any]:
-        """Solve NLP using continuation strategy."""
+        """Solve NLP using continuation strategy with sophisticated constraint relaxation."""
         logger.info("Starting continuation optimization...")
         
         continuation_factors = self.numerical_guards.continuation.generate_continuation_sequence()
@@ -291,15 +291,8 @@ class CollocationSolver:
                 else:
                     initial_guess = current_solution['x']
             
-            # Relax constraints for early steps
-            if factor < 1.0:
-                # TODO: Implement constraint relaxation
-                # For now, use original bounds
-                lower_bounds = nlp.constraint_bounds['lower']
-                upper_bounds = nlp.constraint_bounds['upper']
-            else:
-                lower_bounds = nlp.constraint_bounds['lower']
-                upper_bounds = nlp.constraint_bounds['upper']
+            # Apply sophisticated constraint relaxation
+            lower_bounds, upper_bounds = self._relax_constraints_sophisticated(nlp, factor)
             
             # Solve current step
             try:
@@ -316,8 +309,10 @@ class CollocationSolver:
                     'g': solution['g'],
                     'stats': solver.stats()
                 }
-                
-                logger.info(f"Step {i+1} completed: obj={float(solution['f']):.6f}")
+
+                # Extract scalar objective value robustly to avoid deprecation warnings
+                f_scalar = np.asarray(solution['f']).reshape(-1)[0]
+                logger.info(f"Step {i+1} completed: obj={float(f_scalar):.6f}")
                 
             except Exception as e:
                 logger.warning(f"Continuation step {i+1} failed: {e}")
@@ -328,6 +323,65 @@ class CollocationSolver:
                 break
         
         return current_solution
+    
+    def _relax_constraints_sophisticated(self, nlp: MotionNLP, factor: float) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Apply sophisticated constraint relaxation based on constraint types and magnitudes.
+        
+        This method provides more intelligent constraint relaxation than the simple
+        symmetric relaxation, taking into account constraint types and magnitudes.
+        
+        Args:
+            nlp: The NLP formulation
+            factor: Continuation factor (0 = fully relaxed, 1 = original)
+            
+        Returns:
+            Tuple of (relaxed_lower_bounds, relaxed_upper_bounds)
+        """
+        orig_l = np.array(nlp.constraint_bounds['lower'], dtype=float)
+        orig_u = np.array(nlp.constraint_bounds['upper'], dtype=float)
+        
+        if factor >= 1.0:
+            return orig_l, orig_u
+        
+        # Compute relaxation based on constraint magnitude and type
+        relaxation_radius = (1.0 - factor)
+        
+        # For equality constraints (where lower == upper), relax symmetrically
+        equality_mask = np.abs(orig_u - orig_l) < 1e-12
+        inequality_mask = ~equality_mask
+        
+        relaxed_l = orig_l.copy()
+        relaxed_u = orig_u.copy()
+        
+        if np.any(equality_mask):
+            # Equality constraints: relax symmetrically around the target value
+            target_values = (orig_l[equality_mask] + orig_u[equality_mask]) / 2.0
+            relaxation_amount = relaxation_radius * np.maximum(1.0, np.abs(target_values))
+            relaxed_l[equality_mask] = target_values - relaxation_amount
+            relaxed_u[equality_mask] = target_values + relaxation_amount
+        
+        if np.any(inequality_mask):
+            # Inequality constraints: relax based on constraint magnitude
+            constraint_magnitudes = np.maximum(np.abs(orig_l[inequality_mask]), 
+                                             np.abs(orig_u[inequality_mask]))
+            relaxation_amount = relaxation_radius * np.maximum(1.0, constraint_magnitudes)
+            
+            # Relax lower bounds (make them more negative)
+            relaxed_l[inequality_mask] = orig_l[inequality_mask] - relaxation_amount
+            
+            # Relax upper bounds (make them more positive)
+            relaxed_u[inequality_mask] = orig_u[inequality_mask] + relaxation_amount
+        
+        # Ensure bounds remain finite and reasonable
+        relaxed_l = np.maximum(relaxed_l, -1e6)
+        relaxed_u = np.minimum(relaxed_u, 1e6)
+        
+        logger.debug(f"Sophisticated constraint relaxation: factor={factor:.3f}, "
+                    f"equality_constraints={np.sum(equality_mask)}, "
+                    f"inequality_constraints={np.sum(inequality_mask)}")
+        
+        return relaxed_l, relaxed_u
     
     def _generate_initial_guess(self, nlp: MotionNLP, motion_params: Dict[str, Any]) -> ca.DM:
         """Generate initial guess for the optimization variables."""
@@ -361,9 +415,70 @@ class CollocationSolver:
     
     def _piecewise_initial_guess(self, nlp: MotionNLP, motion_params: Dict[str, Any]) -> ca.DM:
         """Generate piecewise initial guess based on traditional segments."""
-        # TODO: Implement piecewise initial guess using traditional motion law
-        # For now, fall back to sinusoidal
-        return self._sinusoidal_initial_guess(nlp, motion_params)
+        grid = nlp.grid
+        theta_rad = grid.nodes
+        theta_deg = theta_rad * 180.0 / np.pi
+
+        stroke = float(motion_params.get('strokeLengthMm', 10.0))
+        rise_deg = float(motion_params.get('riseDeg', 180.0))
+        dwell_deg = float(motion_params.get('dwellDeg', 0.0))
+        return_deg = float(motion_params.get('returnDeg', 180.0))
+
+        # Ensure non-negative and not exceeding full cycle
+        rise_deg = max(0.0, rise_deg)
+        dwell_deg = max(0.0, dwell_deg)
+        return_deg = max(0.0, return_deg)
+
+        total = rise_deg + dwell_deg + return_deg
+        if total > 360.0:
+            # Normalize proportionally to fit within one cycle
+            scale = 360.0 / total
+            rise_deg *= scale
+            dwell_deg *= scale
+            return_deg *= scale
+
+        # Phase boundaries
+        rise_end = rise_deg
+        dwell_end = rise_end + dwell_deg
+        return_end = dwell_end + return_deg
+
+        # Cycloidal helpers for smooth rise/return within phase lengths
+        def cycloidal_rise(x_deg: float, L_deg: float) -> float:
+            if L_deg <= 0.0:
+                return 0.0
+            t = np.clip(x_deg / L_deg, 0.0, 1.0)
+            return stroke * (t - (1.0 / (2.0 * np.pi)) * np.sin(2.0 * np.pi * t))
+
+        def cycloidal_return(x_deg: float, L_deg: float) -> float:
+            if L_deg <= 0.0:
+                return stroke
+            t = np.clip(x_deg / L_deg, 0.0, 1.0)
+            s = t - (1.0 / (2.0 * np.pi)) * np.sin(2.0 * np.pi * t)
+            return stroke * (1.0 - s)
+
+        position_guess = np.zeros(grid.node_count, dtype=float)
+        for i, ang in enumerate(theta_deg):
+            a = ang % 360.0
+            if a < rise_end:
+                # Rising phase
+                position_guess[i] = cycloidal_rise(a, rise_deg)
+            elif a < dwell_end:
+                # Top dwell
+                position_guess[i] = stroke
+            elif a < return_end:
+                # Return phase
+                position_guess[i] = cycloidal_return(a - dwell_end, return_deg)
+            else:
+                # Bottom dwell
+                position_guess[i] = 0.0
+
+        # Numerical safety: clip to [0, stroke]
+        position_guess = np.clip(position_guess, 0.0, stroke)
+
+        # Pack to CasADi DM vector compatible with NLP variables
+        initial_guess = ca.DM.zeros(nlp.num_variables)
+        initial_guess[:grid.node_count] = position_guess
+        return initial_guess
     
     def _post_process_solution(self, solution_data: Dict[str, Any], grid: CollocationGrid, start_time: float, motion_params: Dict[str, Any]) -> CollocationSolution:
         """Post-process the optimization solution."""

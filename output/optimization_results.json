@@ -1,0 +1,6 @@
+{
+  "status": "failed",
+  "error": "[Errno 2] No such file or directory: './output/input_parameters.json'",
+  "execution_time": 0.0,
+  "stage": "pipeline_execution"
+}

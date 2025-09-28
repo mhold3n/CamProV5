@@ -119,8 +119,8 @@ class ConstraintBuilder:
             tolerance=1e-6
         ))
         
-        # BDC position (maximum displacement)
-        bdc_angle = np.pi  # Approximate BDC at 180 degrees
+        # BDC position (maximum displacement): detect data-driven evaluation point
+        bdc_angle = self._estimate_bdc_evaluation_angle()
         self.constraints.append(ConstraintDefinition(
             name="stroke_length",
             constraint_type="equality",
@@ -129,6 +129,31 @@ class ConstraintBuilder:
             target_value=self.stroke_length,
             tolerance=1e-4 * self.stroke_length
         ))
+
+    def _estimate_bdc_evaluation_angle(self) -> float:
+        """Estimate BDC evaluation angle using grid and motion parameters.
+
+        Strategy
+        --------
+        - If a BDC dwell is specified, center the evaluation at the dwell center
+          (π) but snap to the nearest available grid node to ensure numerical stability.
+        - Otherwise, use a surrogate cycloidal displacement over the existing grid
+          nodes and pick the node with the maximum surrogate displacement. This
+          avoids hard-coded angles and adapts to arbitrary node layouts.
+        """
+        nodes = self.grid.nodes
+        if nodes.size == 0:
+            return float(np.pi)
+
+        # Preferred center for BDC dwell case: π (snap to nearest node)
+        if self.dwell_bdc_deg and self.dwell_bdc_deg > 0.0:
+            idx = int(np.argmin(np.abs(nodes - np.pi)))
+            return float(nodes[idx])
+
+        # Surrogate cycloidal displacement: s(θ) = (1 - cos θ)/2
+        surrogate = 0.5 * (1.0 - np.cos(nodes))
+        idx = int(np.argmax(surrogate))
+        return float(nodes[idx])
     
     def _add_dwell_constraints(self):
         """Add dwell constraints (velocity ≈ 0 during dwells)."""
@@ -319,8 +344,9 @@ class MotionNLP:
                 constraint_bounds_upper.append(0.0)
                 
             elif constraint.name == "stroke_length":
-                # Find node closest to BDC and constrain its position
-                bdc_idx = np.argmin(np.abs(self.grid.nodes - np.pi))
+                # Constrain position at estimated BDC evaluation node
+                eval_theta = float(constraint.evaluation_points[0])
+                bdc_idx = int(np.argmin(np.abs(self.grid.nodes - eval_theta)))
                 expr = self.position_vars[bdc_idx]
                 constraint_expressions.append(expr)
                 stroke = constraint.target_value

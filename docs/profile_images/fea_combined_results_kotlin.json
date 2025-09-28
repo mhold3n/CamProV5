@@ -1,0 +1,120 @@
+{
+  "solver_type": "kotlin",
+  "stress_analysis": {
+    "analysis_type": "stress_analysis",
+    "status": "completed",
+    "model_file": "fea_model.json",
+    "parameters_file": "fea_parameters.json",
+    "analysis_metrics": {
+      "max_von_mises_stress_mpa": 1.0925484305920792,
+      "max_hertzian_contact_stress_mpa": 0.7283656203947194,
+      "safety_factor": 228.82280821594222,
+      "contact_force_sun_planet_n": 312.5,
+      "contact_force_planet_ring_n": 333.3333333333333,
+      "angular_velocity_rad_s": 314.1592653589793,
+      "estimated_torque_nmm": 100000.0
+    },
+    "stress_distribution": {
+      "sun_gear": {
+        "max_stress_mpa": 0.7052369794346953,
+        "stress_concentration_factor": 1.2
+      },
+      "planet_gears": {
+        "max_stress_mpa": 0.7283656203947194,
+        "stress_concentration_factor": 1.5
+      },
+      "ring_gear": {
+        "max_stress_mpa": 0.7283656203947194,
+        "stress_concentration_factor": 1.1
+      }
+    },
+    "fatigue_analysis": {
+      "endurance_limit_mpa": 200.0,
+      "fatigue_safety_factor": 2.5,
+      "estimated_cycles_to_failure": 1000000.0
+    },
+    "contact_analysis": {
+      "max_contact_pressure_mpa": 0.7283656203947194,
+      "contact_width_mm": 2.0,
+      "sliding_velocity_max_mm_s": 62831.853071795864
+    },
+    "recommendations": [
+      "Maximum stress: 1.1 MPa",
+      "Safety factor: 228.82",
+      "Design meets safety requirements",
+      "Monitor contact pressure at high RPM operation"
+    ]
+  },
+  "vibration_analysis": {
+    "analysis_type": "vibration_analysis",
+    "status": "completed",
+    "model_file": "fea_model.json",
+    "parameters_file": "fea_parameters.json",
+    "modal_analysis": {
+      "natural_frequencies": [
+        {
+          "mode": 1,
+          "frequency_hz": 40.0,
+          "description": "Ring gear bending"
+        },
+        {
+          "mode": 2,
+          "frequency_hz": 60.0,
+          "description": "Planet gear vibration"
+        },
+        {
+          "mode": 3,
+          "frequency_hz": 75.0,
+          "description": "Sun gear torsional"
+        },
+        {
+          "mode": 4,
+          "frequency_hz": 100.0,
+          "description": "Gear mesh frequency"
+        },
+        {
+          "mode": 5,
+          "frequency_hz": 100.0,
+          "description": "Planet pass frequency"
+        }
+      ],
+      "damping_ratio": 0.02,
+      "modal_mass_kg": 5.2
+    },
+    "nvh_analysis": {
+      "peaks": [
+        {
+          "frequency_hz": 100.0,
+          "amplitude_db": 45.0,
+          "source": "gear_mesh"
+        },
+        {
+          "frequency_hz": 100.0,
+          "amplitude_db": 38.0,
+          "source": "planet_passage"
+        },
+        {
+          "frequency_hz": 100.0,
+          "amplitude_db": 42.0,
+          "source": "harmonic"
+        }
+      ],
+      "overall_level_db": 52.0,
+      "critical_frequencies": [
+        100.0,
+        100.0
+      ]
+    },
+    "recommendations": [
+      "Gear mesh frequency: 100.0 Hz",
+      "Planet pass frequency: 100.0 Hz",
+      "Consider dynamic balancing for improved NVH",
+      "Monitor resonance at critical frequencies"
+    ]
+  },
+  "overall_assessment": {
+    "stress_pass": true,
+    "vibration_pass": false,
+    "design_acceptable": false
+  }
+}

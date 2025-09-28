@@ -1,7 +1,7 @@
 {
-  "workflow": true,
-  "data_flow": true,
-  "computation": true,
-  "export": true,
-  "overall": true
+  "workflow": null,
+  "data_flow": null,
+  "computation": null,
+  "export": null,
+  "overall": null
 }

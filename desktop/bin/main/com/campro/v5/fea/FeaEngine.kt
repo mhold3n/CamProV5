@@ -372,11 +372,10 @@ class FeaEngine {
      * Check if this FEA engine instance is functional.
      * This verifies that the native methods are available and working.
      */
-    fun isFunctional(): Boolean {
-        return try {
+    fun isFunctional(): Boolean =
+        try {
             testNativeLibraryNative() == 42
         } catch (_: Throwable) {
             false
         }
-    }
 }

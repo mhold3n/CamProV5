@@ -104,16 +104,18 @@ fun ParameterInputForm(
             "Analysis" to
                 listOf(
                     Parameter(
-                    "Profile Solver", 
-                    "Piecewise", 
-                    "", 
-                    "string", 
-                    if (com.campro.v5.config.FeatureFlags.Collocation.isUIVisible()) {
-                        listOf("Piecewise", "Collocation")
-                    } else {
-                        listOf("Piecewise")
-                    }
-                ),
+                        "Profile Solver",
+                        "Piecewise",
+                        "",
+                        "string",
+                        if (com.campro.v5.config.FeatureFlags.Collocation
+                                .isUIVisible()
+                        ) {
+                            listOf("Piecewise", "Collocation")
+                        } else {
+                            listOf("Piecewise")
+                        },
+                    ),
                     Parameter("RK Analysis Revs", "5", "revs", "int"),
                     Parameter("Show Test Plot", "0", "(0=Off, 1=On)", "int"),
                     Parameter("Use Cantera", "0", "(0=No, 1=Yes)", "int"),

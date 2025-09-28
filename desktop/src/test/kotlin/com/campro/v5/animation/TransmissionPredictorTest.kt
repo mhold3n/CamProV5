@@ -15,7 +15,7 @@ class TransmissionPredictorTest {
         // Reset singleton state for clean test isolation
         MotionLawEngine.resetInstance()
     }
-    
+
     @Test
     fun transmission_is_periodic_mean_normalized_and_finite() {
         val profiles = listOf(RampProfile.Cycloidal, RampProfile.S5, RampProfile.S7)

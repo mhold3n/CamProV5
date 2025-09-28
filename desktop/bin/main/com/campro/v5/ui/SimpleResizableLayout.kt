@@ -117,8 +117,10 @@ fun SimpleResizableLayout(
                     )
                 } else {
                     PreviewsPanel(
-                        engine = com.campro.v5.animation.MotionLawEngine.getInstance(),
-                        modifier = Modifier.fillMaxSize()
+                        engine =
+                            com.campro.v5.animation.MotionLawEngine
+                                .getInstance(),
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
             }

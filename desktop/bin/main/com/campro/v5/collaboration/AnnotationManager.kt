@@ -499,7 +499,6 @@ class AnnotationManager {
      */
     fun getSupportedTypes(): Map<String, AnnotationType> = supportedTypes
 
-
     /**
      * Get current annotation session.
      */

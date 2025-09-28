@@ -1,0 +1,30 @@
+{
+  "optimization_success": true,
+  "final_objective": 18.909650974041643,
+  "optimized_variables": {
+    "journal_offset_radius": 6.914353579901933,
+    "journal_angle_offset": -34.79004730264329,
+    "sun_phase_offset": 25.667903162035024,
+    "planet_profile_coeff_1": -0.2,
+    "planet_profile_coeff_2": -0.1,
+    "ring_profile_coeff_1": -0.12625707881962456,
+    "ring_profile_coeff_2": -0.0689589701834122,
+    "sun_profile_coeff_1": 0.1,
+    "sun_profile_coeff_2": 0.05,
+    "profile_phase_shift": -8.866033458816618
+  },
+  "mechanical_advantage": {
+    "mean": 2.9626078772805937,
+    "std": 0.1488724726506361,
+    "min": 2.750019252648625,
+    "max": 3.1999999999999997,
+    "range": 0.4499807473513746
+  },
+  "transfer_efficiency": {
+    "mean": 0.902834548813114,
+    "std": 0.009225271203783593,
+    "min": 0.888888888888889,
+    "max": 0.916665240556749
+  },
+  "target_compliance": {
+    "ma_in_range": 

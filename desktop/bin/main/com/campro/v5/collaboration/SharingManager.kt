@@ -14,9 +14,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.security.MessageDigest
+import java.util.Base64
 import java.util.Date
 import java.util.UUID
-import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -485,7 +485,6 @@ class SharingManager {
      * Get supported sharing platforms.
      */
     fun getSupportedPlatforms(): Map<String, SharingPlatform> = supportedPlatforms
-
 
     // Helper methods
     private fun initializeEncryption() {

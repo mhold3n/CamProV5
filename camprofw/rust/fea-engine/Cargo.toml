@@ -6,6 +6,10 @@ harness = false
 name = "parameter_validation"
 path = "tests/parameter_validation.rs"
 
+[[bin]]
+name = "parameter_validation"
+path = "tests/parameter_validation.rs"
+
 [package]
 name = "fea-engine"
 version = "0.9.0-beta"

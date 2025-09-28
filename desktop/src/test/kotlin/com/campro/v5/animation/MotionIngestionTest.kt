@@ -3,11 +3,13 @@ package com.campro.v5.animation
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import kotlin.math.abs
 import kotlin.random.Random
 
 class MotionIngestionTest {
-    private fun interpLinear(theta: Double, samples: FixtureMotionSamples): Double {
+    private fun interpLinear(
+        theta: Double,
+        samples: FixtureMotionSamples,
+    ): Double {
         val step = samples.stepDeg
         val n = samples.samples.size
         if (n == 0) return 0.0
@@ -42,5 +44,3 @@ class MotionIngestionTest {
         }
     }
 }
-
-

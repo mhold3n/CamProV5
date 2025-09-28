@@ -18,13 +18,13 @@ Python Implementation:
   Sun radius range: 100.00 - 120.00 mm
   Planet radius range: 150.00 - 200.00 mm
   Ring inner radius range: 420.00 - 500.00 mm
-  Clearance range: 269.50 - 299.50 mm
+  Clearance range: 268.00 - 298.00 mm
 
 Kotlin Implementation:
   Sun radius range: 100.00 - 120.00 mm
   Planet radius range: 150.00 - 200.00 mm
   Ring inner radius range: 420.00 - 500.00 mm
-  Clearance range: 269.50 - 299.50 mm
+  Clearance range: 268.00 - 298.00 mm
 
 CONSTRAINT VALIDATION:
 ------------------------------

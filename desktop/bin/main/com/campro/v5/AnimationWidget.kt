@@ -444,7 +444,7 @@ fun AnimationWidget(
 
                         if (currentEngine != null) {
                             // Draw the animation frame
-                            println("DEBUG: Drawing animation frame - canvas: ${canvasWidth}x${canvasHeight}, scale: $scale, offset: $offset, engine type: ${currentEngine.getType()}")
+                            println("DEBUG: Drawing animation frame - canvas: ${canvasWidth}x$canvasHeight, scale: $scale, offset: $offset, engine type: ${currentEngine.getType()}")
                             currentEngine.drawFrame(
                                 drawScope = this,
                                 canvasWidth = canvasWidth,

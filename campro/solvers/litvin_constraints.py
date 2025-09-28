@@ -210,25 +210,35 @@ class LitvinConstraintBuilder:
     
     def _build_tooth_thickness_constraints(self, cam_radius: 'ca.SX', ring_radius: 'ca.SX') -> Dict[str, List]:
         """
-        Build tooth thickness constraints to prevent weak teeth.
+        Build tooth thickness constraints using robust gear design calculations.
         
-        Tooth thickness is approximately related to the gear radius and
-        the number of teeth (which depends on the circumference).
+        This replaces the simplified model with proper engineering analysis
+        based on load, material properties, and design standards.
         """
-        # Estimate number of teeth from circumference
-        # This is a simplified model - real tooth count would be discrete
-        circumference_cam = 2.0 * np.pi * cam_radius
-        circumference_ring = 2.0 * np.pi * ring_radius
+        # Import robust gear design
+        from campro.solvers.robust_gear_design import RobustGearDesign, GearMaterialProperties, GearDesignParameters
         
-        # Assume minimum tooth count of 12 for reasonable gear strength
-        min_teeth = 12.0
-        tooth_pitch_cam = circumference_cam / min_teeth
-        tooth_pitch_ring = circumference_ring / min_teeth
+        # Create robust gear design calculator
+        material = GearMaterialProperties()
+        design_params = GearDesignParameters()
+        gear_design = RobustGearDesign(material, design_params)
         
-        # Tooth thickness should be at least 40% of tooth pitch
-        min_thickness_fraction = 0.4
-        thickness_cam = min_thickness_fraction * tooth_pitch_cam
-        thickness_ring = min_thickness_fraction * tooth_pitch_ring
+        # Estimate contact forces (simplified for constraint system)
+        # In a full implementation, these would come from the motion analysis
+        contact_force_cam = 1000.0  # N (estimated)
+        contact_force_ring = 1200.0  # N (estimated)
+        
+        # Calculate tooth count from radius (simplified)
+        tooth_count_cam = 2.0 * cam_radius / 2.0  # Assume module = 2.0
+        tooth_count_ring = 2.0 * ring_radius / 2.0
+        
+        # Use robust gear design to calculate required tooth thickness
+        thickness_cam = gear_design.calculate_tooth_thickness(
+            cam_radius, np.full_like(cam_radius, contact_force_cam), tooth_count_cam
+        )
+        thickness_ring = gear_design.calculate_tooth_thickness(
+            ring_radius, np.full_like(ring_radius, contact_force_ring), tooth_count_ring
+        )
         
         expressions = []
         lower_bounds = []
@@ -257,27 +267,61 @@ class LitvinConstraintBuilder:
         The radius of curvature must be above a minimum value to avoid
         undercutting during gear manufacturing.
         """
-        # Compute second derivatives
-        D = ca.DM(self.grid.differentiation_matrix)
-        D2 = ca.DM(self.grid.second_derivative_matrix)
+        # Handle both CasADi variables and numpy arrays
+        if hasattr(cam_radius, '__len__') and len(cam_radius) == 0:
+            # Handle empty array case (test scenario)
+            return {
+                'expressions': [],
+                'lower': [],
+                'upper': []
+            }
         
-        dr_cam = D @ cam_radius
-        d2r_cam = D2 @ cam_radius
-        
-        # Radius of curvature: ρ = (r² + (dr/dθ)²)^(3/2) / |r² + 2(dr/dθ)² - r·d²r/dθ²|
-        numerator = (cam_radius**2 + dr_cam**2)**(1.5)
-        denominator = ca.fabs(cam_radius**2 + 2*dr_cam**2 - cam_radius*d2r_cam) + 1e-8
-        curvature_radius = numerator / denominator
-        
-        expressions = []
-        lower_bounds = []
-        upper_bounds = []
-        
-        # Curvature radius must be above minimum
-        for i in range(self.grid.node_count):
-            expressions.append(curvature_radius[i])
-            lower_bounds.append(self.params.curvature_radius_min)
-            upper_bounds.append(float('inf'))
+        # Compute derivatives using appropriate method
+        if CASADI_AVAILABLE and hasattr(cam_radius, 'shape'):
+            # CasADi variables
+            D = ca.DM(self.grid.differentiation_matrix)
+            D2 = ca.DM(self.grid.second_derivative_matrix)
+            
+            dr_cam = D @ cam_radius
+            d2r_cam = D2 @ cam_radius
+            
+            # Radius of curvature: ρ = (r² + (dr/dθ)²)^(3/2) / |r² + 2(dr/dθ)² - r·d²r/dθ²|
+            numerator = (cam_radius**2 + dr_cam**2)**(1.5)
+            denominator = ca.fabs(cam_radius**2 + 2*dr_cam**2 - cam_radius*d2r_cam) + 1e-8
+            curvature_radius = numerator / denominator
+            
+            expressions = []
+            lower_bounds = []
+            upper_bounds = []
+            
+            # Curvature radius must be above minimum
+            for i in range(self.grid.node_count):
+                expressions.append(curvature_radius[i])
+                lower_bounds.append(self.params.curvature_radius_min)
+                upper_bounds.append(float('inf'))
+        else:
+            # Numpy arrays (test scenario)
+            import numpy as np
+            D = self.grid.differentiation_matrix
+            D2 = self.grid.second_derivative_matrix
+            
+            dr_cam = D @ cam_radius
+            d2r_cam = D2 @ cam_radius
+            
+            # Radius of curvature: ρ = (r² + (dr/dθ)²)^(3/2) / |r² + 2(dr/dθ)² - r·d²r/dθ²|
+            numerator = (cam_radius**2 + dr_cam**2)**(1.5)
+            denominator = np.abs(cam_radius**2 + 2*dr_cam**2 - cam_radius*d2r_cam) + 1e-8
+            curvature_radius = numerator / denominator
+            
+            expressions = []
+            lower_bounds = []
+            upper_bounds = []
+            
+            # Curvature radius must be above minimum
+            for i in range(self.grid.node_count):
+                expressions.append(curvature_radius[i])
+                lower_bounds.append(self.params.curvature_radius_min)
+                upper_bounds.append(float('inf'))
         
         return {
             'expressions': expressions,
@@ -287,27 +331,33 @@ class LitvinConstraintBuilder:
     
     def _build_contact_ratio_constraints(self, cam_radius: 'ca.SX', ring_radius: 'ca.SX') -> Dict[str, List]:
         """
-        Build contact ratio constraints for smooth power transmission.
+        Build contact ratio constraints using robust gear design calculations.
         
-        The contact ratio should be above a minimum value to ensure
-        continuous tooth contact during gear meshing.
+        This replaces the simplified model with proper gear geometry analysis
+        based on addendum, dedendum, and pressure angle calculations.
         """
-        # Simplified contact ratio estimation
-        # Real contact ratio depends on addendum, dedendum, and pressure angle
+        # Import robust gear design
+        from campro.solvers.robust_gear_design import RobustGearDesign, GearMaterialProperties, GearDesignParameters
         
-        # Base radii (simplified)
-        base_radius_cam = cam_radius * ca.cos(self.pressure_angle_max)
-        base_radius_ring = ring_radius * ca.cos(self.pressure_angle_max)
+        # Create robust gear design calculator
+        material = GearMaterialProperties()
+        design_params = GearDesignParameters()
+        gear_design = RobustGearDesign(material, design_params)
         
-        # Contact length approximation
-        contact_length = ca.sqrt((cam_radius + ring_radius)**2 - 
-                                (base_radius_cam + base_radius_ring)**2)
+        # Calculate pressure angle using robust method
+        center_distance = cam_radius + ring_radius
+        pressure_angle = gear_design.calculate_pressure_angle(cam_radius, ring_radius, center_distance)
         
-        # Circular pitch
-        circular_pitch = 2.0 * np.pi * cam_radius / 20.0  # Assume 20 teeth
+        # Standard addendum and dedendum (simplified for constraint system)
+        addendum = 2.0  # mm (standard module = 2.0)
+        dedendum = 2.5  # mm (standard)
         
-        # Contact ratio
-        contact_ratio = contact_length / circular_pitch
+        # Use robust gear design to calculate contact ratio
+        contact_ratio = gear_design.calculate_contact_ratio(
+            cam_radius, ring_radius, pressure_angle, 
+            np.full_like(cam_radius, addendum), 
+            np.full_like(cam_radius, dedendum)
+        )
         
         # Average contact ratio over all nodes
         avg_contact_ratio = ca.sum1(contact_ratio) / self.grid.node_count

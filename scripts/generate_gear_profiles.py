@@ -14,6 +14,9 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Any
 import tempfile
 import shutil
+import os
+import subprocess
+import json
 
 # Simple logging setup
 import logging
@@ -96,6 +99,45 @@ class GearProfileGenerator:
             # Planet COM and journal parameters
             "journalOffsetRadius": 5.0,  # mm offset from planet COM to journal
             "journalAngleOffset": 0.0,  # degrees offset from planet COM to journal
+            
+            # Gear profile scaling parameters (FIXED: parameterized instead of hardcoded)
+            "planetRadiusBaseFactor": 0.15,  # Planet radius as fraction of max rod extension
+            "planetRadiusVariationFactor": 0.05,  # Planet radius variation as fraction of max rod extension
+            "sunRadiusBaseFactor": 0.1,  # Sun radius as fraction of max rod extension
+            "sunRadiusVariationFactor": 0.02,  # Sun radius variation as fraction of max rod extension
+            "planetRadiusMinFactor": 0.8,  # Minimum planet radius as fraction of base
+            "sunRadiusMinFactor": 0.9,  # Minimum sun radius as fraction of base
+            
+            # Motion law phase parameters (FIXED: parameterized instead of hardcoded)
+            "constantVelocityTdcDeg": 30.0,  # Constant velocity duration at TDC
+            "constantVelocityBdcDeg": 40.0,  # Constant velocity duration at BDC
+            
+            # Physics parameters for optimization (FIXED: added missing physics)
+            "cylinderPressure": 2.0e5,  # Pa (2 bar cylinder pressure)
+            "pistonArea": 0.01,  # m² (100 cm² piston area)
+            "pistonMass": 5.0,  # kg piston mass
+            "pistonLeverArm": 0.1,  # m effective piston lever arm
+            "frictionCoefficient": 0.05,  # friction coefficient
+            "feaYoungsModulus": 200e9,  # Pa (200 GPa steel)
+            "feaPoissonsRatio": 0.3,  # Poisson's ratio
+            "feaYieldStrength": 400e6,  # Pa (400 MPa steel)
+            
+            # Motion law sampling parameters
+            "samplingStepDeg": 1.0,  # degrees between samples
+            
+            # Motion law phase parameters
+            "rampBeforeTdcDeg": 10.0,  # degrees
+            "rampAfterTdcDeg": 10.0,   # degrees
+            "dwellTdcDeg": 5.0,        # degrees
+            "rampBeforeBdcDeg": 10.0,  # degrees
+            "rampAfterBdcDeg": 10.0,   # degrees
+            "dwellBdcDeg": 5.0,        # degrees
+            
+            # Gear clearance parameters
+            "interferenceBuffer": 2.0,  # mm clearance between gears
+            "strokeAchievableFactor": 0.8,  # Fraction of stroke that must be achievable
+            "clearanceSafetyMargin": 0.1,  # mm safety margin for clearance adjustments
+            "adjustmentSplitFactor": 0.5,  # How to split clearance adjustments between sun and ring
         }
     
     def generate_motion_law_piecewise(self, params: Dict[str, Any]) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -122,13 +164,16 @@ class GearProfileGenerator:
         ramp_after_bdc = params["rampAfterBdcDeg"]
         dwell_bdc = params["dwellBdcDeg"]
         
-        # Calculate phase boundaries
+        # Calculate phase boundaries (FIXED: use parameterized values)
+        constant_velocity_tdc = params.get("constantVelocityTdcDeg", 30.0)
+        constant_velocity_bdc = params.get("constantVelocityBdcDeg", 40.0)
+        
         phase1_end = ramp_before_tdc  # Acceleration to constant velocity
-        phase2_end = phase1_end + 30.0  # Constant velocity (30°)
+        phase2_end = phase1_end + constant_velocity_tdc  # Constant velocity (parameterized)
         phase3_end = phase2_end + ramp_after_tdc  # Deceleration to dwell
         phase4_end = phase3_end + dwell_tdc  # Dwell at TDC
         phase5_end = phase4_end + ramp_before_bdc  # Acceleration to constant velocity
-        phase6_end = phase5_end + 40.0  # Constant velocity (40°)
+        phase6_end = phase5_end + constant_velocity_bdc  # Constant velocity (parameterized)
         phase7_end = phase6_end + ramp_after_bdc  # Deceleration to dwell
         phase8_end = phase7_end + dwell_bdc  # Dwell at BDC
         
@@ -299,10 +344,11 @@ class GearProfileGenerator:
                 "sliderAxisDeg": params["sliderAxisDeg"],
                 "journalPhaseBetaDeg": params["journalPhaseBetaDeg"],
                 "journalRadius": params["journalRadius"],
-                "camR0": params["camR0"],
-                "camKPerUnit": params["camKPerUnit"],
-                "centerDistanceBias": params["centerDistanceBias"],
-                "centerDistanceScale": params["centerDistanceScale"],
+                # Optional cam/center-distance parameters required by Kotlin bridge (provide defaults)
+                "camR0": params.get("camR0", 0.0),
+                "camKPerUnit": params.get("camKPerUnit", 0.0),
+                "centerDistanceBias": params.get("centerDistanceBias", 0.0),
+                "centerDistanceScale": params.get("centerDistanceScale", 1.0),
                 "rpm": params["rpm"]
             }
             
@@ -313,20 +359,57 @@ class GearProfileGenerator:
             temp_output_file = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
             temp_output_file.close()
             
-            # Call the Kotlin motion law generator
-            # This assumes the Kotlin code can be called via a JAR or compiled executable
-            # For now, we'll simulate the call and use the Python implementation as fallback
+            # Call the Kotlin motion law generator via external CLI specified by env KOTLIN_MOTION_CLI
             logger.info("Calling Kotlin MotionLawGenerator with parameters...")
             logger.info(f"Parameters file: {temp_params_file.name}")
             logger.info(f"Output file: {temp_output_file.name}")
-            
-            # TODO: Replace this with actual Kotlin call when available
-            # For now, use the Python implementation to simulate Kotlin results
-            logger.info("Using Python implementation to simulate Kotlin results (migration verification)")
-            theta_deg, displacement, velocity, acceleration = self.generate_motion_law_piecewise(params)
+
+            kotlin_cli = os.environ.get("KOTLIN_MOTION_CLI")
+            if not kotlin_cli:
+                # Attempt to build and package latest CLI from Gradle if not provided
+                try:
+                    logger.info("KOTLIN_MOTION_CLI not set. Building desktop CLI via Gradle...")
+                    gradle_cmd = ["./gradlew", "-p", "desktop", "packageMotionCli", "-q", "--no-daemon"]
+                    subprocess.run(gradle_cmd, check=True)
+                    packaged_runner = os.path.join(
+                        os.path.dirname(__file__), "..", "desktop", "build", "cli", "run-desktop"
+                    )
+                    packaged_runner = os.path.abspath(packaged_runner)
+                    if not os.path.exists(packaged_runner):
+                        raise RuntimeError("Packaged CLI runner not found after Gradle build")
+                    kotlin_cli = packaged_runner
+                    logger.info(f"Using freshly packaged CLI: {kotlin_cli}")
+                except Exception as be:
+                    raise RuntimeError(
+                        "KOTLIN_MOTION_CLI environment variable not set and automatic build failed"
+                    ) from be
+
+            cmd = [kotlin_cli, "--input", temp_params_file.name, "--output", temp_output_file.name]
+            logger.info(f"Executing: {' '.join(cmd)}")
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode != 0:
+                raise RuntimeError(f"Kotlin CLI failed (code {result.returncode}): {result.stderr.strip()}")
+
+            # Read Kotlin output JSON
+            with open(temp_output_file.name, "r") as f:
+                out = json.load(f)
+
+            # Try to parse MotionLawSamples schema
+            if isinstance(out, dict) and "samples" in out:
+                samples = out["samples"]
+                theta_deg = np.array([s.get("thetaDeg", 0.0) for s in samples], dtype=float)
+                displacement = np.array([s.get("xMm", 0.0) for s in samples], dtype=float)
+                velocity = np.array([s.get("vMmPerOmega", 0.0) for s in samples], dtype=float)
+                acceleration = np.array([s.get("aMmPerOmega2", 0.0) for s in samples], dtype=float)
+            else:
+                # Fallback parsing for flat arrays
+                theta = np.array(out.get("theta_grid", []), dtype=float)
+                theta_deg = np.rad2deg(theta)
+                displacement = np.array(out.get("position", []), dtype=float)
+                velocity = np.array(out.get("velocity", []), dtype=float)
+                acceleration = np.array(out.get("acceleration", []), dtype=float)
             
             # Clean up temporary files
-            import os
             try:
                 os.unlink(temp_params_file.name)
                 os.unlink(temp_output_file.name)
@@ -388,9 +471,11 @@ class GearProfileGenerator:
         sun_center_radius = journal_radius  # Sun gear center at journal radius
         
         # Planet radius must accommodate the connecting rod extension
-        # Planet radius varies with displacement to match rod extension
-        planet_radius_base = max_rod_extension * 0.15  # 15% of max extension as base
-        planet_radius_variation = max_rod_extension * 0.05  # 5% variation
+        # Planet radius varies with displacement to match rod extension (FIXED: parameterized)
+        planet_radius_base_factor = params.get("planetRadiusBaseFactor", 0.15)
+        planet_radius_variation_factor = params.get("planetRadiusVariationFactor", 0.05)
+        planet_radius_base = max_rod_extension * planet_radius_base_factor
+        planet_radius_variation = max_rod_extension * planet_radius_variation_factor
         
         # Normalize displacement to drive planet radius variation
         displacement_range = max_displacement - min_displacement
@@ -399,9 +484,10 @@ class GearProfileGenerator:
         else:
             displacement_normalized = np.zeros_like(displacement)
         
-        # Planet radius varies with displacement (SINGLE reference for all profiles)
+        # Planet radius varies with displacement (SINGLE reference for all profiles) (FIXED: parameterized)
+        planet_radius_min_factor = params.get("planetRadiusMinFactor", 0.8)
         r_planet = planet_radius_base + planet_radius_variation * displacement_normalized
-        r_planet = np.maximum(r_planet, planet_radius_base * 0.8)  # Ensure minimum radius
+        r_planet = np.maximum(r_planet, planet_radius_base * planet_radius_min_factor)  # Ensure minimum radius
 
         # Step 4: UNIFIED CONTACT POINT CONSTRAINT SYSTEM
         # ===============================================
@@ -410,13 +496,16 @@ class GearProfileGenerator:
         # This automatically ensures no overlap and proper meshing
         
         # Sun gear center is at the connecting rod journal (differentiated from gear center)
-        # Sun gear radius must accommodate the connecting rod extension
-        sun_radius_base = max_rod_extension * 0.1  # 10% of max extension as base
-        sun_radius_variation = max_rod_extension * 0.02  # 2% variation
+        # Sun gear radius must accommodate the connecting rod extension (FIXED: parameterized)
+        sun_radius_base_factor = params.get("sunRadiusBaseFactor", 0.1)
+        sun_radius_variation_factor = params.get("sunRadiusVariationFactor", 0.02)
+        sun_radius_base = max_rod_extension * sun_radius_base_factor
+        sun_radius_variation = max_rod_extension * sun_radius_variation_factor
         
-        # Sun gear radius varies with displacement (complementary to planet)
+        # Sun gear radius varies with displacement (complementary to planet) (FIXED: parameterized)
+        sun_radius_min_factor = params.get("sunRadiusMinFactor", 0.9)
         r_sun = sun_radius_base + sun_radius_variation * (1.0 - displacement_normalized)
-        r_sun = np.maximum(r_sun, sun_radius_base * 0.9)  # Ensure minimum radius
+        r_sun = np.maximum(r_sun, sun_radius_base * sun_radius_min_factor)  # Ensure minimum radius
         
         # UNIFIED CONSTRAINT: R_ring(θ) = R_sun(θ) + 2*R_planet(θ)
         # This is derived from: contact_point_ring_planet = contact_point_sun_planet
@@ -429,12 +518,13 @@ class GearProfileGenerator:
         
         # Check if gearset can accommodate the stroke
         gearset_capacity = max_gearset_radius - min_gearset_radius
-        stroke_achievable = gearset_capacity >= stroke_length * 0.8  # 80% of stroke must be achievable
+        stroke_achievable_factor = params.get("strokeAchievableFactor", 0.8)  # FIXED: parameterized
+        stroke_achievable = gearset_capacity >= stroke_length * stroke_achievable_factor
         
         if not stroke_achievable:
             logger.warning(f"Gearset may be too small for stroke: capacity={gearset_capacity:.1f}mm, stroke={stroke_length:.1f}mm")
-            # Scale up gearset to accommodate stroke
-            scale_factor = (stroke_length * 0.8) / gearset_capacity
+            # Scale up gearset to accommodate stroke (FIXED: use parameterized factor)
+            scale_factor = (stroke_length * stroke_achievable_factor) / gearset_capacity
             r_planet *= scale_factor
             r_sun *= scale_factor
             r_ring_inner = r_sun + 2.0 * r_planet
@@ -573,12 +663,14 @@ class GearProfileGenerator:
 
         if min_clearance < 0:
             logger.warning(f"Negative clearance detected: {min_clearance:.3f} mm")
-            # Adjust profiles to ensure positive clearance while maintaining complementary relationship
-            adjustment = -min_clearance + 0.1  # Add 0.1mm safety margin
+            # Adjust profiles to ensure positive clearance while maintaining complementary relationship (FIXED: parameterized)
+            clearance_safety_margin = params.get("clearanceSafetyMargin", 0.1)  # mm safety margin
+            adjustment = -min_clearance + clearance_safety_margin
             
-            # Adjust sun and ring together to maintain UNIFIED CONSTRAINT
-            r_sun += adjustment * 0.5  # Split adjustment between sun and ring
-            r_ring_inner += adjustment * 0.5
+            # Adjust sun and ring together to maintain UNIFIED CONSTRAINT (FIXED: parameterized)
+            adjustment_split_factor = params.get("adjustmentSplitFactor", 0.5)  # How to split adjustment
+            r_sun += adjustment * adjustment_split_factor
+            r_ring_inner += adjustment * adjustment_split_factor
             
             # Re-enforce UNIFIED CONSTRAINT: R_ring(θ) = R_sun(θ) + 2*R_planet(θ)
             r_ring_inner = r_sun + 2.0 * r_planet

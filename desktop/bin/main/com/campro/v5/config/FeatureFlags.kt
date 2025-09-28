@@ -1,186 +1,116 @@
 package com.campro.v5.config
 
-import java.util.Properties
-import java.io.File
-
 /**
- * Feature flag configuration for CamProV5.
- * 
- * This system allows for gradual rollout of new features, particularly
- * the collocation solver, with safe fallbacks and user control.
+ * Feature flags to control the activation/deactivation of workflow components.
+ *
+ * This allows us to safely transition from old to new workflow implementations
+ * without permanently removing code until we're certain the new workflow is complete.
  */
 object FeatureFlags {
     
-    // Default feature flag values
-    private val defaultFlags = mapOf(
-        "collocation.enabled" to false,
-        "collocation.force_fallback" to false,
-        "collocation.ui_visible" to true,
-        "collocation.python_bridge_enabled" to true,
-        "collocation.litvin_constraints_enabled" to false,
-        "collocation.numerical_guards_enabled" to true,
-        "advanced.dense_validation_enabled" to false,
-        "advanced.matrix_caching_enabled" to true,
-        "debug.verbose_logging" to false,
-        "debug.performance_metrics" to false
-    )
+    // ============================================================================
+    // OLD WORKFLOW FLAGS (Currently deactivated for safety)
+    // ============================================================================
     
-    // Runtime flag overrides
-    private val runtimeFlags = mutableMapOf<String, Boolean>()
+    /**
+     * Controls the old Motion Law Engine system.
+     * Set to false to deactivate problematic motion law implementations.
+     */
+    const val ENABLE_OLD_MOTION_LAW_ENGINE = false
     
-    // Configuration file path
-    private val configFile = File(System.getProperty("user.home"), ".campro/feature_flags.properties")
+    /**
+     * Controls the old Motion Law Generator.
+     * Set to false to deactivate piecewise fallback with 360° periodicity issues.
+     */
+    const val ENABLE_OLD_MOTION_LAW_GENERATOR = false
     
-    init {
-        loadConfigFile()
+    /**
+     * Controls the old Diagnostics Preflight system.
+     * Set to false to deactivate diagnostics for removed system.
+     */
+    const val ENABLE_OLD_DIAGNOSTICS_PREFLIGHT = false
+    
+    /**
+     * Controls the old Performance Diagnostics system.
+     * Set to false to deactivate PerfDiag components.
+     */
+    const val ENABLE_OLD_PERF_DIAG = false
+    
+    /**
+     * Controls the old Collocation Motion Solver.
+     * Set to false to deactivate problematic Python bridge implementation.
+     */
+    const val ENABLE_OLD_COLLOCATION_MOTION_SOLVER = false
+    
+    // ============================================================================
+    // NEW WORKFLOW FLAGS (Currently active)
+    // ============================================================================
+    
+    /**
+     * Controls the new Unified Optimization Pipeline.
+     * Set to true to enable the new robust workflow.
+     */
+    const val ENABLE_NEW_UNIFIED_OPTIMIZATION = true
+    
+    /**
+     * Controls the new Optimization State Manager.
+     * Set to true to enable the new state management system.
+     */
+    const val ENABLE_NEW_OPTIMIZATION_STATE_MANAGER = true
+    
+    /**
+     * Controls the new Unified Optimization Bridge.
+     * Set to true to enable the new Python bridge.
+     */
+    const val ENABLE_NEW_OPTIMIZATION_BRIDGE = true
+    
+    /**
+     * Controls the new Visualization Components.
+     * Set to true to enable the new visualization system.
+     */
+    const val ENABLE_NEW_VISUALIZATION_COMPONENTS = true
+    
+    /**
+     * Controls the new Advanced Features (Presets, Export, Batch Processing).
+     * Set to true to enable the new advanced features.
+     */
+    const val ENABLE_NEW_ADVANCED_FEATURES = true
+    
+    // ============================================================================
+    // TRANSITION FLAGS (For gradual migration)
+    // ============================================================================
+    
+    /**
+     * Controls whether to show warnings about deactivated old features.
+     * Set to true to inform users about the transition.
+     */
+    const val SHOW_OLD_FEATURE_WARNINGS = true
+    
+    /**
+     * Controls whether to log old feature usage attempts.
+     * Set to true to monitor usage of deactivated features.
+     */
+    const val LOG_OLD_FEATURE_USAGE = true
+    
+    /**
+     * Check if any old workflow features are still enabled.
+     */
+    fun hasOldFeaturesEnabled(): Boolean {
+        return ENABLE_OLD_MOTION_LAW_ENGINE ||
+               ENABLE_OLD_MOTION_LAW_GENERATOR ||
+               ENABLE_OLD_DIAGNOSTICS_PREFLIGHT ||
+               ENABLE_OLD_PERF_DIAG ||
+               ENABLE_OLD_COLLOCATION_MOTION_SOLVER
     }
     
     /**
-     * Check if a feature flag is enabled.
+     * Check if all new workflow features are enabled.
      */
-    fun isEnabled(flagName: String): Boolean {
-        // Priority: runtime override > config file > default
-        return runtimeFlags[flagName] ?: loadFromConfig(flagName) ?: defaultFlags[flagName] ?: false
+    fun hasAllNewFeaturesEnabled(): Boolean {
+        return ENABLE_NEW_UNIFIED_OPTIMIZATION &&
+               ENABLE_NEW_OPTIMIZATION_STATE_MANAGER &&
+               ENABLE_NEW_OPTIMIZATION_BRIDGE &&
+               ENABLE_NEW_VISUALIZATION_COMPONENTS &&
+               ENABLE_NEW_ADVANCED_FEATURES
     }
-    
-    /**
-     * Set a feature flag at runtime (temporary override).
-     */
-    fun setFlag(flagName: String, enabled: Boolean) {
-        runtimeFlags[flagName] = enabled
-    }
-    
-    /**
-     * Clear runtime override for a flag.
-     */
-    fun clearFlag(flagName: String) {
-        runtimeFlags.remove(flagName)
-    }
-    
-    /**
-     * Get all active flags with their values.
-     */
-    fun getAllFlags(): Map<String, Boolean> {
-        val allFlags = defaultFlags.toMutableMap()
-        
-        // Apply config file overrides
-        loadAllFromConfig().forEach { (key, value) ->
-            allFlags[key] = value
-        }
-        
-        // Apply runtime overrides
-        runtimeFlags.forEach { (key, value) ->
-            allFlags[key] = value
-        }
-        
-        return allFlags
-    }
-    
-    /**
-     * Save current flags to config file.
-     */
-    fun saveConfig() {
-        try {
-            configFile.parentFile?.mkdirs()
-            val properties = Properties()
-            
-            getAllFlags().forEach { (key, value) ->
-                properties.setProperty(key, value.toString())
-            }
-            
-            configFile.outputStream().use { output ->
-                properties.store(output, "CamProV5 Feature Flags")
-            }
-        } catch (e: Exception) {
-            println("Warning: Could not save feature flags config: ${e.message}")
-        }
-    }
-    
-    private fun loadConfigFile() {
-        if (!configFile.exists()) return
-        
-        try {
-            val properties = Properties()
-            configFile.inputStream().use { input ->
-                properties.load(input)
-            }
-            
-            properties.forEach { (key, value) ->
-                val flagName = key.toString()
-                val flagValue = value.toString().toBoolean()
-                // Don't override runtime flags
-                if (!runtimeFlags.containsKey(flagName)) {
-                    runtimeFlags[flagName] = flagValue
-                }
-            }
-        } catch (e: Exception) {
-            println("Warning: Could not load feature flags config: ${e.message}")
-        }
-    }
-    
-    private fun loadFromConfig(flagName: String): Boolean? {
-        if (!configFile.exists()) return null
-        
-        try {
-            val properties = Properties()
-            configFile.inputStream().use { input ->
-                properties.load(input)
-            }
-            return properties.getProperty(flagName)?.toBoolean()
-        } catch (e: Exception) {
-            return null
-        }
-    }
-    
-    private fun loadAllFromConfig(): Map<String, Boolean> {
-        if (!configFile.exists()) return emptyMap()
-        
-        try {
-            val properties = Properties()
-            configFile.inputStream().use { input ->
-                properties.load(input)
-            }
-            return properties.map { (key, value) ->
-                key.toString() to value.toString().toBoolean()
-            }.toMap()
-        } catch (e: Exception) {
-            return emptyMap()
-        }
-    }
-    
-    // Convenience methods for specific features
-    object Collocation {
-        fun isEnabled(): Boolean = isEnabled("collocation.enabled")
-        fun isForceFallback(): Boolean = isEnabled("collocation.force_fallback")
-        fun isUIVisible(): Boolean = isEnabled("collocation.ui_visible")
-        fun isPythonBridgeEnabled(): Boolean = isEnabled("collocation.python_bridge_enabled")
-        fun areLitvinConstraintsEnabled(): Boolean = isEnabled("collocation.litvin_constraints_enabled")
-        fun areNumericalGuardsEnabled(): Boolean = isEnabled("collocation.numerical_guards_enabled")
-    }
-    
-    object Advanced {
-        fun isDenseValidationEnabled(): Boolean = isEnabled("advanced.dense_validation_enabled")
-        fun isMatrixCachingEnabled(): Boolean = isEnabled("advanced.matrix_caching_enabled")
-    }
-    
-    object Debug {
-        fun isVerboseLoggingEnabled(): Boolean = isEnabled("debug.verbose_logging")
-        fun arePerformanceMetricsEnabled(): Boolean = isEnabled("debug.performance_metrics")
-    }
-    
-    /**
-     * Get a description of all feature flags for UI display.
-     */
-    fun getFeatureDescriptions(): Map<String, String> = mapOf(
-        "collocation.enabled" to "Enable collocation solver as primary method",
-        "collocation.force_fallback" to "Force fallback to piecewise even if collocation is available",
-        "collocation.ui_visible" to "Show collocation option in UI profile solver dropdown",
-        "collocation.python_bridge_enabled" to "Enable Python CasADi + IPOPT bridge",
-        "collocation.litvin_constraints_enabled" to "Enable Litvin conjugacy constraints in NLP",
-        "collocation.numerical_guards_enabled" to "Enable numerical methods and guards",
-        "advanced.dense_validation_enabled" to "Enable comprehensive post-solve validation",
-        "advanced.matrix_caching_enabled" to "Cache collocation matrices for performance",
-        "debug.verbose_logging" to "Enable detailed logging for debugging",
-        "debug.performance_metrics" to "Enable performance measurement and reporting"
-    )
 }

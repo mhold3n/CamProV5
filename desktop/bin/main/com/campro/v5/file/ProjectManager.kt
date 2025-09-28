@@ -193,7 +193,6 @@ class ProjectManager {
      */
     fun createEmptyProject(name: String): Project = createProjectFromTemplate("empty", name)
 
-
     /**
      * Check if the current project has been modified.
      *
