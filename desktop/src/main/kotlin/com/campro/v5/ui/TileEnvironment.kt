@@ -11,6 +11,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.campro.v5.debug.DebugFab
+import com.campro.v5.debug.DebugIconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -177,7 +179,8 @@ fun TileEnvironment(
         }
 
         // Floating action button for tile management
-        FloatingActionButton(
+        DebugFab(
+            buttonId = "tiles-manage",
             onClick = { /* TODO: Open tile management dialog */ },
             modifier =
                 Modifier
@@ -342,7 +345,8 @@ private fun TileHeader(
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            IconButton(
+            DebugIconButton(
+                buttonId = "tile-minimize-" + config.id,
                 onClick = onMinimize,
                 modifier = Modifier.size(24.dp),
             ) {
@@ -353,7 +357,8 @@ private fun TileHeader(
                 )
             }
 
-            IconButton(
+            DebugIconButton(
+                buttonId = "tile-maximize-" + config.id,
                 onClick = onMaximize,
                 modifier = Modifier.size(24.dp),
             ) {

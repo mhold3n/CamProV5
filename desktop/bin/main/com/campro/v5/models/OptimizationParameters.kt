@@ -22,8 +22,9 @@ data class OptimizationParameters(
     
     // Operating parameters
     val rpm: Double = 3000.0,
-    val planetCount: Int = 3,
-    val carrierOffsetDeg: Double = 120.0,
+    // Fixed planetary configuration: always 2 planets with 180° offset
+    val planetCount: Int = 2,
+    val carrierOffsetDeg: Double = 180.0,
     
     // Motion law timing parameters
     val rampBeforeTdcDeg: Double = 20.0,
@@ -34,6 +35,9 @@ data class OptimizationParameters(
     val dwellBdcDeg: Double = 10.0,
     val constantVelocityTdcDeg: Double = 30.0,
     val constantVelocityBdcDeg: Double = 40.0,
+    
+    // Compression stroke control
+    val compressionDurationPercent: Double = 70.0, // Compression duration as % of planet duration
     
     // Advanced parameters
     val planetRadiusBaseFactor: Double = 0.2,

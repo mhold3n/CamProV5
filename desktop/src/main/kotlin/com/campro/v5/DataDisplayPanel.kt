@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
+import com.campro.v5.debug.DebugButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -62,41 +63,22 @@ fun DataDisplayPanel(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
         ) {
-            // Export to CSV button
-            Button(
-                onClick = {
-                    // Export to CSV functionality to be implemented
-                    if (testingMode) {
-                        println("EVENT:{\"type\":\"button_clicked\",\"component\":\"ExportCSVButton\"}")
-                    }
-                },
-                modifier = Modifier.padding(end = 8.dp),
+            DebugButton(
+                buttonId = "data-refresh",
+                onClick = { /* TODO: Refresh data */ }
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Save,
-                    contentDescription = null,
-                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                )
-                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                Text("Export CSV")
+                Icon(Icons.Default.Refresh, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Refresh Data")
             }
 
-            // Generate Report button
-            Button(
-                onClick = {
-                    // Generate report functionality to be implemented
-                    if (testingMode) {
-                        println("EVENT:{\"type\":\"button_clicked\",\"component\":\"GenerateReportButton\"}")
-                    }
-                },
+            DebugButton(
+                buttonId = "data-export",
+                onClick = { /* TODO: Export data */ }
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Description,
-                    contentDescription = null,
-                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                )
-                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                Text("Generate Report")
+                Icon(Icons.Default.Download, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Export")
             }
         }
 

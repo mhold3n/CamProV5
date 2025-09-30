@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.campro.v5.debug.DebugIconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -285,15 +286,15 @@ private fun DockablePanelTitleBar(
             ) {
                 // Minimize button
                 if (enableMinimization) {
-                    IconButton(
+                    DebugIconButton(
+                        buttonId = "dock-minimize-" + panelId,
                         onClick = onMinimize,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(20.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Minimize,
-                            contentDescription = "Minimize panel",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(12.dp),
+                            imageVector = Icons.Default.ExpandLess,
+                            contentDescription = "Minimize",
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                 }
@@ -314,15 +315,15 @@ private fun DockablePanelTitleBar(
                 }
 
                 // Close button
-                IconButton(
+                DebugIconButton(
+                    buttonId = "dock-close-" + panelId,
                     onClick = onClose,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(20.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Close panel",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(12.dp),
+                        contentDescription = "Close Panel",
+                        modifier = Modifier.size(14.dp)
                     )
                 }
             }

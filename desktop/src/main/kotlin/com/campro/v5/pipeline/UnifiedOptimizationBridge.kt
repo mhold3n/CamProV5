@@ -215,17 +215,22 @@ class UnifiedOptimizationBridge {
     private fun parseResults(outputFile: Path): OptimizationResult {
         try {
             val resultData = SimpleJsonUtils.readJsonFile(outputFile)
-            
+
+            val motionLawMap = resultData["motion_law"] as? Map<String, Any> ?: emptyMap()
+            val profilesMap = resultData["optimal_profiles"] as? Map<String, Any> ?: emptyMap()
+            val toothMap = resultData["tooth_profiles"] as? Map<String, Any> ?: emptyMap()
+            val feaMap = resultData["fea"] as? Map<String, Any> ?: emptyMap()
+
             return OptimizationResult(
-                status = resultData["status"] as String,
-                motionLaw = parseMotionLaw(resultData["motion_law"] as Map<String, Any>),
-                optimalProfiles = parseGearProfiles(resultData["optimal_profiles"] as Map<String, Any>),
-                toothProfiles = parseToothProfiles(resultData["tooth_profiles"] as Map<String, Any>),
-                feaAnalysis = parseFEAAnalysis(resultData["fea"] as Map<String, Any>),
-                executionTime = resultData["execution_time"] as? Double ?: 0.0,
+                status = (resultData["status"] as? String) ?: "failed",
+                motionLaw = parseMotionLaw(motionLawMap),
+                optimalProfiles = parseGearProfiles(profilesMap),
+                toothProfiles = parseToothProfiles(toothMap),
+                feaAnalysis = parseFEAAnalysis(feaMap),
+                executionTime = (resultData["execution_time"] as? Number)?.toDouble() ?: 0.0,
                 error = resultData["error"] as? String
             )
-            
+
         } catch (e: Exception) {
             logger.error("Failed to parse results: ${e.message}", e)
             return createErrorResult("Failed to parse results: ${e.message}")
@@ -248,15 +253,30 @@ class UnifiedOptimizationBridge {
      * Parse gear profile data from Python result.
      */
     private fun parseGearProfiles(profilesData: Map<String, Any>): GearProfileData {
-        val optimalProfiles = profilesData["optimal_profiles"] as Map<String, Any>
-        
+        fun toDoubleArray(key: String): DoubleArray {
+            val list = profilesData[key] as? List<*> ?: return doubleArrayOf()
+            return list.mapNotNull { (it as? Number)?.toDouble() }.toDoubleArray()
+        }
+
+        val rSun = toDoubleArray("r_sun")
+        val rPlanet = toDoubleArray("r_planet")
+        val rRingInner = toDoubleArray("r_ring_inner")
+
+        val gearRatio = (profilesData["gear_ratio"] as? Number)?.toDouble() ?: 0.0
+        // Use solver_status as a proxy for method if available
+        val optimalMethod = (profilesData["optimal_solution"] as? String)
+            ?: (profilesData["solver_status"] as? String)
+            ?: "unknown"
+
+        val efficiencyAnalysis = profilesData["efficiency_analysis"] as? Map<String, Any>
+
         return GearProfileData(
-            rSun = (optimalProfiles["r_sun"] as List<Double>).toDoubleArray(),
-            rPlanet = (optimalProfiles["r_planet"] as List<Double>).toDoubleArray(),
-            rRingInner = (optimalProfiles["r_ring_inner"] as List<Double>).toDoubleArray(),
-            gearRatio = optimalProfiles["gear_ratio"] as Double,
-            optimalMethod = profilesData["optimal_solution"] as String,
-            efficiencyAnalysis = profilesData["efficiency_analysis"] as? Map<String, Any>
+            rSun = rSun,
+            rPlanet = rPlanet,
+            rRingInner = rRingInner,
+            gearRatio = gearRatio,
+            optimalMethod = optimalMethod,
+            efficiencyAnalysis = efficiencyAnalysis
         )
     }
     

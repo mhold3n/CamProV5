@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.campro.v5.debug.DebugButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -295,7 +296,8 @@ private fun PlaybackControlsTile(
         )
 
         // Play/Pause button
-        Button(
+        DebugButton(
+            buttonId = "playback-toggle",
             onClick = {
                 isPlaying = !isPlaying
                 onParametersChanged(parameters + ("animationStarted" to isPlaying.toString()))

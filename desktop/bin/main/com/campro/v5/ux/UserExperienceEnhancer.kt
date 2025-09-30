@@ -7,6 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.campro.v5.debug.DebugIconButton
+import com.campro.v5.debug.DebugOutlinedButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -122,11 +124,9 @@ fun EnhancedLoadingIndicator(
                 
                 // Cancel button
                 if (loadingState.canCancel && onCancel != null) {
-                    OutlinedButton(
+                    DebugOutlinedButton(
+                        buttonId = "enhanced-loading-cancel",
                         onClick = onCancel,
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
                     ) {
                         Icon(
                             imageVector = Icons.Default.Cancel,
@@ -370,7 +370,7 @@ fun SuccessFeedback(
                     )
                 }
                 
-                IconButton(onClick = onDismiss) {
+                DebugIconButton(buttonId = "success-dismiss", onClick = onDismiss) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Dismiss",

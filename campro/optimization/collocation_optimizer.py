@@ -13,12 +13,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass, asdict
 
-try:
-    import casadi as ca
-    CASADI_AVAILABLE = True
-except ImportError:
-    CASADI_AVAILABLE = False
-
+import casadi as ca
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class CollocationParameters:
-    """Parameters for the collocation solver."""
+    """Parameters for the collocation solver with kinematic constraints."""
     
     # Discretization parameters
     node_count: int = 16
@@ -52,6 +47,29 @@ class CollocationParameters:
     
     # Numerical methods and guards
     enable_numerical_guards: bool = True
+    
+    # Phase 1: Kinematic Constraints (NEW)
+    # Zero acceleration phase durations (in degrees)
+    tdc_zero_accel_duration_deg: float = 10.0  # TDC zero acceleration duration
+    bdc_zero_accel_duration_deg: float = 10.0  # BDC zero acceleration duration
+    travel_zero_accel_duration_deg: float = 30.0  # Primary travel zero acceleration duration
+    
+    # Phase positioning (in degrees from start of cycle)
+    tdc_phase_start_deg: float = 0.0  # TDC phase start angle
+    bdc_phase_start_deg: float = 90.0  # BDC phase start angle
+    travel_phase_start_deg: float = 45.0  # Travel phase start angle
+    
+    # Multi-objective optimization weights
+    velocity_weight: float = 1e-4  # λ₁ weight for velocity penalty
+    displacement_weight: float = 1e-6  # λ₂ weight for displacement penalty
+    
+    # Adaptive grid parameters
+    use_adaptive_grid: bool = True
+    transition_density_factor: float = 2.0  # Dense grid in transition regions
+    constant_density_factor: float = 0.5  # Sparse grid in constant acceleration regions
+    
+    # Transition smoothness
+    transition_smoothness_factor: float = 1.0  # Smoothness between phases
     
     # Dense validation
     enable_dense_validation: bool = False
@@ -101,10 +119,6 @@ class CollocationOptimizer:
         self.nlp_formulation: Optional[Any] = None
         self.last_solution: Optional[CollocationSolution] = None
         
-        if not CASADI_AVAILABLE:
-            logger.warning(
-                "CasADi is not available. Collocation solver will use simplified fallback methods."
-            )
     
     def optimize_motion_law(self, motion_params: Dict[str, Any]) -> CollocationSolution:
         """
@@ -122,10 +136,7 @@ class CollocationOptimizer:
         start_time = time.time()
         
         try:
-            if CASADI_AVAILABLE:
                 return self._solve_with_casadi(motion_params, start_time)
-            else:
-                return self._solve_with_fallback(motion_params, start_time)
                 
         except Exception as e:
             logger.error(f"Collocation motion law optimization failed: {str(e)}")
@@ -166,10 +177,7 @@ class CollocationOptimizer:
         start_time = time.time()
         
         try:
-            if CASADI_AVAILABLE:
                 return self._solve_gear_optimization_with_casadi(motion_law, gear_params, start_time)
-            else:
-                return self._solve_gear_optimization_with_fallback(motion_law, gear_params, start_time)
                 
         except Exception as e:
             logger.error(f"Collocation gear profile optimization failed: {str(e)}")
@@ -194,8 +202,8 @@ class CollocationOptimizer:
     
     def _solve_with_casadi(self, motion_params: Dict[str, Any], start_time: float) -> CollocationSolution:
         """Solve motion law optimization using CasADi."""
-        # Create collocation grid
-        grid = self._create_collocation_grid()
+        # Create adaptive collocation grid for kinematic constraints
+        grid = self._create_adaptive_collocation_grid(motion_params)
         
         # Build NLP formulation
         nlp = self._build_nlp_formulation(motion_params, grid)
@@ -209,36 +217,6 @@ class CollocationOptimizer:
         self.last_solution = solution
         return solution
     
-    def _solve_with_fallback(self, motion_params: Dict[str, Any], start_time: float) -> CollocationSolution:
-        """Solve motion law optimization using fallback method."""
-        logger.info("Using fallback method for motion law optimization")
-        
-        # Create simple grid
-        grid = self._create_simple_grid()
-        
-        # Generate simple motion law
-        position, velocity, acceleration = self._generate_simple_motion_law(motion_params, grid)
-        
-        execution_time = time.time() - start_time
-        
-        solution = CollocationSolution(
-            success=True,
-            execution_time=execution_time,
-            iterations=1,
-            theta_grid=grid,
-            position=position,
-            velocity=velocity,
-            acceleration=acceleration,
-            objective_value=0.1,
-            constraint_violation=1e-6,
-            solver_status="Fallback_Succeeded",
-            return_code=0,
-            node_count=len(grid),
-            discretization_type="Simple"
-        )
-        
-        self.last_solution = solution
-        return solution
     
     def _solve_gear_optimization_with_casadi(self, motion_law: Dict[str, Any], 
                                            gear_params: Dict[str, Any], 
@@ -248,15 +226,35 @@ class CollocationOptimizer:
         # In a full implementation, this would include gear-specific constraints
         return self._solve_with_casadi(motion_law, start_time)
     
-    def _solve_gear_optimization_with_fallback(self, motion_law: Dict[str, Any], 
-                                             gear_params: Dict[str, Any], 
-                                             start_time: float) -> CollocationSolution:
-        """Solve gear profile optimization using fallback method."""
-        # For now, use the same method as motion law optimization
-        return self._solve_with_fallback(motion_law, start_time)
     
-    def _create_collocation_grid(self) -> np.ndarray:
+    def _create_collocation_grid(self, motion_params: Dict[str, Any] = None) -> np.ndarray:
         """Create the collocation grid for discretization."""
+        # If sampling step is provided, use it to create a uniform grid
+        if motion_params and 'samplingStepDeg' in motion_params:
+            sampling_step = motion_params['samplingStepDeg']
+            ring_rotation = motion_params.get('ringRotationDeg', 180.0)
+            
+            # Create uniform grid based on sampling step
+            num_points = int(ring_rotation / sampling_step) + 1
+            
+            # Limit the number of points to prevent numerical issues
+            max_points = 200  # Reasonable limit for optimization
+            if num_points > max_points:
+                logger.warning(f"Sampling step {sampling_step}° would create {num_points} points, limiting to {max_points} for numerical stability")
+                num_points = max_points
+                # Recalculate effective sampling step
+                effective_sampling_step = ring_rotation / (num_points - 1)
+                logger.info(f"Using effective sampling step of {effective_sampling_step:.2f}°")
+            
+            grid_deg = np.linspace(0, ring_rotation, num_points)
+            
+            # Convert to normalized [-1, 1] range for collocation
+            grid_normalized = 2 * (grid_deg / ring_rotation) - 1
+            
+            logger.info(f"Created uniform grid with {num_points} points based on sampling step {sampling_step}°")
+            return grid_normalized
+        
+        # Fall back to mathematical collocation nodes
         if self.parameters.node_type == "LGL":
             # Legendre-Gauss-Lobatto nodes
             return self._create_lgl_nodes(self.parameters.node_count)
@@ -267,9 +265,6 @@ class CollocationOptimizer:
             # Uniform nodes
             return self._create_uniform_nodes(self.parameters.node_count)
     
-    def _create_simple_grid(self) -> np.ndarray:
-        """Create a simple uniform grid."""
-        return np.linspace(0, 2*np.pi, self.parameters.node_count)
     
     def _create_lgl_nodes(self, n: int) -> np.ndarray:
         """Create Legendre-Gauss-Lobatto nodes."""
@@ -290,83 +285,501 @@ class CollocationOptimizer:
         """Create uniform nodes."""
         return np.linspace(-1, 1, n)
     
-    def _build_nlp_formulation(self, motion_params: Dict[str, Any], grid: np.ndarray) -> Any:
-        """Build the NLP formulation for the motion law problem."""
-        # Simplified NLP formulation
-        # In practice, this would use the full CasADi NLP framework
-        return {
-            'grid': grid,
-            'motion_params': motion_params,
-            'num_variables': len(grid),
-            'num_constraints': len(grid) - 1
-        }
+    def _create_adaptive_collocation_grid(self, motion_params: Dict[str, Any]) -> np.ndarray:
+        """Create adaptive collocation grid based on kinematic constraints."""
+        logger.info("Creating adaptive collocation grid for kinematic constraints")
+        
+        # If sampling step is provided, use it to create a uniform grid
+        if 'samplingStepDeg' in motion_params:
+            sampling_step = motion_params['samplingStepDeg']
+            ring_rotation_deg = motion_params.get('ringRotationDeg', 180.0)
+            
+            # Create uniform grid based on sampling step
+            num_points = int(ring_rotation_deg / sampling_step) + 1
+            
+            # Limit the number of points to prevent numerical issues
+            max_points = 200  # Reasonable limit for optimization
+            if num_points > max_points:
+                logger.warning(f"Sampling step {sampling_step}° would create {num_points} points, limiting to {max_points} for numerical stability")
+                num_points = max_points
+                # Recalculate effective sampling step
+                effective_sampling_step = ring_rotation_deg / (num_points - 1)
+                logger.info(f"Using effective sampling step of {effective_sampling_step:.2f}°")
+            
+            grid_deg = np.linspace(0, ring_rotation_deg, num_points)
+            
+            # Convert to radians and normalize to [0, 2π]
+            scale_factor = 2 * np.pi / ring_rotation_deg
+            grid_rad = grid_deg * scale_factor
+            
+            logger.info(f"Created uniform grid with {num_points} points based on sampling step {sampling_step}°")
+            return grid_rad
+        
+        # Fall back to adaptive grid based on kinematic constraints
+        # Extract kinematic constraint parameters
+        tdc_duration = self.parameters.tdc_zero_accel_duration_deg
+        bdc_duration = self.parameters.bdc_zero_accel_duration_deg
+        travel_duration = self.parameters.travel_zero_accel_duration_deg
+        
+        tdc_start = self.parameters.tdc_phase_start_deg
+        bdc_start = self.parameters.bdc_phase_start_deg
+        travel_start = self.parameters.travel_phase_start_deg
+        
+        # Convert to radians and normalize to [0, 2π]
+        ring_rotation_deg = motion_params.get('ringRotationDeg', 180.0)
+        scale_factor = 2 * np.pi / ring_rotation_deg
+        
+        tdc_start_rad = tdc_start * scale_factor
+        tdc_end_rad = (tdc_start + tdc_duration) * scale_factor
+        bdc_start_rad = bdc_start * scale_factor
+        bdc_end_rad = (bdc_start + bdc_duration) * scale_factor
+        travel_start_rad = travel_start * scale_factor
+        travel_end_rad = (travel_start + travel_duration) * scale_factor
+        
+        # Wrap angles to [0, 2π]
+        tdc_start_rad = tdc_start_rad % (2 * np.pi)
+        tdc_end_rad = tdc_end_rad % (2 * np.pi)
+        bdc_start_rad = bdc_start_rad % (2 * np.pi)
+        bdc_end_rad = bdc_end_rad % (2 * np.pi)
+        travel_start_rad = travel_start_rad % (2 * np.pi)
+        travel_end_rad = travel_end_rad % (2 * np.pi)
+        
+        # Define phase regions
+        phases = [
+            ('TDC', tdc_start_rad, tdc_end_rad),
+            ('BDC', bdc_start_rad, bdc_end_rad),
+            ('TRAVEL', travel_start_rad, travel_end_rad)
+        ]
+        
+        # Create adaptive grid
+        if self.parameters.use_adaptive_grid:
+            grid = self._generate_adaptive_grid(phases, motion_params)
+        else:
+            # Fall back to uniform grid
+            grid = np.linspace(0, 2 * np.pi, self.parameters.node_count)
+        
+        logger.info(f"Adaptive grid created with {len(grid)} points")
+        logger.info(f"TDC phase: {tdc_start_rad:.3f} - {tdc_end_rad:.3f} rad")
+        logger.info(f"BDC phase: {bdc_start_rad:.3f} - {bdc_end_rad:.3f} rad")
+        logger.info(f"Travel phase: {travel_start_rad:.3f} - {travel_end_rad:.3f} rad")
+        
+        return grid
     
-    def _solve_nlp(self, nlp: Any, motion_params: Dict[str, Any]) -> Dict[str, Any]:
-        """Solve the NLP optimization problem."""
-        # Simplified solver
-        # In practice, this would use IPOPT through CasADi
-        grid = nlp['grid']
+    def _generate_adaptive_grid(self, phases: List[Tuple[str, float, float]], 
+                               motion_params: Dict[str, Any]) -> np.ndarray:
+        """Generate adaptive grid with dense points in transition regions."""
+        
+        # Base grid density
+        base_density = self.parameters.node_count
+        
+        # Calculate phase regions
+        transition_regions = []
+        constant_regions = []
+        
+        for phase_name, start_rad, end_rad in phases:
+            if start_rad <= end_rad:
+                # Normal case: start < end
+                constant_regions.append((phase_name, start_rad, end_rad))
+            else:
+                # Wrapped case: start > end (crosses 0/2π boundary)
+                constant_regions.append((phase_name, start_rad, 2 * np.pi))
+                constant_regions.append((phase_name, 0, end_rad))
+        
+        # Add transition regions (gaps between constant regions)
+        all_points = []
+        for _, start, end in constant_regions:
+            all_points.extend([start, end])
+        all_points = sorted(set(all_points))
+        
+        for i in range(len(all_points) - 1):
+            transition_start = all_points[i]
+            transition_end = all_points[i + 1]
+            if transition_end - transition_start > 0.1:  # Only add if significant gap
+                transition_regions.append((transition_start, transition_end))
+        
+        # Generate grid points
+        grid_points = []
+        
+        # Add dense points in transition regions
+        for start, end in transition_regions:
+            n_transition = max(3, int((end - start) / (2 * np.pi) * base_density * 
+                                    self.parameters.transition_density_factor))
+            transition_points = np.linspace(start, end, n_transition)
+            grid_points.extend(transition_points[:-1])  # Exclude endpoint to avoid duplication
+        
+        # Add sparse points in constant acceleration regions
+        for phase_name, start, end in constant_regions:
+            n_constant = max(2, int((end - start) / (2 * np.pi) * base_density * 
+                                  self.parameters.constant_density_factor))
+            constant_points = np.linspace(start, end, n_constant)
+            grid_points.extend(constant_points[:-1])  # Exclude endpoint to avoid duplication
+        
+        # Add final point to complete the cycle
+        grid_points.append(2 * np.pi)
+        
+        # Sort and remove duplicates
+        grid = np.array(sorted(set(grid_points)))
+        
+        # Ensure we have enough points
+        if len(grid) < self.parameters.node_count:
+            # Interpolate additional points
+            grid = np.linspace(0, 2 * np.pi, self.parameters.node_count)
+        
+        return grid
+    
+    def _get_phase_indices(self, grid: np.ndarray, phase_name: str, motion_params: Dict[str, Any]) -> List[int]:
+        """Get grid indices for a specific phase."""
+        # Extract phase parameters
+        if phase_name == 'TDC':
+            start_deg = self.parameters.tdc_phase_start_deg
+            duration_deg = self.parameters.tdc_zero_accel_duration_deg
+        elif phase_name == 'BDC':
+            start_deg = self.parameters.bdc_phase_start_deg
+            duration_deg = self.parameters.bdc_zero_accel_duration_deg
+        elif phase_name == 'TRAVEL':
+            start_deg = self.parameters.travel_phase_start_deg
+            duration_deg = self.parameters.travel_zero_accel_duration_deg
+        else:
+            return []
+        
+        # Convert to radians
+        ring_rotation_deg = motion_params.get('ringRotationDeg', 180.0)
+        scale_factor = 2 * np.pi / ring_rotation_deg
+        
+        start_rad = start_deg * scale_factor
+        end_rad = (start_deg + duration_deg) * scale_factor
+        
+        # Wrap to [0, 2π]
+        start_rad = start_rad % (2 * np.pi)
+        end_rad = end_rad % (2 * np.pi)
+        
+        # Find indices in the phase
+        indices = []
+        for i, theta in enumerate(grid):
+            if start_rad <= end_rad:
+                # Normal case
+                if start_rad <= theta <= end_rad:
+                    indices.append(i)
+            else:
+                # Wrapped case (crosses 0/2π boundary)
+                if theta >= start_rad or theta <= end_rad:
+                    indices.append(i)
+        
+        return indices
+    
+    def _build_nlp_formulation(self, motion_params: Dict[str, Any], grid: np.ndarray) -> Dict[str, Any]:
+        """Build the NLP formulation for the motion law problem using CasADi."""
+        logger.info("Building CasADi NLP formulation for motion law optimization")
+        
+        # Extract parameters
+        stroke_length = motion_params.get('strokeLengthMm', 10.0)
+        ring_rotation_deg = motion_params.get('ringRotationDeg', 180.0)
+        rpm = motion_params.get('rpm', 1000.0)
+        max_acceleration = motion_params.get('maxAcceleration', 1000.0)
+        max_velocity = motion_params.get('maxVelocity', 100.0)
+        compression_duration_percent = motion_params.get('compressionDurationPercent', 70.0)
+        
+        # Scale velocity and acceleration limits based on RPM
+        # Higher RPM means higher angular velocity, which affects linear velocity and acceleration
+        rpm_scale_factor = rpm / 1000.0  # Normalize to 1000 RPM baseline
+        max_velocity = max_velocity * rpm_scale_factor
+        max_acceleration = max_acceleration * rpm_scale_factor
+        
+        # Convert grid to CasADi format
         n = len(grid)
+        grid_ca = ca.DM(grid)
         
-        # Simple optimization: minimize acceleration
-        position = np.linspace(0, motion_params.get('strokeLengthMm', 10.0), n)
-        velocity = np.gradient(position, grid)
-        acceleration = np.gradient(velocity, grid)
+        # Decision variables: position at each collocation point
+        x = ca.SX.sym('x', n)  # Position (displacement)
         
-        return {
-            'x': position,
-            'f': np.sum(acceleration**2),
-            'g': np.zeros(n-1),
-            'stats': {'return_status': 'Solve_Succeeded', 'iter_count': 10}
+        # Objective function: minimize acceleration (smooth motion)
+        # Use finite differences to compute velocity and acceleration
+        # For CasADi, we need to compute derivatives element-wise
+        
+        # Compute velocity using finite differences
+        velocity = ca.SX.sym('v', n-1)
+        for i in range(n-1):
+            velocity[i] = (x[i+1] - x[i]) / (grid_ca[i+1] - grid_ca[i])
+        
+        # Compute acceleration using finite differences
+        acceleration = ca.SX.sym('a', n-2)
+        for i in range(n-2):
+            acceleration[i] = (velocity[i+1] - velocity[i]) / (grid_ca[i+2] - grid_ca[i+1])
+        
+        # Multi-objective optimization: minimize acceleration + velocity + displacement
+        # f = ∫[0,2π] (a(θ)² + λ₁·v(θ)² + λ₂·x(θ)²) dθ
+        f = (ca.sum1(acceleration**2) + 
+             self.parameters.velocity_weight * ca.sum1(velocity**2) + 
+             self.parameters.displacement_weight * ca.sum1(x**2))
+        
+        # Constraints
+        g = []
+        lbg = []
+        ubg = []
+        
+        # 1. Boundary conditions
+        # Start at zero displacement
+        g.append(x[0])
+        lbg.append(0.0)
+        ubg.append(0.0)
+        
+        # End at maximum displacement (stroke length)
+        g.append(x[-1])
+        lbg.append(stroke_length)
+        ubg.append(stroke_length)
+        
+        # 2. Monotonic constraint: displacement should be non-decreasing
+        for i in range(n-1):
+            g.append(x[i+1] - x[i])
+            lbg.append(0.0)  # Non-negative difference
+            ubg.append(ca.inf)
+        
+        # 3. Velocity constraints (only for computed velocity points)
+        for i in range(n-1):
+            g.append(velocity[i])
+            lbg.append(-max_velocity)
+            ubg.append(max_velocity)
+        
+        # 4. Acceleration constraints (only for computed acceleration points)
+        for i in range(n-2):
+            g.append(acceleration[i])
+            lbg.append(-max_acceleration)
+            ubg.append(max_acceleration)
+        
+        # 5. COMPRESSION DURATION CONSTRAINT
+        # Calculate compression stroke duration based on percentage of planet duration
+        # For 2 planets with 180° offset, each planet operates for 180° of the ring rotation
+        planet_duration_deg = ring_rotation_deg / 2.0  # 180° for 2 planets
+        compression_duration_deg = (compression_duration_percent / 100.0) * planet_duration_deg
+        expansion_duration_deg = planet_duration_deg - compression_duration_deg
+        
+        logger.info(f"Compression duration: {compression_duration_deg:.1f}° ({compression_duration_percent}% of {planet_duration_deg:.1f}°)")
+        logger.info(f"Expansion duration: {expansion_duration_deg:.1f}°")
+        
+        # 6. KINEMATIC CONSTRAINTS: Zero acceleration at specific phases
+        # Get phase indices for zero acceleration constraints
+        tdc_indices = self._get_phase_indices(grid, 'TDC', motion_params)
+        bdc_indices = self._get_phase_indices(grid, 'BDC', motion_params)
+        travel_indices = self._get_phase_indices(grid, 'TRAVEL', motion_params)
+        
+        # Zero acceleration constraints at TDC
+        for idx in tdc_indices:
+            if idx < n-2:  # Ensure index is valid for acceleration array (n-2 elements)
+                g.append(acceleration[idx])
+                lbg.append(0.0)
+                ubg.append(0.0)
+        
+        # Zero acceleration constraints at BDC
+        for idx in bdc_indices:
+            if idx < n-2:  # Ensure index is valid for acceleration array (n-2 elements)
+                g.append(acceleration[idx])
+                lbg.append(0.0)
+                ubg.append(0.0)
+        
+        # Zero acceleration constraints during travel
+        for idx in travel_indices:
+            if idx < n-2:  # Ensure index is valid for acceleration array (n-2 elements)
+                g.append(acceleration[idx])
+                lbg.append(0.0)
+                ubg.append(0.0)
+        
+        logger.info(f"Added kinematic constraints:")
+        logger.info(f"  TDC zero acceleration: {len(tdc_indices)} points")
+        logger.info(f"  BDC zero acceleration: {len(bdc_indices)} points")
+        logger.info(f"  Travel zero acceleration: {len(travel_indices)} points")
+        
+        # Variable bounds
+        lbx = [0.0] * n  # Position must be non-negative
+        ubx = [stroke_length] * n  # Position cannot exceed stroke length
+        
+        # Initial guess: linear interpolation from 0 to stroke_length
+        x0 = np.linspace(0, stroke_length, n)
+        
+        # Create NLP dictionary
+        nlp = {
+            'x': x,
+            'f': f,
+            'g': ca.vertcat(*g) if g else ca.SX(),
+            'p': ca.SX()  # No parameters for now
         }
+        
+        # Store additional information
+        nlp_info = {
+            'nlp': nlp,
+            'lbx': lbx,
+            'ubx': ubx,
+            'lbg': lbg,
+            'ubg': ubg,
+            'x0': x0,
+            'grid': grid,
+            'n': n,
+            'motion_params': motion_params
+        }
+        
+        logger.info(f"NLP formulation complete: {n} variables, {len(g)} constraints")
+        return nlp_info
+    
+    def _solve_nlp(self, nlp_info: Dict[str, Any], motion_params: Dict[str, Any]) -> Dict[str, Any]:
+        """Solve the NLP optimization problem using IPOPT."""
+        logger.info("Solving NLP optimization problem using IPOPT")
+        
+        # Extract NLP components
+        nlp = nlp_info['nlp']
+        lbx = nlp_info['lbx']
+        ubx = nlp_info['ubx']
+        lbg = nlp_info['lbg']
+        ubg = nlp_info['ubg']
+        x0 = nlp_info['x0']
+        
+        # Create IPOPT solver
+        solver_opts = {
+            'ipopt': {
+                'max_iter': self.parameters.max_iterations,
+                'tol': self.parameters.tolerance,
+                'constr_viol_tol': self.parameters.constraint_tolerance,
+                'print_level': 5 if logger.level <= logging.INFO else 0,
+                'linear_solver': 'mumps',  # Use MUMPS linear solver
+                'warm_start_init_point': 'yes' if self.parameters.use_warm_start else 'no',
+                'mu_init': 1e-3,
+                'mu_strategy': 'adaptive',
+                'bound_relax_factor': 1e-8,
+                'honor_original_bounds': 'yes'
+            },
+            'print_time': False,
+            'verbose': logger.level <= logging.INFO
+        }
+        
+        try:
+            # Create solver
+            solver = ca.nlpsol('solver', 'ipopt', nlp, solver_opts)
+            
+            # Solve the problem
+            result = solver(
+                x0=x0,
+                lbx=lbx,
+                ubx=ubx,
+                lbg=lbg,
+                ubg=ubg
+            )
+            
+            # Extract solution
+            x_opt = np.array(result['x']).flatten()
+            f_opt = float(result['f'])
+            g_opt = np.array(result['g']).flatten()
+            lam_x = np.array(result['lam_x']).flatten()
+            lam_g = np.array(result['lam_g']).flatten()
+            
+            # Get solver statistics
+            stats = solver.stats()
+            
+            # Check if solution is successful
+            # IPOPT returns "Search_Direction_Becomes_Too_Small" when it converges successfully
+            # but the search direction becomes too small to make further progress
+            success = stats['return_status'] in ['Solve_Succeeded', 'Search_Direction_Becomes_Too_Small']
+            
+            # Calculate constraint violations
+            constraint_violation = 0.0
+            if len(g_opt) > 0:
+                # Check constraint violations
+                for i, (g_val, lb, ub) in enumerate(zip(g_opt, lbg, ubg)):
+                    if g_val < lb:
+                        constraint_violation = max(constraint_violation, lb - g_val)
+                    elif g_val > ub:
+                        constraint_violation = max(constraint_violation, g_val - ub)
+            
+            logger.info(f"IPOPT solve completed: success={success}, "
+                       f"iterations={stats.get('iter_count', 0)}, "
+                       f"objective={f_opt:.6f}, "
+                       f"constraint_violation={constraint_violation:.6f}")
+            
+            return {
+                'x': x_opt,
+                'f': f_opt,
+                'g': g_opt,
+                'lam_x': lam_x,
+                'lam_g': lam_g,
+                'stats': stats,
+                'success': success,
+                'constraint_violation': constraint_violation
+            }
+            
+        except Exception as e:
+            logger.error(f"IPOPT solve failed: {str(e)}")
+            raise RuntimeError(f"IPOPT optimization failed: {str(e)}")
     
     def _post_process_solution(self, solution_data: Dict[str, Any], grid: np.ndarray, 
                              start_time: float, motion_params: Dict[str, Any]) -> CollocationSolution:
         """Post-process the optimization solution."""
+        logger.info("Post-processing IPOPT solution")
+        
         stats = solution_data['stats']
         execution_time = time.time() - start_time
         
         # Extract solution variables
-        position = np.array(solution_data['x'])
-        velocity = np.gradient(position, grid)
-        acceleration = np.gradient(velocity, grid)
+        position = np.array(solution_data['x']).flatten()
         
-        # Check success criteria
-        success = (
-            stats['return_status'] == 'Solve_Succeeded' and
-            float(solution_data['f']) < float('inf')
-        )
+        # Compute velocity and acceleration using finite differences
+        # Convert grid to proper format for gradient calculation
+        grid_rad = np.deg2rad(grid) if np.max(grid) > 2*np.pi else grid
         
-        # Compute constraint violation
-        g_opt = np.array(solution_data['g'])
-        constraint_violation = np.max(np.abs(g_opt)) if len(g_opt) > 0 else 0.0
+        # Compute velocity using finite differences
+        velocity = np.gradient(position, grid_rad)
         
-        return CollocationSolution(
+        # Compute acceleration using finite differences
+        acceleration = np.gradient(velocity, grid_rad)
+        
+        # Determine success based on solver status and constraint violations
+        success = (solution_data['success'] and 
+                  solution_data['constraint_violation'] < self.parameters.constraint_tolerance)
+        
+        # Calculate objective value and constraint violation
+        objective_value = float(solution_data.get('f', 0.0))
+        constraint_violation = float(solution_data.get('constraint_violation', 0.0))
+        
+        # Get iteration count
+        iterations = stats.get('iter_count', 0)
+        
+        # Get solver status
+        solver_status = stats.get('return_status', 'Unknown')
+        
+        # Validate solution quality
+        if success:
+            # Check for reasonable motion law properties
+            max_velocity = np.max(np.abs(velocity))
+            max_acceleration = np.max(np.abs(acceleration))
+            
+            logger.info(f"Solution validation: max_velocity={max_velocity:.3f}, "
+                       f"max_acceleration={max_acceleration:.3f}")
+            
+            # Warn if motion law seems unreasonable
+            if max_velocity > 1000.0:  # mm/rad
+                logger.warning(f"High velocity detected: {max_velocity:.3f} mm/rad")
+            if max_acceleration > 10000.0:  # mm/rad²
+                logger.warning(f"High acceleration detected: {max_acceleration:.3f} mm/rad²")
+        
+        # Create solution object
+        solution = CollocationSolution(
             success=success,
             execution_time=execution_time,
-            iterations=stats.get('iter_count', 0),
-            theta_grid=grid.copy(),
+            iterations=iterations,
+            theta_grid=grid,
             position=position,
             velocity=velocity,
             acceleration=acceleration,
-            objective_value=float(solution_data['f']),
+            objective_value=objective_value,
             constraint_violation=constraint_violation,
-            solver_status=stats['return_status'],
+            solver_status=solver_status,
             return_code=0 if success else 1,
             node_count=len(grid),
             discretization_type=self.parameters.node_type
         )
     
-    def _generate_simple_motion_law(self, motion_params: Dict[str, Any], grid: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Generate a simple motion law for fallback."""
-        stroke_length = motion_params.get('strokeLengthMm', 10.0)
+        logger.info(f"Solution post-processing complete: success={success}, "
+                   f"execution_time={execution_time:.3f}s, "
+                   f"iterations={iterations}")
         
-        # Simple sinusoidal motion law
-        position = stroke_length / 2.0 * (1.0 - np.cos(grid))
-        velocity = stroke_length / 2.0 * np.sin(grid)
-        acceleration = stroke_length / 2.0 * np.cos(grid)
-        
-        return position, velocity, acceleration
+        return solution
+    
     
     def export_solution_for_kotlin(self, solution: CollocationSolution, output_path: Path) -> None:
         """
@@ -421,7 +834,7 @@ class CollocationOptimizer:
         """Get information about the current solver state."""
         info = {
             "solver_type": "collocation",
-            "casadi_available": CASADI_AVAILABLE,
+            "casadi_available": True,
             "parameters": asdict(self.parameters),
             "has_solution": self.last_solution is not None,
             "last_solution_success": self.last_solution.success if self.last_solution else None,

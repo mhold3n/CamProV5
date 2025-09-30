@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.campro.v5.debug.DebugIconButton
+import com.campro.v5.debug.DebugButton
+import com.campro.v5.debug.DebugOutlinedButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -204,7 +207,7 @@ fun ErrorDisplay(
                     )
                 }
                 
-                IconButton(onClick = onDismiss) {
+                DebugIconButton(buttonId = "error-dismiss", onClick = onDismiss) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Dismiss error"
@@ -241,7 +244,8 @@ fun ErrorDisplay(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Button(
+                    DebugButton(
+                        buttonId = "error-recovery",
                         onClick = {
                             error.recoveryAction.action()
                             onDismiss()
@@ -259,7 +263,7 @@ fun ErrorDisplay(
                     }
                     
                     if (error.recoveryAction.canRetry) {
-                        OutlinedButton(onClick = onDismiss) {
+                        DebugOutlinedButton(buttonId = "error-cancel", onClick = onDismiss) {
                             Text("Cancel")
                         }
                     }
@@ -270,7 +274,8 @@ fun ErrorDisplay(
             if (error.technicalDetails != null) {
                 var showDetails by remember { mutableStateOf(false) }
                 
-                OutlinedButton(
+                DebugOutlinedButton(
+                    buttonId = "error-tech-details-toggle",
                     onClick = { showDetails = !showDetails },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -373,7 +378,8 @@ fun ErrorSummaryCard(
                 )
                 
                 if (summary.hasErrors) {
-                    Button(
+                    DebugButton(
+                        buttonId = "error-view-all",
                         onClick = onViewAll,
                         modifier = Modifier.height(32.dp)
                     ) {

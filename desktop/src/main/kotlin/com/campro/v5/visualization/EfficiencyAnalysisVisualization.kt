@@ -88,6 +88,11 @@ private fun EfficiencyComparisonChart(
         
         val chartWidth = canvasWidth - marginLeft - marginRight
         val chartHeight = canvasHeight - marginTop - marginBottom
+
+        // Guard against non-positive drawable area
+        if (chartWidth <= 0f || chartHeight <= 0f) {
+            return@Canvas
+        }
         
         // Draw axes
         drawEfficiencyAxes(
@@ -157,6 +162,10 @@ private fun DrawScope.drawEfficiencyBars(
     marginLeft: Float,
     marginTop: Float
 ) {
+    // Guard against non-positive drawable area
+    if (chartWidth <= 0f || chartHeight <= 0f) {
+        return
+    }
     // Simulate efficiency data (in real implementation, this would come from the analysis)
     val methods = listOf("Litvin", "Collocation", "Hybrid")
     val efficiencies = listOf(0.85, 0.82, 0.88) // Example values
@@ -166,23 +175,28 @@ private fun DrawScope.drawEfficiencyBars(
         Color(0xFFFF9800)  // Orange
     )
     
-    val barWidth = chartWidth / (methods.size * 2)
-    val barSpacing = barWidth / 2
+    val safeChartWidth = chartWidth.coerceAtLeast(1f)
+    val safeChartHeight = chartHeight.coerceAtLeast(1f)
+    val barWidth = (safeChartWidth / (methods.size * 2)).coerceAtLeast(1f)
+    val barSpacing = (barWidth / 2).coerceAtLeast(1f)
     
     methods.forEachIndexed { index, method ->
         val efficiency = efficiencies[index]
         val color = colors[index]
         
         val barX = marginLeft + (index * (barWidth + barSpacing)) + barSpacing
-        val barHeight = (chartHeight * efficiency).toFloat()
-        val barY = marginTop + chartHeight - barHeight
+        val rawHeight = (safeChartHeight * efficiency).toFloat()
+        val barHeight = rawHeight.coerceIn(0f, safeChartHeight)
+        val barY = marginTop + safeChartHeight - barHeight
         
         // Draw bar
-        drawRect(
-            color = color,
-            topLeft = Offset(barX, barY),
-            size = androidx.compose.ui.geometry.Size(barWidth, barHeight)
-        )
+        if (barHeight > 0f) {
+            drawRect(
+                color = color,
+                topLeft = Offset(barX, barY),
+                size = androidx.compose.ui.geometry.Size(barWidth, barHeight)
+            )
+        }
         
         // Draw efficiency value on top of bar
         // Note: Text drawing removed - will be handled by Compose Text components

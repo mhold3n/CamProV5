@@ -23,6 +23,12 @@ import com.campro.v5.performance.PerformanceOptimizer
 import com.campro.v5.error.ErrorHandler
 import com.campro.v5.ux.UserExperienceEnhancer
 import com.campro.v5.accessibility.AccessibilityEnhancer
+import com.campro.v5.accessibility.AccessibilitySettingsPanel
+import com.campro.v5.debug.DebugManager
+import com.campro.v5.debug.DebugPanel
+import com.campro.v5.debug.DebugButton
+import com.campro.v5.debug.DebugOutlinedButton
+import com.campro.v5.debug.DebugIconButton
 import kotlinx.coroutines.launch
 import java.nio.file.Paths
 import org.slf4j.LoggerFactory
@@ -51,6 +57,7 @@ fun UnifiedOptimizationTile(
     val errorHandler = remember { ErrorHandler() }
     val performanceOptimizer = remember { PerformanceOptimizer }
     var showAccessibilitySettings by remember { mutableStateOf(false) }
+    var showDebugPanel by remember { mutableStateOf(DebugManager.settings.panelVisible) }
     
     // Create state manager
     val stateManager = remember { OptimizationStateManager(bridge) }
@@ -99,7 +106,7 @@ fun UnifiedOptimizationTile(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header with accessibility settings
+            // Header with accessibility & debug settings
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -111,21 +118,41 @@ fun UnifiedOptimizationTile(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 
-                IconButton(
-                    onClick = { showAccessibilitySettings = !showAccessibilitySettings }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Accessibility,
-                        contentDescription = "Accessibility Settings"
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DebugIconButton(
+                        buttonId = "toggle-debug-panel",
+                        onClick = { showDebugPanel = !showDebugPanel; DebugManager.setPanelVisible(showDebugPanel) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.BugReport,
+                            contentDescription = "Debug Panel"
+                        )
+                    }
+                    DebugIconButton(
+                        buttonId = "toggle-accessibility-panel",
+                        onClick = { showAccessibilitySettings = !showAccessibilitySettings }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Accessibility,
+                            contentDescription = "Accessibility Settings"
+                        )
+                    }
                 }
             }
             
+            // Debug panel
+            if (showDebugPanel) {
+                DebugPanel(
+                    onSettingsChanged = { DebugManager.updateSettings(it) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
             // Accessibility settings panel
             if (showAccessibilitySettings) {
-                Text(
-                    text = "Accessibility Settings Panel (Temporarily Disabled)",
-                    modifier = Modifier.fillMaxSize()
+                AccessibilitySettingsPanel(
+                    onSettingsChanged = { AccessibilityEnhancer.updateSettings(it) },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
             
@@ -145,22 +172,6 @@ fun UnifiedOptimizationTile(
                                 parameters = parameters,
                                 onParametersChanged = { parameters = it },
                                 modifier = Modifier.weight(1f)
-                            )
-                            
-                            // Control buttons
-                            OptimizationControls(
-                                optimizationState = optimizationState,
-                                onStartOptimization = {
-                                    scope.launch {
-                                        stateManager.runOptimization(parameters, outputDir)
-                                    }
-                                },
-                                onCancelOptimization = {
-                                    stateManager.cancelOptimization()
-                                },
-                                onResetState = {
-                                    stateManager.resetState()
-                                }
                             )
                             
                             // Error display
@@ -195,6 +206,22 @@ fun UnifiedOptimizationTile(
                     }
                 }
             }
+
+            // Control buttons (always visible, adapts to state)
+            OptimizationControls(
+                optimizationState = optimizationState,
+                onStartOptimization = {
+                    scope.launch {
+                        stateManager.runOptimization(parameters, outputDir)
+                    }
+                },
+                onCancelOptimization = {
+                    stateManager.cancelOptimization()
+                },
+                onResetState = {
+                    stateManager.resetState()
+                }
+            )
         }
     }
 }
@@ -213,7 +240,8 @@ private fun OptimizationControls(
     ) {
         when (optimizationState) {
             is OptimizationState.Idle -> {
-                Button(
+                DebugButton(
+                    buttonId = "start-optimization",
                     onClick = onStartOptimization,
                     modifier = Modifier.weight(1f)
                 ) {
@@ -227,7 +255,8 @@ private fun OptimizationControls(
             }
             
             is OptimizationState.Running -> {
-                Button(
+                DebugButton(
+                    buttonId = "cancel-optimization",
                     onClick = onCancelOptimization,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
@@ -244,7 +273,8 @@ private fun OptimizationControls(
             }
             
             is OptimizationState.Completed, is OptimizationState.Failed -> {
-                Button(
+                DebugButton(
+                    buttonId = "run-again",
                     onClick = onStartOptimization,
                     modifier = Modifier.weight(1f)
                 ) {
@@ -256,7 +286,8 @@ private fun OptimizationControls(
                     Text("Run Again")
                 }
                 
-                OutlinedButton(
+                DebugOutlinedButton(
+                    buttonId = "reset-state",
                     onClick = onResetState,
                     modifier = Modifier.weight(1f)
                 ) {

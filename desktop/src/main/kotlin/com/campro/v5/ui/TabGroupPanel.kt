@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.campro.v5.debug.DebugIconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -231,7 +232,8 @@ private fun TabGroupHeader(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 // Add tab button (placeholder for future functionality)
-                IconButton(
+                DebugIconButton(
+                    buttonId = "tabs-add",
                     onClick = {
                         // TODO(#19): Implement add tab functionality (UI/Compose). Should open a new tab with default content.
                     },
@@ -246,7 +248,8 @@ private fun TabGroupHeader(
                 }
 
                 // Tab group menu
-                IconButton(
+                DebugIconButton(
+                    buttonId = "tabs-menu",
                     onClick = {
                         // TODO(#20): Implement tab group menu (rename, delete group, move tabs between groups).
                     },
@@ -354,7 +357,8 @@ private fun TabItem(
             )
 
             // Close button
-            IconButton(
+            DebugIconButton(
+                buttonId = "tab-close-" + panelId,
                 onClick = onClose,
                 modifier = Modifier.size(16.dp),
             ) {

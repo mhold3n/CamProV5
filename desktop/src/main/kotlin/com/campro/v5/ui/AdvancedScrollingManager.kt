@@ -12,6 +12,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.campro.v5.debug.DebugButton
+import com.campro.v5.debug.DebugIconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -612,7 +614,8 @@ fun ScrollSyncControls(
             }
 
             // Create sync group button
-            Button(
+            DebugButton(
+                buttonId = "create-sync-group",
                 onClick = {
                     if (selectedPanels.size >= 2) {
                         val groupId = "sync_group_${System.currentTimeMillis()}"
@@ -645,7 +648,8 @@ fun ScrollSyncControls(
                             modifier = Modifier.weight(1f),
                         )
 
-                        IconButton(
+                        DebugIconButton(
+                            buttonId = "remove-sync-group",
                             onClick = { scrollingManager.removeSyncGroup(groupId) },
                         ) {
                             Icon(

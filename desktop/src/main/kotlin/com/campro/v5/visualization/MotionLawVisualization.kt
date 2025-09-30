@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.campro.v5.debug.DebugIconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -153,7 +154,8 @@ private fun LegendItem(
             color = if (isVisible) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
         )
         
-        IconButton(
+        DebugIconButton(
+            buttonId = "motion-legend-toggle-" + label.lowercase().replace(" ", "-"),
             onClick = onToggle,
             modifier = Modifier.size(20.dp)
         ) {

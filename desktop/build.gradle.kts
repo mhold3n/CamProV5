@@ -78,6 +78,7 @@ sourceSets {
             include("com/campro/v5/error/**")
             include("com/campro/v5/ux/**")
             include("com/campro/v5/accessibility/**")
+            include("com/campro/v5/debug/**")
             // include("com/campro/v5/layout/**") // Excluded due to API compatibility issues
         }
     }

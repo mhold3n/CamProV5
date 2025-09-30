@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material3.*
+import com.campro.v5.debug.DebugIconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -521,6 +522,28 @@ fun DraggableResizablePanel(
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
+                            DebugIconButton(
+                                buttonId = "resize-dock",
+                                onClick = { /* TODO: Dock */ },
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Dock,
+                                    contentDescription = "Dock",
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                            DebugIconButton(
+                                buttonId = "resize-undock",
+                                onClick = { /* TODO: Undock */ },
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Undock,
+                                    contentDescription = "Undock",
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
                             IconButton(
                                 onClick = { onZIndexChange(zIndex + 1f) },
                                 modifier = Modifier.size(24.dp),

@@ -6,12 +6,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.campro.v5.debug.DebugOutlinedButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.campro.v5.models.OptimizationParameters
 import com.campro.v5.ui.SimpleLayoutManager as LayoutManager
+// Using local ParameterField to avoid cross-file dependency during build
 
 /**
  * Comprehensive parameter input form for optimization parameters.
@@ -159,7 +161,8 @@ fun OptimizationParameterForm(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedButton(
+                DebugOutlinedButton(
+                    buttonId = "toggle-validation-errors",
                     onClick = { showValidationErrors = !showValidationErrors },
                     modifier = Modifier.weight(1f)
                 ) {
@@ -171,7 +174,8 @@ fun OptimizationParameterForm(
                     Text(if (showValidationErrors) "Hide Errors" else "Show Errors")
                 }
                 
-                OutlinedButton(
+                DebugOutlinedButton(
+                    buttonId = "reset-defaults",
                     onClick = { onParametersChanged(OptimizationParameters.createDefault()) },
                     modifier = Modifier.weight(1f)
                 ) {
@@ -183,7 +187,8 @@ fun OptimizationParameterForm(
                     Text("Reset to Defaults")
                 }
                 
-                OutlinedButton(
+                DebugOutlinedButton(
+                    buttonId = "quick-test",
                     onClick = { onParametersChanged(OptimizationParameters.createQuickTest()) },
                     modifier = Modifier.weight(1f)
                 ) {
@@ -258,24 +263,24 @@ private fun BasicParametersSection(
             )
         }
         
-        // Row 3: Planet count and rod length
+        // Row 3: Rod length and compression duration
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             ParameterField(
-                label = "Planet Count",
-                value = parameters.planetCount.toDouble(),
-                unit = "",
-                onValueChange = { onParametersChanged(parameters.copy(planetCount = it.toInt())) },
-                modifier = Modifier.weight(1f)
-            )
-            
-            ParameterField(
                 label = "Rod Length",
                 value = parameters.rodLength,
                 unit = "mm",
                 onValueChange = { onParametersChanged(parameters.copy(rodLength = it)) },
+                modifier = Modifier.weight(1f)
+            )
+            
+            ParameterField(
+                label = "Compression Duration",
+                value = parameters.compressionDurationPercent,
+                unit = "%",
+                onValueChange = { onParametersChanged(parameters.copy(compressionDurationPercent = it)) },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -412,6 +417,13 @@ private fun GearDesignParametersSection(
             color = MaterialTheme.colorScheme.onSurface
         )
         
+        // Fixed planetary configuration info
+        Text(
+            text = "Planetary Configuration: 2 planets, 180° offset (fixed)",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        
         // Physical dimensions
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -434,26 +446,14 @@ private fun GearDesignParametersSection(
             )
         }
         
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            ParameterField(
-                label = "Interference Buffer",
-                value = parameters.interferenceBuffer,
-                unit = "mm",
-                onValueChange = { onParametersChanged(parameters.copy(interferenceBuffer = it)) },
-                modifier = Modifier.weight(1f)
-            )
-            
-            ParameterField(
-                label = "Carrier Offset",
-                value = parameters.carrierOffsetDeg,
-                unit = "°",
-                onValueChange = { onParametersChanged(parameters.copy(carrierOffsetDeg = it)) },
-                modifier = Modifier.weight(1f)
-            )
-        }
+        // Interference buffer (carrier offset is fixed at 180° for 2 planets)
+        ParameterField(
+            label = "Interference Buffer",
+            value = parameters.interferenceBuffer,
+            unit = "mm",
+            onValueChange = { onParametersChanged(parameters.copy(interferenceBuffer = it)) },
+            modifier = Modifier.fillMaxWidth()
+        )
         
         // Ring rotation
         ParameterField(
@@ -585,17 +585,15 @@ private fun ParameterField(
 ) {
     OutlinedTextField(
         value = value.toString(),
-        onValueChange = { 
+        onValueChange = {
             val newValue = it.toDoubleOrNull() ?: value
             onValueChange(newValue)
         },
-        label = { 
-            Text("$label $unit".trim()) 
+        label = {
+            Text("$label $unit".trim())
         },
         modifier = modifier,
         singleLine = true,
-        isError = false // Could add validation here
+        isError = false
     )
 }
-
-

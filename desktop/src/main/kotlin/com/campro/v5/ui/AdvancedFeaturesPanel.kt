@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.campro.v5.debug.DebugButton
+import com.campro.v5.debug.DebugIconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -119,7 +121,8 @@ private fun PresetsPanel(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Button(
+            DebugButton(
+                buttonId = "presets-save",
                 onClick = { showSaveDialog = true },
                 modifier = Modifier.weight(1f)
             ) {
@@ -131,7 +134,8 @@ private fun PresetsPanel(
                 Text("Save Preset")
             }
             
-            Button(
+            DebugButton(
+                buttonId = "presets-load",
                 onClick = { showLoadDialog = true },
                 modifier = Modifier.weight(1f)
             ) {
@@ -264,13 +268,13 @@ private fun PresetItem(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                IconButton(onClick = onLoad) {
+                DebugIconButton(buttonId = "presets-item-load-" + preset.name, onClick = onLoad) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
                         contentDescription = "Load preset"
                     )
                 }
-                IconButton(onClick = onDelete) {
+                DebugIconButton(buttonId = "presets-item-delete-" + preset.name, onClick = onDelete) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Delete preset"
@@ -315,7 +319,8 @@ private fun ExportImportPanel(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Button(
+                        DebugButton(
+                            buttonId = "export-json",
                             onClick = {
                                 scope.launch {
                                     val outputPath = Paths.get("./exports/results_${System.currentTimeMillis()}.json")
@@ -332,7 +337,8 @@ private fun ExportImportPanel(
                             Text("Export JSON")
                         }
                         
-                        Button(
+                        DebugButton(
+                            buttonId = "export-csv",
                             onClick = {
                                 scope.launch {
                                     val outputPath = Paths.get("./exports/results_${System.currentTimeMillis()}.csv")
@@ -407,7 +413,8 @@ private fun BatchProcessingPanel(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Button(
+            DebugButton(
+                buttonId = "batch-start",
                 onClick = { showBatchDialog = true },
                 enabled = batchState !is BatchState.Running,
                 modifier = Modifier.weight(1f)
@@ -420,7 +427,8 @@ private fun BatchProcessingPanel(
                 Text("Start Batch")
             }
             
-            Button(
+            DebugButton(
+                buttonId = "batch-cancel",
                 onClick = { batchProcessor.cancelBatch() },
                 enabled = batchState is BatchState.Running,
                 modifier = Modifier.weight(1f),
@@ -555,7 +563,8 @@ private fun BatchResultsCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
-                Button(
+                DebugButton(
+                    buttonId = "batch-export",
                     onClick = onExportResults,
                     modifier = Modifier.height(32.dp)
                 ) {

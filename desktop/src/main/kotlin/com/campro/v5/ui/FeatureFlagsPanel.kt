@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import com.campro.v5.debug.DebugOutlinedButton
+import com.campro.v5.debug.DebugButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -124,7 +126,8 @@ fun FeatureFlagsPanel() {
                     .padding(top = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            OutlinedButton(
+            DebugOutlinedButton(
+                buttonId = "feature-flags-refresh",
                 onClick = {
                     flagStates = FeatureFlags.getAllFlags().toMutableMap()
                 },
@@ -133,7 +136,8 @@ fun FeatureFlagsPanel() {
                 Text("Refresh")
             }
 
-            Button(
+            DebugButton(
+                buttonId = "feature-flags-save",
                 onClick = {
                     FeatureFlags.saveConfig()
                 },
