@@ -44,12 +44,6 @@ fun main() = application {
                 )
                 
                 Text(
-                    text = "✅ GUI is working! If you can see this, the application is running correctly.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                
-                Text(
                     text = "The UnifiedOptimizationTile below should show parameter input fields and optimization controls.",
                     style = MaterialTheme.typography.bodyMedium
                 )
