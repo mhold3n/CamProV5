@@ -1,19 +1,19 @@
 package com.campro.v5.utils
 
-import java.nio.file.Path
+import org.slf4j.LoggerFactory
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import org.slf4j.LoggerFactory
 
 /**
  * Utility class for file operations.
  */
 object FileUtils {
-    
+
     private val logger = LoggerFactory.getLogger(FileUtils::class.java)
-    
+
     /**
      * Create directory if it doesn't exist.
      */
@@ -28,18 +28,18 @@ object FileUtils {
             }
         }
     }
-    
+
     /**
      * Create temporary directory with timestamp.
      */
     fun createTempDirectory(prefix: String = "campro"): Path {
         val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
-        val tempDirName = "${prefix}_${timestamp}"
+        val tempDirName = "${prefix}_$timestamp"
         val tempDir = Files.createTempDirectory(tempDirName)
         logger.debug("Created temporary directory: $tempDir")
         return tempDir
     }
-    
+
     /**
      * Write string to file.
      */
@@ -52,40 +52,34 @@ object FileUtils {
             throw RuntimeException("Failed to write string to file", e)
         }
     }
-    
+
     /**
      * Read string from file.
      */
-    fun readStringFromFile(filePath: Path): String {
-        return try {
-            val content = String(Files.readAllBytes(filePath))
-            logger.debug("Read string from file: $filePath")
-            content
-        } catch (e: Exception) {
-            logger.error("Failed to read string from file: $filePath", e)
-            throw RuntimeException("Failed to read string from file", e)
-        }
+    fun readStringFromFile(filePath: Path): String = try {
+        val content = String(Files.readAllBytes(filePath))
+        logger.debug("Read string from file: $filePath")
+        content
+    } catch (e: Exception) {
+        logger.error("Failed to read string from file: $filePath", e)
+        throw RuntimeException("Failed to read string from file", e)
     }
-    
+
     /**
      * Check if file exists.
      */
-    fun fileExists(filePath: Path): Boolean {
-        return Files.exists(filePath)
-    }
-    
+    fun fileExists(filePath: Path): Boolean = Files.exists(filePath)
+
     /**
      * Get file size in bytes.
      */
-    fun getFileSize(filePath: Path): Long {
-        return try {
-            Files.size(filePath)
-        } catch (e: Exception) {
-            logger.error("Failed to get file size: $filePath", e)
-            0L
-        }
+    fun getFileSize(filePath: Path): Long = try {
+        Files.size(filePath)
+    } catch (e: Exception) {
+        logger.error("Failed to get file size: $filePath", e)
+        0L
     }
-    
+
     /**
      * Delete file if it exists.
      */
@@ -100,7 +94,7 @@ object FileUtils {
             }
         }
     }
-    
+
     /**
      * Clean up temporary directory and all its contents.
      */
@@ -119,7 +113,7 @@ object FileUtils {
             }
         }
     }
-    
+
     /**
      * Get file extension.
      */
@@ -132,7 +126,7 @@ object FileUtils {
             ""
         }
     }
-    
+
     /**
      * Get file name without extension.
      */

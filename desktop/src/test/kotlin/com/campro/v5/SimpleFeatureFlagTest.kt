@@ -18,7 +18,7 @@ class SimpleFeatureFlagTest {
         assertFalse(FeatureFlags.ENABLE_OLD_DIAGNOSTICS_PREFLIGHT)
         assertFalse(FeatureFlags.ENABLE_OLD_COLLOCATION_MOTION_SOLVER)
         assertFalse(FeatureFlags.ENABLE_OLD_MOTION_LAW_GENERATOR)
-        
+
         // Test that new workflow components are enabled by default
         assertTrue(FeatureFlags.ENABLE_NEW_UNIFIED_OPTIMIZATION)
         assertTrue(FeatureFlags.ENABLE_NEW_ADVANCED_FEATURES)
@@ -34,7 +34,7 @@ class SimpleFeatureFlagTest {
         val result = LegacyComponentWrapper.withMotionLawEngine {
             "This should not execute"
         }
-        
+
         // Should return null because the feature is disabled
         assertNull(result)
     }

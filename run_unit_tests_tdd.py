@@ -10,7 +10,7 @@ import sys
 import subprocess
 import logging
 from pathlib import Path
-from typing import List, Tuple, Dict, Any
+from typing import Dict, Any
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -47,7 +47,7 @@ class TDDTestRunner:
             logger.info(f"   Description: {description}")
             
             # Run specific test level
-            success = self._run_specific_test("test_phase1_motion_law_unit.py", level)
+            success = self._run_specific_test("phases/test_phase1_motion_law_unit.py", level)
             
             if success:
                 logger.info(f"✅ {level.upper()} TEST PASSED")
@@ -86,7 +86,7 @@ class TDDTestRunner:
             logger.info(f"   Description: {description}")
             
             # Run specific test level
-            success = self._run_specific_test("test_phase2_gear_optimization_unit.py", level)
+            success = self._run_specific_test("phases/test_phase2_gear_optimization_unit.py", level)
             
             if success:
                 logger.info(f"✅ {level.upper()} TEST PASSED")
@@ -122,7 +122,7 @@ class TDDTestRunner:
             logger.info(f"   Description: {description}")
             
             # Run specific integration test
-            success = self._run_specific_test("test_phase2_gear_optimization_unit.py", test_name)
+            success = self._run_specific_test("phases/test_phase2_gear_optimization_unit.py", test_name)
             
             if success:
                 logger.info(f"✅ {test_name} PASSED")
@@ -147,7 +147,7 @@ class TDDTestRunner:
             cmd = [
                 sys.executable, "-m", "pytest",
                 f"tests/{test_file}",
-                f"-k", test_pattern,
+                "-k", test_pattern,
                 "-v",
                 "--tb=short",
                 "--no-header",
@@ -283,7 +283,7 @@ class TDDTestRunner:
                 # Try to create a simple NLP
                 x = ca.SX.sym('x')
                 nlp = {'x': x, 'f': x**2, 'g': x-1}
-                solver = ca.nlpsol('solver', 'ipopt', nlp)
+                ca.nlpsol('solver', 'ipopt', nlp)
                 diagnostics["ipopt_available"] = True
                 logger.info("✅ IPOPT is available with CasADi")
             except Exception as e:
@@ -292,8 +292,9 @@ class TDDTestRunner:
         
         # Test basic functionality
         try:
-            from campro.optimization.collocation_optimizer import CollocationOptimizer, CollocationParameters
-            from campro.optimization.phase2_gear_optimizer import Phase2GearOptimizer, Phase2Parameters
+            # Test imports (not used directly, just testing availability)
+            from campro.optimization.collocation_optimizer import CollocationOptimizer, CollocationParameters  # noqa: F401
+            from campro.optimization.phase2_gear_optimizer import Phase2GearOptimizer, Phase2Parameters  # noqa: F401
             diagnostics["basic_functionality"] = True
             logger.info("✅ Basic functionality imports work")
         except ImportError as e:
@@ -333,7 +334,7 @@ def main():
     
     # Generate and display report
     report = runner.generate_test_report()
-    print("\n" + report)
+    logger.info("\n" + report)
     
     # Save report to file
     report_path = Path("test_results/tdd_test_report.txt")

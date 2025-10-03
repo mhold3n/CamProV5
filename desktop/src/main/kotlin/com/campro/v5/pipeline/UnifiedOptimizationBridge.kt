@@ -1,86 +1,78 @@
 package com.campro.v5.pipeline
 
+import com.campro.v5.models.FEAAnalysisData
+import com.campro.v5.models.GearProfileData
+import com.campro.v5.models.MotionLawData
 import com.campro.v5.models.OptimizationParameters
 import com.campro.v5.models.OptimizationResult
-import com.campro.v5.models.MotionLawData
-import com.campro.v5.models.GearProfileData
-import com.campro.v5.models.FEAAnalysisData
 import com.campro.v5.models.ToothProfileData
 import com.campro.v5.utils.SimpleJsonUtils
-import com.campro.v5.utils.FileUtils
-import java.io.File
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import org.slf4j.LoggerFactory
+import java.io.File
+import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 
 /**
  * Bridge between Kotlin UI and Python unified optimization pipeline.
- * 
+ *
  * This class handles parameter validation, conversion, result parsing,
  * and error handling for the unified optimization pipeline.
  */
 class UnifiedOptimizationBridge {
-    
+
     private val logger = LoggerFactory.getLogger(UnifiedOptimizationBridge::class.java)
-    
+
     companion object {
         private const val PYTHON_SCRIPT_PATH = "../scripts/kotlin_bridge_cli.py"
         private const val DEFAULT_TIMEOUT_SECONDS = 30L
         private const val MAX_RETRIES = 3
     }
-    
+
     /**
      * Run unified optimization pipeline with Kotlin parameters.
-     * 
+     *
      * @param parameters Optimization parameters from UI
      * @param outputDir Output directory for results
      * @return CompletableFuture with optimization result
      */
-    suspend fun runOptimization(
-        parameters: OptimizationParameters,
-        outputDir: Path
-    ): CompletableFuture<OptimizationResult> = withContext(Dispatchers.IO) {
-        
-        return@withContext CompletableFuture.supplyAsync {
-            try {
-                logger.info("Starting unified optimization pipeline")
-                
-                // Validate parameters
-                validateParameters(parameters)
-                
-                // Convert Kotlin parameters to Python format
-                val pythonParams = convertParametersToPython(parameters)
-                
-                // Create temporary files for communication
-                val inputFile = createInputFile(pythonParams, outputDir)
-                val outputFile = createOutputFile(outputDir)
-                
-                // Run Python pipeline
-                val success = runPythonPipeline(inputFile, outputFile, outputDir)
-                
-                if (success) {
-                    // Parse results
-                    val result = parseResults(outputFile)
-                    logger.info("Optimization completed successfully")
-                    result
-                } else {
-                    logger.error("Python pipeline execution failed")
-                    createErrorResult("Pipeline execution failed")
+    suspend fun runOptimization(parameters: OptimizationParameters, outputDir: Path): CompletableFuture<OptimizationResult> =
+        withContext(Dispatchers.IO) {
+            return@withContext CompletableFuture.supplyAsync {
+                try {
+                    logger.info("Starting unified optimization pipeline")
+
+                    // Validate parameters
+                    validateParameters(parameters)
+
+                    // Convert Kotlin parameters to Python format
+                    val pythonParams = convertParametersToPython(parameters)
+
+                    // Create temporary files for communication
+                    val inputFile = createInputFile(pythonParams, outputDir)
+                    val outputFile = createOutputFile(outputDir)
+
+                    // Run Python pipeline
+                    val success = runPythonPipeline(inputFile, outputFile, outputDir)
+
+                    if (success) {
+                        // Parse results
+                        val result = parseResults(outputFile)
+                        logger.info("Optimization completed successfully")
+                        result
+                    } else {
+                        logger.error("Python pipeline execution failed")
+                        createErrorResult("Pipeline execution failed")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Optimization failed: ${e.message}", e)
+                    createErrorResult(e.message ?: "Unknown error")
                 }
-                
-            } catch (e: Exception) {
-                logger.error("Optimization failed: ${e.message}", e)
-                createErrorResult(e.message ?: "Unknown error")
             }
         }
-    }
-    
+
     /**
      * Validate optimization parameters.
      */
@@ -95,42 +87,55 @@ class UnifiedOptimizationBridge {
         require(parameters.ringThickness > 0) { "Ring thickness must be positive" }
         require(parameters.interferenceBuffer >= 0) { "Interference buffer must be non-negative" }
     }
-    
+
     /**
      * Convert Kotlin parameters to Python format.
      */
-    private fun convertParametersToPython(parameters: OptimizationParameters): Map<String, Any> {
-        return mapOf(
-            "samplingStepDeg" to parameters.samplingStepDeg,
-            "ringRotationDeg" to parameters.ringRotationDeg,
-            "gearRatio" to parameters.gearRatio,
-            "strokeLengthMm" to parameters.strokeLengthMm,
-            "rodLength" to parameters.rodLength,
-            "journalRadius" to parameters.journalRadius,
-            "interferenceBuffer" to parameters.interferenceBuffer,
-            "ringThickness" to parameters.ringThickness,
-            "rpm" to parameters.rpm,
-            "planetCount" to parameters.planetCount,
-            "carrierOffsetDeg" to parameters.carrierOffsetDeg,
-            "rampBeforeTdcDeg" to parameters.rampBeforeTdcDeg,
-            "rampAfterTdcDeg" to parameters.rampAfterTdcDeg,
-            "dwellTdcDeg" to parameters.dwellTdcDeg,
-            "rampBeforeBdcDeg" to parameters.rampBeforeBdcDeg,
-            "rampAfterBdcDeg" to parameters.rampAfterBdcDeg,
-            "dwellBdcDeg" to parameters.dwellBdcDeg,
-            "constantVelocityTdcDeg" to parameters.constantVelocityTdcDeg,
-            "constantVelocityBdcDeg" to parameters.constantVelocityBdcDeg,
-            // Add additional parameters that might be needed
-            "planetRadiusBaseFactor" to 0.2,
-            "planetRadiusVariationFactor" to 0.1,
-            "sunRadiusBaseFactor" to 0.15,
-            "sunRadiusVariationFactor" to 0.05,
-            "strokeAchievableFactor" to 0.9,
-            "clearanceSafetyMargin" to 0.2,
-            "adjustmentSplitFactor" to 0.6
-        )
-    }
-    
+    private fun convertParametersToPython(parameters: OptimizationParameters): Map<String, Any> = mapOf(
+        "samplingStepDeg" to parameters.samplingStepDeg,
+        "ringRotationDeg" to parameters.ringRotationDeg,
+        "gearRatio" to parameters.gearRatio,
+        "strokeLengthMm" to parameters.strokeLengthMm,
+        "rodLength" to parameters.rodLength,
+        "journalRadius" to parameters.journalRadius,
+        "interferenceBuffer" to parameters.interferenceBuffer,
+        "ringThickness" to parameters.ringThickness,
+        "rpm" to parameters.rpm,
+        "planetCount" to parameters.planetCount,
+        "carrierOffsetDeg" to parameters.carrierOffsetDeg,
+        "rampBeforeTdcDeg" to parameters.rampBeforeTdcDeg,
+        "rampAfterTdcDeg" to parameters.rampAfterTdcDeg,
+        "dwellTdcDeg" to parameters.dwellTdcDeg,
+        "rampBeforeBdcDeg" to parameters.rampBeforeBdcDeg,
+        "rampAfterBdcDeg" to parameters.rampAfterBdcDeg,
+        "dwellBdcDeg" to parameters.dwellBdcDeg,
+        "constantVelocityTdcDeg" to parameters.constantVelocityTdcDeg,
+        "constantVelocityBdcDeg" to parameters.constantVelocityBdcDeg,
+        // Add additional parameters that might be needed
+        "planetRadiusBaseFactor" to 0.2,
+        "planetRadiusVariationFactor" to 0.1,
+        "sunRadiusBaseFactor" to 0.15,
+        "sunRadiusVariationFactor" to 0.05,
+        "strokeBasedVariationFactor" to 0.3,  // 30% of stroke length for significant asymmetry
+        "strokeAchievableFactor" to 0.9,
+        "clearanceSafetyMargin" to 0.2,
+        "adjustmentSplitFactor" to 0.6,
+        // New instantaneous ratio hyperparameters (calculated from user inputs)
+        "rMin" to parameters.calculateGearRatioBounds().first,
+        "rMax" to parameters.calculateGearRatioBounds().second,
+        "rSmoothnessWeight" to parameters.rSmoothnessWeight,
+        "motionVariationWeight" to parameters.motionVariationWeight,
+        // Journal offset optimization parameters (calculated from user inputs)
+        "journalOffsetMin" to parameters.journalOffsetMin,
+        "journalOffsetMax" to parameters.journalOffsetMax,
+        // User-driven bounds
+        "maxGearRatioVariation" to parameters.maxGearRatioVariation,
+        "maxJournalOffsetPercent" to parameters.maxJournalOffsetPercent,
+        // Optional symmetry prior controls
+        "enableSymmetryPrior" to parameters.enableSymmetryPrior,
+        "symmetryWeight" to parameters.symmetryWeight,
+    )
+
     /**
      * Create input parameter file for Python pipeline.
      */
@@ -139,36 +144,30 @@ class UnifiedOptimizationBridge {
         SimpleJsonUtils.writeJsonFile(parameters, inputFile)
         return inputFile
     }
-    
+
     /**
      * Create output file path for Python pipeline results.
      */
-    private fun createOutputFile(outputDir: Path): Path {
-        return outputDir.resolve("optimization_results.json")
-    }
-    
+    private fun createOutputFile(outputDir: Path): Path = outputDir.resolve("optimization_results.json")
+
     /**
      * Run Python pipeline with retry logic.
      */
-    private fun runPythonPipeline(
-        inputFile: Path,
-        outputFile: Path,
-        outputDir: Path
-    ): Boolean {
+    private fun runPythonPipeline(inputFile: Path, outputFile: Path, outputDir: Path): Boolean {
         var retryCount = 0
         var lastException: Exception? = null
-        
+
         while (retryCount < MAX_RETRIES) {
             try {
                 val command = buildPythonCommand(inputFile, outputFile, outputDir)
                 logger.debug("Running Python command: ${command.joinToString(" ")}")
-                
+
                 val process = ProcessBuilder(command)
                     .directory(File(System.getProperty("user.dir")))
                     .start()
-                
+
                 val success = process.waitFor(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                
+
                 if (success && process.exitValue() == 0) {
                     logger.info("Python pipeline completed successfully")
                     return true
@@ -177,38 +176,31 @@ class UnifiedOptimizationBridge {
                     logger.warn("Python pipeline failed (attempt ${retryCount + 1}): $errorOutput")
                     lastException = RuntimeException("Pipeline failed: $errorOutput")
                 }
-                
             } catch (e: Exception) {
                 logger.warn("Python pipeline exception (attempt ${retryCount + 1}): ${e.message}")
                 lastException = e
             }
-            
+
             retryCount++
             if (retryCount < MAX_RETRIES) {
                 Thread.sleep(1000) // Wait 1 second before retry
             }
         }
-        
+
         logger.error("Python pipeline failed after $MAX_RETRIES attempts", lastException)
         return false
     }
-    
+
     /**
      * Build Python command for pipeline execution.
      */
-    private fun buildPythonCommand(
-        inputFile: Path,
-        outputFile: Path,
-        outputDir: Path
-    ): List<String> {
-        return listOf(
-            "python", PYTHON_SCRIPT_PATH,
-            "--input", inputFile.toString(),
-            "--output", outputFile.toString(),
-            "--output-dir", outputDir.toString()
-        )
-    }
-    
+    private fun buildPythonCommand(inputFile: Path, outputFile: Path, outputDir: Path): List<String> = listOf(
+        "python", PYTHON_SCRIPT_PATH,
+        "--input", inputFile.toString(),
+        "--output", outputFile.toString(),
+        "--output-dir", outputDir.toString(),
+    )
+
     /**
      * Parse optimization results from Python output.
      */
@@ -228,27 +220,31 @@ class UnifiedOptimizationBridge {
                 toothProfiles = parseToothProfiles(toothMap),
                 feaAnalysis = parseFEAAnalysis(feaMap),
                 executionTime = (resultData["execution_time"] as? Number)?.toDouble() ?: 0.0,
-                error = resultData["error"] as? String
+                error = resultData["error"] as? String,
             )
-
         } catch (e: Exception) {
             logger.error("Failed to parse results: ${e.message}", e)
             return createErrorResult("Failed to parse results: ${e.message}")
         }
     }
-    
+
     /**
      * Parse motion law data from Python result.
      */
     private fun parseMotionLaw(motionLawData: Map<String, Any>): MotionLawData {
+        fun toDoubleArray(key: String): DoubleArray {
+            val list = motionLawData[key] as? List<*> ?: return doubleArrayOf()
+            return list.mapNotNull { (it as? Number)?.toDouble() }.toDoubleArray()
+        }
+
         return MotionLawData(
-            thetaDeg = (motionLawData["theta_deg"] as List<Double>).toDoubleArray(),
-            displacement = (motionLawData["displacement"] as List<Double>).toDoubleArray(),
-            velocity = (motionLawData["velocity"] as List<Double>).toDoubleArray(),
-            acceleration = (motionLawData["acceleration"] as List<Double>).toDoubleArray()
+            thetaDeg = toDoubleArray("theta_deg"),
+            displacement = toDoubleArray("displacement"),
+            velocity = toDoubleArray("velocity"),
+            acceleration = toDoubleArray("acceleration"),
         )
     }
-    
+
     /**
      * Parse gear profile data from Python result.
      */
@@ -269,6 +265,13 @@ class UnifiedOptimizationBridge {
             ?: "unknown"
 
         val efficiencyAnalysis = profilesData["efficiency_analysis"] as? Map<String, Any>
+        
+        // New fields for variable instantaneous ratio
+        val instantaneousRatio = toDoubleArray("instantaneous_ratio")
+        val journalOffset = toDoubleArray("journal_offset")
+        val accumulatedPlanetAngleDeg = (profilesData["accumulated_planet_angle_deg"] as? Number)?.toDouble() ?: 0.0
+        // Discrete efficiency values for each angle
+        val forceTransferEfficiency = toDoubleArray("force_transfer_efficiency")
 
         return GearProfileData(
             rSun = rSun,
@@ -276,100 +279,169 @@ class UnifiedOptimizationBridge {
             rRingInner = rRingInner,
             gearRatio = gearRatio,
             optimalMethod = optimalMethod,
-            efficiencyAnalysis = efficiencyAnalysis
+            efficiencyAnalysis = efficiencyAnalysis,
+            instantaneousRatio = instantaneousRatio,
+            journalOffset = journalOffset,
+            accumulatedPlanetAngleDeg = accumulatedPlanetAngleDeg,
+            forceTransferEfficiency = forceTransferEfficiency,
         )
     }
-    
+
     /**
      * Parse tooth profile data from Python result.
      */
-    private fun parseToothProfiles(toothData: Map<String, Any>): ToothProfileData {
-        return ToothProfileData(
-            sunTeeth = parseToothArray(toothData["sun_teeth"]),
-            planetTeeth = parseToothArray(toothData["planet_teeth"]),
-            ringTeeth = parseToothArray(toothData["ring_teeth"])
-        )
-    }
-    
+    private fun parseToothProfiles(toothData: Map<String, Any>): ToothProfileData = ToothProfileData(
+        sunTeeth = parseToothArray(toothData["sun_teeth"]),
+        planetTeeth = parseToothArray(toothData["planet_teeth"]),
+        ringTeeth = parseToothArray(toothData["ring_teeth"]),
+    )
+
     /**
      * Parse tooth array data.
      */
-    private fun parseToothArray(toothData: Any?): Array<DoubleArray>? {
-        return if (toothData is List<*>) {
-            toothData.map { tooth ->
-                if (tooth is List<*>) {
-                    tooth.map { it as Double }.toDoubleArray()
-                } else {
-                    doubleArrayOf()
-                }
-            }.toTypedArray()
-        } else {
-            null
-        }
+    private fun parseToothArray(toothData: Any?): Array<DoubleArray>? = if (toothData is List<*>) {
+        toothData.map { tooth ->
+            if (tooth is List<*>) {
+                tooth.map { it as Double }.toDoubleArray()
+            } else {
+                doubleArrayOf()
+            }
+        }.toTypedArray()
+    } else {
+        null
     }
-    
+
     /**
      * Parse FEA analysis data from Python result.
      */
     private fun parseFEAAnalysis(feaData: Map<String, Any>): FEAAnalysisData {
         val analysisSummary = feaData["analysis_summary"] as? Map<String, Any> ?: emptyMap()
-        
+        val stressAnalysis = feaData["stress_analysis"] as? Map<String, Any> ?: emptyMap()
+        val fatigueAnalysis = feaData["fatigue_analysis"] as? Map<String, Any> ?: emptyMap()
+        val vibrationAnalysis = feaData["vibration_analysis"] as? Map<String, Any> ?: emptyMap()
+
+        // Extract stress data
+        val maxStress = (stressAnalysis["max_stress"] as? Number)?.toDouble() 
+            ?: (analysisSummary["max_stress"] as? Number)?.toDouble() ?: 0.0
+
+        // Extract natural frequencies
+        val naturalFrequencies = (vibrationAnalysis["natural_frequencies"] as? List<*>)?.mapNotNull { (it as? Number)?.toDouble() }?.toDoubleArray()
+            ?: (analysisSummary["natural_frequencies"] as? List<*>)?.mapNotNull { (it as? Number)?.toDouble() }?.toDoubleArray()
+            ?: doubleArrayOf()
+
+        // Extract fatigue life
+        val fatigueLife = (fatigueAnalysis["fatigue_life"] as? Number)?.toDouble()
+            ?: (analysisSummary["fatigue_life"] as? Number)?.toDouble() ?: 0.0
+
+        // Generate recommendations based on analysis results
+        val recommendations = generateRecommendations(maxStress, fatigueLife, naturalFrequencies)
+
         return FEAAnalysisData(
-            maxStress = analysisSummary["max_stress"] as? Double ?: 0.0,
-            naturalFrequencies = (analysisSummary["natural_frequencies"] as? List<Double>)?.toDoubleArray() ?: doubleArrayOf(),
-            fatigueLife = analysisSummary["fatigue_life"] as? Double ?: 0.0,
-            modeShapes = (feaData["mode_shapes"] as? List<String>)?.toTypedArray() ?: emptyArray(),
-            recommendations = (feaData["recommendations"] as? List<String>)?.toTypedArray() ?: emptyArray()
+            maxStress = maxStress,
+            naturalFrequencies = naturalFrequencies,
+            fatigueLife = fatigueLife,
+            modeShapes = (vibrationAnalysis["mode_shapes"] as? List<String>)?.toTypedArray() ?: emptyArray(),
+            recommendations = recommendations,
         )
     }
-    
+
+    /**
+     * Generate engineering recommendations based on FEA analysis results.
+     */
+    private fun generateRecommendations(maxStress: Double, fatigueLife: Double, naturalFrequencies: DoubleArray): Array<String> {
+        val recommendations = mutableListOf<String>()
+
+        // Stress-based recommendations
+        when {
+            maxStress > 500.0 -> {
+                recommendations.add("⚠️ High stress detected (>500 MPa). Consider material upgrade or design modification.")
+                recommendations.add("🔧 Increase gear thickness or use higher strength material.")
+            }
+            maxStress > 200.0 -> {
+                recommendations.add("✅ Stress levels are acceptable but monitor for fatigue.")
+                recommendations.add("📊 Consider stress concentration reduction at critical points.")
+            }
+            else -> {
+                recommendations.add("✅ Stress levels are well within safe limits.")
+            }
+        }
+
+        // Fatigue-based recommendations
+        when {
+            fatigueLife < 10000 -> {
+                recommendations.add("⚠️ Low fatigue life (<10K cycles). Design needs improvement.")
+                recommendations.add("🔧 Consider surface treatment or material change.")
+            }
+            fatigueLife < 100000 -> {
+                recommendations.add("⚠️ Moderate fatigue life. Monitor operating conditions.")
+                recommendations.add("📊 Consider reducing operating speed or load.")
+            }
+            else -> {
+                recommendations.add("✅ Fatigue life is adequate for most applications.")
+            }
+        }
+
+        // Natural frequency recommendations
+        if (naturalFrequencies.isNotEmpty()) {
+            val firstNaturalFreq = naturalFrequencies[0]
+            when {
+                firstNaturalFreq < 50.0 -> {
+                    recommendations.add("⚠️ Low natural frequency. Risk of resonance.")
+                    recommendations.add("🔧 Increase stiffness or reduce mass.")
+                }
+                firstNaturalFreq > 200.0 -> {
+                    recommendations.add("✅ Natural frequencies are well above operating range.")
+                }
+                else -> {
+                    recommendations.add("✅ Natural frequencies are acceptable.")
+                }
+            }
+        }
+
+        return recommendations.toTypedArray()
+    }
+
     /**
      * Create error result for failed optimization.
      */
-    private fun createErrorResult(errorMessage: String): OptimizationResult {
-        return OptimizationResult(
-            status = "failed",
-            motionLaw = MotionLawData(doubleArrayOf(), doubleArrayOf(), doubleArrayOf(), doubleArrayOf()),
-            optimalProfiles = GearProfileData(doubleArrayOf(), doubleArrayOf(), doubleArrayOf(), 0.0, "none", null),
-            toothProfiles = ToothProfileData(null, null, null),
-            feaAnalysis = FEAAnalysisData(0.0, doubleArrayOf(), 0.0, emptyArray(), emptyArray()),
-            executionTime = 0.0,
-            error = errorMessage
-        )
-    }
-    
+    private fun createErrorResult(errorMessage: String): OptimizationResult = OptimizationResult(
+        status = "failed",
+        motionLaw = MotionLawData(doubleArrayOf(), doubleArrayOf(), doubleArrayOf(), doubleArrayOf()),
+        optimalProfiles = GearProfileData(doubleArrayOf(), doubleArrayOf(), doubleArrayOf(), 0.0, "none", null),
+        toothProfiles = ToothProfileData(null, null, null),
+        feaAnalysis = FEAAnalysisData(0.0, doubleArrayOf(), 0.0, emptyArray(), emptyArray()),
+        executionTime = 0.0,
+        error = errorMessage,
+    )
+
     /**
      * Check if Python pipeline is available.
      */
-    fun isPipelineAvailable(): Boolean {
-        return try {
-            val command = listOf("python", "-c", "import campro.pipeline.unified_optimizer; print('OK')")
-            val process = ProcessBuilder(command).start()
-            val success = process.waitFor(5, TimeUnit.SECONDS)
-            success && process.exitValue() == 0
-        } catch (e: Exception) {
-            logger.warn("Python pipeline not available: ${e.message}")
-            false
-        }
+    fun isPipelineAvailable(): Boolean = try {
+        val command = listOf("python", "-c", "import campro.pipeline.unified_optimizer; print('OK')")
+        val process = ProcessBuilder(command).start()
+        val success = process.waitFor(5, TimeUnit.SECONDS)
+        success && process.exitValue() == 0
+    } catch (e: Exception) {
+        logger.warn("Python pipeline not available: ${e.message}")
+        false
     }
-    
+
     /**
      * Get pipeline version information.
      */
-    fun getPipelineVersion(): String {
-        return try {
-            val command = listOf("python", "-c", "import campro; print(campro.__version__)")
-            val process = ProcessBuilder(command).start()
-            val success = process.waitFor(5, TimeUnit.SECONDS)
-            
-            if (success && process.exitValue() == 0) {
-                process.inputStream.bufferedReader().readText().trim()
-            } else {
-                "unknown"
-            }
-        } catch (e: Exception) {
-            logger.warn("Could not get pipeline version: ${e.message}")
+    fun getPipelineVersion(): String = try {
+        val command = listOf("python", "-c", "import campro; print(campro.__version__)")
+        val process = ProcessBuilder(command).start()
+        val success = process.waitFor(5, TimeUnit.SECONDS)
+
+        if (success && process.exitValue() == 0) {
+            process.inputStream.bufferedReader().readText().trim()
+        } else {
             "unknown"
         }
+    } catch (e: Exception) {
+        logger.warn("Could not get pipeline version: ${e.message}")
+        "unknown"
     }
 }

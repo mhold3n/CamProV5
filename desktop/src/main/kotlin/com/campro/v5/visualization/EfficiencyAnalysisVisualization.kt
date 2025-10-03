@@ -3,7 +3,6 @@ package com.campro.v5.visualization
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,42 +11,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.campro.v5.models.GearProfileData
 import kotlin.math.*
 
 /**
  * Efficiency analysis visualization component.
- * 
+ *
  * This component displays efficiency comparisons between different optimization
  * methods and provides detailed efficiency breakdowns.
  */
 @Composable
-fun EfficiencyAnalysisVisualization(
-    gearProfiles: GearProfileData,
-    modifier: Modifier = Modifier
-) {
+fun EfficiencyAnalysisVisualization(gearProfiles: GearProfileData, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxSize(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             // Header
             Text(
                 text = "Efficiency Analysis",
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
-            
+
             // Efficiency comparison chart
             Box(
                 modifier = Modifier
@@ -55,16 +48,16 @@ fun EfficiencyAnalysisVisualization(
                     .fillMaxWidth()
                     .background(
                         color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = MaterialTheme.shapes.medium
+                        shape = MaterialTheme.shapes.medium,
                     )
-                    .padding(16.dp)
+                    .padding(16.dp),
             ) {
                 EfficiencyComparisonChart(
                     gearProfiles = gearProfiles,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
-            
+
             // Efficiency breakdown
             EfficiencyBreakdown(gearProfiles = gearProfiles)
         }
@@ -72,20 +65,17 @@ fun EfficiencyAnalysisVisualization(
 }
 
 @Composable
-private fun EfficiencyComparisonChart(
-    gearProfiles: GearProfileData,
-    modifier: Modifier = Modifier
-) {
+private fun EfficiencyComparisonChart(gearProfiles: GearProfileData, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val canvasWidth = size.width
         val canvasHeight = size.height
-        
+
         // Calculate margins
         val marginLeft = 80.dp.toPx()
         val marginRight = 20.dp.toPx()
         val marginTop = 20.dp.toPx()
         val marginBottom = 60.dp.toPx()
-        
+
         val chartWidth = canvasWidth - marginLeft - marginRight
         val chartHeight = canvasHeight - marginTop - marginBottom
 
@@ -93,64 +83,59 @@ private fun EfficiencyComparisonChart(
         if (chartWidth <= 0f || chartHeight <= 0f) {
             return@Canvas
         }
-        
+
         // Draw axes
         drawEfficiencyAxes(
             chartWidth = chartWidth,
             chartHeight = chartHeight,
             marginLeft = marginLeft,
-            marginTop = marginTop
+            marginTop = marginTop,
         )
-        
+
         // Draw efficiency bars
         drawEfficiencyBars(
             gearProfiles = gearProfiles,
             chartWidth = chartWidth,
             chartHeight = chartHeight,
             marginLeft = marginLeft,
-            marginTop = marginTop
+            marginTop = marginTop,
         )
     }
 }
 
-private fun DrawScope.drawEfficiencyAxes(
-    chartWidth: Float,
-    chartHeight: Float,
-    marginLeft: Float,
-    marginTop: Float
-) {
+private fun DrawScope.drawEfficiencyAxes(chartWidth: Float, chartHeight: Float, marginLeft: Float, marginTop: Float) {
     val strokeWidth = 2.dp.toPx()
     val axisColor = Color.Gray
-    
+
     // X-axis
     drawLine(
         start = Offset(marginLeft, marginTop + chartHeight),
         end = Offset(marginLeft + chartWidth, marginTop + chartHeight),
         color = axisColor,
-        strokeWidth = strokeWidth
+        strokeWidth = strokeWidth,
     )
-    
+
     // Y-axis
     drawLine(
         start = Offset(marginLeft, marginTop),
         end = Offset(marginLeft, marginTop + chartHeight),
         color = axisColor,
-        strokeWidth = strokeWidth
+        strokeWidth = strokeWidth,
     )
-    
+
     // Y-axis labels (0% to 100%)
     for (i in 0..10) {
         val y = marginTop + (chartHeight * i / 10)
         val value = (100 - i * 10).toString()
-        
+
         // Note: Text drawing removed - will be handled by Compose Text components
-        
+
         // Grid line
         drawLine(
             start = Offset(marginLeft, y),
             end = Offset(marginLeft + chartWidth, y),
             color = Color.Gray.copy(alpha = 0.3f),
-            strokeWidth = 1.dp.toPx()
+            strokeWidth = 1.dp.toPx(),
         )
     }
 }
@@ -160,7 +145,7 @@ private fun DrawScope.drawEfficiencyBars(
     chartWidth: Float,
     chartHeight: Float,
     marginLeft: Float,
-    marginTop: Float
+    marginTop: Float,
 ) {
     // Guard against non-positive drawable area
     if (chartWidth <= 0f || chartHeight <= 0f) {
@@ -172,35 +157,35 @@ private fun DrawScope.drawEfficiencyBars(
     val colors = listOf(
         Color(0xFF2196F3), // Blue
         Color(0xFF4CAF50), // Green
-        Color(0xFFFF9800)  // Orange
+        Color(0xFFFF9800), // Orange
     )
-    
+
     val safeChartWidth = chartWidth.coerceAtLeast(1f)
     val safeChartHeight = chartHeight.coerceAtLeast(1f)
     val barWidth = (safeChartWidth / (methods.size * 2)).coerceAtLeast(1f)
     val barSpacing = (barWidth / 2).coerceAtLeast(1f)
-    
+
     methods.forEachIndexed { index, method ->
         val efficiency = efficiencies[index]
         val color = colors[index]
-        
+
         val barX = marginLeft + (index * (barWidth + barSpacing)) + barSpacing
         val rawHeight = (safeChartHeight * efficiency).toFloat()
         val barHeight = rawHeight.coerceIn(0f, safeChartHeight)
         val barY = marginTop + safeChartHeight - barHeight
-        
+
         // Draw bar
         if (barHeight > 0f) {
             drawRect(
                 color = color,
                 topLeft = Offset(barX, barY),
-                size = androidx.compose.ui.geometry.Size(barWidth, barHeight)
+                size = androidx.compose.ui.geometry.Size(barWidth, barHeight),
             )
         }
-        
+
         // Draw efficiency value on top of bar
         // Note: Text drawing removed - will be handled by Compose Text components
-        
+
         // Note: Text drawing removed - will be handled by Compose Text components
     }
 }
@@ -209,43 +194,64 @@ private fun DrawScope.drawEfficiencyBars(
 private fun EfficiencyBreakdown(gearProfiles: GearProfileData) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        ),
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 text = "Efficiency Breakdown",
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            
+
             // Efficiency metrics
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 EfficiencyMetric(
                     label = "Optimal Method",
                     value = gearProfiles.optimalMethod,
-                    color = Color(0xFF4CAF50)
+                    color = Color(0xFF4CAF50),
                 )
-                
+
                 EfficiencyMetric(
-                    label = "Efficiency",
-                    value = "85%", // Example value
-                    color = Color(0xFF2196F3)
+                    label = "Avg Efficiency",
+                    value = if (gearProfiles.forceTransferEfficiency.isNotEmpty()) {
+                        val avgEfficiency = gearProfiles.forceTransferEfficiency.average()
+                        String.format("%.2f%%", avgEfficiency * 100)
+                    } else {
+                        "N/A"
+                    },
+                    color = Color(0xFF2196F3),
                 )
-                
+
                 EfficiencyMetric(
-                    label = "Loss Factor",
-                    value = "15%", // Example value
-                    color = Color(0xFFFF9800)
+                    label = "Efficiency Range",
+                    value = if (gearProfiles.forceTransferEfficiency.isNotEmpty()) {
+                        val minEff = gearProfiles.forceTransferEfficiency.minOrNull() ?: 0.0
+                        val maxEff = gearProfiles.forceTransferEfficiency.maxOrNull() ?: 0.0
+                        String.format("%.1f-%.1f%%", minEff * 100, maxEff * 100)
+                    } else {
+                        "N/A"
+                    },
+                    color = Color(0xFFFF9800),
                 )
             }
-            
+
+            // Discrete efficiency chart
+            if (gearProfiles.forceTransferEfficiency.isNotEmpty()) {
+                DiscreteEfficiencyChart(
+                    efficiencyData = gearProfiles.forceTransferEfficiency,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                )
+            }
+
             // Loss breakdown
             LossBreakdownCard()
         }
@@ -253,65 +259,112 @@ private fun EfficiencyBreakdown(gearProfiles: GearProfileData) {
 }
 
 @Composable
-private fun EfficiencyMetric(
-    label: String,
-    value: String,
-    color: Color
-) {
+private fun EfficiencyMetric(label: String, value: String, color: Color) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = color
+            color = color,
         )
     }
 }
 
 @Composable
-private fun LossBreakdownCard() {
+private fun DiscreteEfficiencyChart(
+    efficiencyData: DoubleArray,
+    modifier: Modifier = Modifier
+) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        ),
+        modifier = modifier
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "Loss Breakdown",
+                text = "Efficiency vs. Angle",
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            
+
+            // Simple bar chart showing efficiency values
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = MaterialTheme.shapes.small,
+                    )
+                    .padding(8.dp)
+            ) {
+                Canvas(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    val canvasWidth = size.width
+                    val canvasHeight = size.height
+                    val barWidth = canvasWidth / efficiencyData.size
+                    val maxEfficiency = efficiencyData.maxOrNull() ?: 1.0
+                    val minEfficiency = efficiencyData.minOrNull() ?: 0.0
+                    val efficiencyRange = maxEfficiency - minEfficiency
+
+                    efficiencyData.forEachIndexed { index, efficiency ->
+                        val normalizedEfficiency = if (efficiencyRange > 0) {
+                            (efficiency - minEfficiency) / efficiencyRange
+                        } else {
+                            0.5
+                        }
+                        
+                        val barHeight = (canvasHeight * normalizedEfficiency).toFloat()
+                        val barX = (index * barWidth).toFloat()
+                        val barY = canvasHeight - barHeight
+
+                        // Color based on efficiency level
+                        val color = when {
+                            normalizedEfficiency > 0.8 -> Color(0xFF4CAF50) // Green
+                            normalizedEfficiency > 0.6 -> Color(0xFFFF9800) // Orange
+                            else -> Color(0xFFF44336) // Red
+                        }
+
+                        drawRect(
+                            color = color,
+                            topLeft = Offset(barX, barY),
+                            size = androidx.compose.ui.geometry.Size(barWidth * 0.8f, barHeight)
+                        )
+                    }
+                }
+            }
+
+            // Efficiency statistics
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                LossItem(
-                    label = "Friction",
-                    value = "8%",
-                    color = Color(0xFFFF5722)
+                Text(
+                    text = "Min: ${String.format("%.3f%%", (efficiencyData.minOrNull() ?: 0.0) * 100)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                
-                LossItem(
-                    label = "Deformation",
-                    value = "4%",
-                    color = Color(0xFFE91E63)
+                Text(
+                    text = "Max: ${String.format("%.3f%%", (efficiencyData.maxOrNull() ?: 0.0) * 100)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                
-                LossItem(
-                    label = "Vibration",
-                    value = "3%",
-                    color = Color(0xFF9C27B0)
+                Text(
+                    text = "Avg: ${String.format("%.3f%%", efficiencyData.average() * 100)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -319,26 +372,63 @@ private fun LossBreakdownCard() {
 }
 
 @Composable
-private fun LossItem(
-    label: String,
-    value: String,
-    color: Color
-) {
+private fun LossBreakdownCard() {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = "Loss Breakdown",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                LossItem(
+                    label = "Friction",
+                    value = "8%",
+                    color = Color(0xFFFF5722),
+                )
+
+                LossItem(
+                    label = "Deformation",
+                    value = "4%",
+                    color = Color(0xFFE91E63),
+                )
+
+                LossItem(
+                    label = "Vibration",
+                    value = "3%",
+                    color = Color(0xFF9C27B0),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LossItem(label: String, value: String, color: Color) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onErrorContainer
+            color = MaterialTheme.colorScheme.onErrorContainer,
         )
         Text(
             text = value,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
-            color = color
+            color = color,
         )
     }
 }
-
-

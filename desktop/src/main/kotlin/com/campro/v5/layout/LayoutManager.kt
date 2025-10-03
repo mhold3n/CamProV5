@@ -172,10 +172,7 @@ class LayoutManager {
      * @param width The new window width
      * @param height The new window height
      */
-    fun updateWindowSize(
-        width: Dp,
-        height: Dp,
-    ) {
+    fun updateWindowSize(width: Dp, height: Dp) {
         val oldWidth = _currentWindowWidth.value
         val oldHeight = _currentWindowHeight.value
         val oldTemplate = _currentTemplate.value
@@ -278,22 +275,20 @@ class LayoutManager {
      *
      * @return True if compact mode should be used, false otherwise
      */
-    fun shouldUseCompactMode(): Boolean =
-        _currentWindowWidth.value < mediumWindowWidth ||
-            _currentWindowHeight.value < mediumWindowHeight ||
-            _currentTemplate.value == LayoutTemplate.COMPACT ||
-            _currentTemplate.value == LayoutTemplate.TOUCH_OPTIMIZED
+    fun shouldUseCompactMode(): Boolean = _currentWindowWidth.value < mediumWindowWidth ||
+        _currentWindowHeight.value < mediumWindowHeight ||
+        _currentTemplate.value == LayoutTemplate.COMPACT ||
+        _currentTemplate.value == LayoutTemplate.TOUCH_OPTIMIZED
 
     /**
      * Determine if the layout should use a single column layout.
      *
      * @return True if single column layout should be used, false otherwise
      */
-    fun shouldUseSingleColumn(): Boolean =
-        _currentWindowWidth.value < smallWindowWidth ||
-            _currentTemplate.value == LayoutTemplate.COMPACT ||
-            _currentTemplate.value == LayoutTemplate.SINGLE_PANEL ||
-            _currentTemplate.value == LayoutTemplate.TOUCH_OPTIMIZED
+    fun shouldUseSingleColumn(): Boolean = _currentWindowWidth.value < smallWindowWidth ||
+        _currentTemplate.value == LayoutTemplate.COMPACT ||
+        _currentTemplate.value == LayoutTemplate.SINGLE_PANEL ||
+        _currentTemplate.value == LayoutTemplate.TOUCH_OPTIMIZED
 
     /**
      * Determine if the layout should emphasize design elements.
@@ -472,11 +467,7 @@ class LayoutManager {
     /**
      * Update panel usage data for dynamic priority adjustment
      */
-    fun updatePanelUsage(
-        panelId: String,
-        interactionType: String = "interaction",
-        currentSize: Pair<Dp, Dp>? = null,
-    ) {
+    fun updatePanelUsage(panelId: String, interactionType: String = "interaction", currentSize: Pair<Dp, Dp>? = null) {
         val currentUsageData = _panelUsageData.value.toMutableMap()
         val existingData = currentUsageData[panelId] ?: PanelUsageData(panelId)
 

@@ -155,10 +155,7 @@ class HelpSystem {
      * @param componentId The ID of the component
      * @param topicId The ID of the help topic
      */
-    fun registerComponentHelp(
-        componentId: String,
-        topicId: String,
-    ) {
+    fun registerComponentHelp(componentId: String, topicId: String) {
         componentHelp[componentId] = topicId
     }
 
@@ -291,12 +288,7 @@ class HelpSystem {
  * @param content The content of the topic
  * @param category The category of the topic
  */
-data class HelpTopic(
-    val id: String,
-    val title: String,
-    val content: String,
-    val category: String,
-)
+data class HelpTopic(val id: String, val title: String, val content: String, val category: String)
 
 /**
  * Help events emitted by the HelpSystem.
@@ -307,18 +299,14 @@ sealed class HelpEvent {
      *
      * @param topic The registered topic
      */
-    data class TopicRegistered(
-        val topic: HelpTopic,
-    ) : HelpEvent()
+    data class TopicRegistered(val topic: HelpTopic) : HelpEvent()
 
     /**
      * Event emitted when the help context changes.
      *
      * @param context The new context
      */
-    data class ContextChanged(
-        val context: String,
-    ) : HelpEvent()
+    data class ContextChanged(val context: String) : HelpEvent()
 
     /**
      * Event emitted when the help context is cleared.
@@ -330,9 +318,7 @@ sealed class HelpEvent {
      *
      * @param topic The requested topic
      */
-    data class HelpRequested(
-        val topic: HelpTopic,
-    ) : HelpEvent()
+    data class HelpRequested(val topic: HelpTopic) : HelpEvent()
 }
 
 /**

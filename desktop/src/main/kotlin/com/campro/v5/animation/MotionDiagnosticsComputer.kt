@@ -5,10 +5,7 @@ import kotlin.math.abs
 
 /** Simple diagnostics from motion-law samples: peak |a| and |jerk| (finite differences). */
 object MotionDiagnosticsComputer {
-    data class Result(
-        val accelMaxAbsPerOmega2: Double,
-        val jerkMaxAbsPerOmega3: Double,
-    )
+    data class Result(val accelMaxAbsPerOmega2: Double, val jerkMaxAbsPerOmega3: Double)
 
     fun compute(m: MotionLawSamples): Result {
         val n = m.samples.size

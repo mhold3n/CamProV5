@@ -91,11 +91,7 @@ class ResizablePanelLayoutScope {
  * A layout that supports multiple resizable panels with drag-to-resize functionality
  */
 @Composable
-fun ResizablePanelLayout(
-    modifier: Modifier = Modifier,
-    spacing: Dp = 8.dp,
-    content: ResizablePanelLayoutScope.() -> Unit,
-) {
+fun ResizablePanelLayout(modifier: Modifier = Modifier, spacing: Dp = 8.dp, content: ResizablePanelLayoutScope.() -> Unit) {
     val scope = remember { ResizablePanelLayoutScope() }
     scope.panels.clear()
     scope.content()
@@ -138,11 +134,11 @@ fun ResizablePanelLayout(
                 if (index < scope.panels.size - 1) {
                     ResizeDivider(
                         orientation =
-                            if (panelConfig.arrangement == PanelArrangement.HORIZONTAL) {
-                                DividerOrientation.VERTICAL
-                            } else {
-                                DividerOrientation.HORIZONTAL
-                            },
+                        if (panelConfig.arrangement == PanelArrangement.HORIZONTAL) {
+                            DividerOrientation.VERTICAL
+                        } else {
+                            DividerOrientation.HORIZONTAL
+                        },
                         onResize = { delta ->
                             // Adjust sizes of adjacent panels
                             val newSizes = panelSizes.toMutableList()
@@ -279,64 +275,60 @@ private fun MeasureScope.layoutResizablePanels(
  * Resize divider component for separating panels
  */
 @Composable
-private fun ResizeDivider(
-    orientation: DividerOrientation,
-    onResize: (Dp) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun ResizeDivider(orientation: DividerOrientation, onResize: (Dp) -> Unit, modifier: Modifier = Modifier) {
     val density = LocalDensity.current
     var isDragging by remember { mutableStateOf(false) }
 
     Box(
         modifier =
-            modifier
-                .then(
-                    if (orientation == DividerOrientation.VERTICAL) {
-                        Modifier.width(8.dp).fillMaxHeight()
-                    } else {
-                        Modifier.height(8.dp).fillMaxWidth()
-                    },
-                ).background(
-                    if (isDragging) {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                    } else {
-                        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                    },
-                ).pointerInput(orientation) {
-                    detectDragGestures(
-                        onDragStart = {
-                            isDragging = true
-                        },
-                        onDragEnd = {
-                            isDragging = false
-                        },
-                        onDrag = { change, dragAmount ->
-                            val delta =
-                                if (orientation == DividerOrientation.VERTICAL) {
-                                    with(density) { dragAmount.x.toDp() }
-                                } else {
-                                    with(density) { dragAmount.y.toDp() }
-                                }
-                            onResize(delta)
-                        },
-                    )
+        modifier
+            .then(
+                if (orientation == DividerOrientation.VERTICAL) {
+                    Modifier.width(8.dp).fillMaxHeight()
+                } else {
+                    Modifier.height(8.dp).fillMaxWidth()
                 },
+            ).background(
+                if (isDragging) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                } else {
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                },
+            ).pointerInput(orientation) {
+                detectDragGestures(
+                    onDragStart = {
+                        isDragging = true
+                    },
+                    onDragEnd = {
+                        isDragging = false
+                    },
+                    onDrag = { change, dragAmount ->
+                        val delta =
+                            if (orientation == DividerOrientation.VERTICAL) {
+                                with(density) { dragAmount.x.toDp() }
+                            } else {
+                                with(density) { dragAmount.y.toDp() }
+                            }
+                        onResize(delta)
+                    },
+                )
+            },
     ) {
         // Visual indicator for the divider
         Box(
             modifier =
-                Modifier
-                    .align(Alignment.Center)
-                    .then(
-                        if (orientation == DividerOrientation.VERTICAL) {
-                            Modifier.width(2.dp).height(20.dp)
-                        } else {
-                            Modifier.height(2.dp).width(20.dp)
-                        },
-                    ).background(
-                        MaterialTheme.colorScheme.outline,
-                        MaterialTheme.shapes.small,
-                    ),
+            Modifier
+                .align(Alignment.Center)
+                .then(
+                    if (orientation == DividerOrientation.VERTICAL) {
+                        Modifier.width(2.dp).height(20.dp)
+                    } else {
+                        Modifier.height(2.dp).width(20.dp)
+                    },
+                ).background(
+                    MaterialTheme.colorScheme.outline,
+                    MaterialTheme.shapes.small,
+                ),
         )
     }
 }

@@ -1,34 +1,43 @@
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import logging
+import time
 
-import numpy as np
+# Enhanced optimizers with full physics
+from campro.optimization.enhanced_motion_law_optimizer import EnhancedMotionLawOptimizer
+from campro.optimization.enhanced_gear_optimizer import EnhancedGearOptimizer
 
-from campro.optimization.collocation_optimizer import CollocationOptimizer, CollocationParameters
-from campro.optimization.phase2_gear_optimizer import Phase2GearOptimizer, Phase2Parameters
-from campro.optimization.efficiency_optimizer import EfficiencyOptimizer
+
+# Other components
 from campro.gears.tooth_generator import ToothProfileGenerator
 from campro.analysis.fea_analyzer import FEAAnalyzer
+
+# Parameter mapping and result adaptation
+from campro.pipeline.parameter_mapper import ParameterMapper
+from campro.pipeline.result_adapter import ResultAdapter
 
 log = logging.getLogger(__name__)
 
 
 class UnifiedOptimizer:
-	"""Unified optimization pipeline orchestrating all components."""
+	"""Unified optimization pipeline orchestrating all components with enhanced physics."""
 
 	def __init__(self, output_dir: Path | None = None) -> None:
 		self.output_dir = Path(output_dir) if output_dir else Path("./pipeline_outputs")
 		self.output_dir.mkdir(parents=True, exist_ok=True)
-
-		self.collocation_optimizer = CollocationOptimizer()
-		self.phase2_gear_optimizer = Phase2GearOptimizer()
-		self.efficiency_optimizer = EfficiencyOptimizer()
+		
+		# Enhanced optimizers will be initialized in run_pipeline with mapped parameters
+		self.enhanced_motion_optimizer: Optional[EnhancedMotionLawOptimizer] = None
+		self.enhanced_gear_optimizer: Optional[EnhancedGearOptimizer] = None
+		log.info("UnifiedOptimizer initialized with enhanced optimizers")
+		
+		# Common components
 		self.tooth_generator = ToothProfileGenerator()
 		self.fea_analyzer = FEAAnalyzer()
 
 	def run_pipeline(self, input_params: Dict[str, Any]) -> Dict[str, Any]:
 		"""
-		Run the unified optimization pipeline end-to-end.
+		Run the unified optimization pipeline end-to-end with enhanced physics.
 
 		Parameters
 		----------
@@ -40,85 +49,90 @@ class UnifiedOptimizer:
 		Dict[str, Any]
 			Compiled results including motion law, profiles, tooth geometry, and FEA summary.
 		"""
-		log.info("Starting unified optimization pipeline")
+		return self._run_enhanced_pipeline(input_params)
+	
+	def _run_enhanced_pipeline(self, input_params: Dict[str, Any]) -> Dict[str, Any]:
+		"""Run pipeline with enhanced optimizers and full physics."""
+		log.info("Starting enhanced optimization pipeline with thermodynamic and transmission physics")
+		start_time = time.time()
+		
+		# Map UI parameters to enhanced optimizer parameters
+		enhanced_motion_params = ParameterMapper.map_to_enhanced_motion_params(input_params)
+		enhanced_gear_params = ParameterMapper.map_to_enhanced_gear_params(input_params)
+		
+		# Initialize enhanced optimizers with mapped parameters
+		self.enhanced_motion_optimizer = EnhancedMotionLawOptimizer(enhanced_motion_params)
+		self.enhanced_gear_optimizer = EnhancedGearOptimizer(enhanced_gear_params)
+		
+		# Phase 1: Enhanced motion law optimization with thermodynamics
+		phase1_start = time.time()
+		log.info("Phase 1: Enhanced motion law optimization with thermodynamic physics")
+		motion_solution = self.enhanced_motion_optimizer.optimize_motion_law(input_params)
+		phase1_time = time.time() - phase1_start
+		log.info(f"Enhanced Phase 1 completed in {phase1_time:.3f}s")
+		
+		# Adapt enhanced motion law result to expected format
+		motion_law = ResultAdapter.adapt_motion_law_result(motion_solution)
+		
+		# Validate the adapted result
+		if not ResultAdapter.validate_motion_law_result(motion_law):
+			raise ValueError("Motion law result validation failed")
 
-		# Phase 1: Motion law via collocation
-		motion_solution = self.collocation_optimizer.optimize_motion_law(input_params)
-		if not motion_solution.success:
-			return {
-				'status': 'failed',
-				'stage': 'motion_law',
-				'error': motion_solution.solver_status,
-			}
-		motion_law = {
-			'grid': motion_solution.theta_grid,
-			'theta_deg': motion_solution.theta_grid,  # Also provide theta_deg for FEA analyzer
-			'displacement': motion_solution.position,
-			'velocity': motion_solution.velocity,
-			'acceleration': motion_solution.acceleration,
+		# Phase 2: Enhanced gear profile optimization with transmission physics
+		phase2_start = time.time()
+		log.info("Phase 2: Enhanced gear profile optimization with transmission physics")
+		gear_solution = self.enhanced_gear_optimizer.optimize_gear_profiles(motion_law, input_params)
+		phase2_time = time.time() - phase2_start
+		log.info(f"Enhanced Phase 2 completed in {phase2_time:.3f}s")
+	
+		# Adapt enhanced gear solution to expected format
+		optimal_profiles = ResultAdapter.adapt_gear_result(gear_solution)
+		
+		# Validate the adapted result
+		if not ResultAdapter.validate_gear_result(optimal_profiles):
+			raise ValueError("Gear result validation failed")
+
+		# Phase 3: Efficiency Analysis and Comparison
+		# Note: Efficiency analysis is now integrated into the enhanced optimizers
+		efficiency_analysis = {
+			"motion_law_efficiency": motion_solution.get("efficiency", 0.0),
+			"gear_efficiency": gear_solution.get("efficiency", 0.0),
+			"overall_efficiency": (motion_solution.get("efficiency", 0.0) + gear_solution.get("efficiency", 0.0)) / 2.0
 		}
-
-		# Phase 2: Gear profiles using our new Phase 2 system
-		# Create Phase 2 parameters from input
-		phase2_params = Phase2Parameters(
-			node_count=input_params.get('nodeCount', 32),
-			max_iterations=input_params.get('maxIterations', 200),
-			tolerance=input_params.get('tolerance', 1e-6),
-			constraint_tolerance=input_params.get('constraintTolerance', 1e-6),
-			force_transfer_weight=input_params.get('forceTransferWeight', 1.0),
-			efficiency_weight=input_params.get('efficiencyWeight', 1.0),
-			smoothness_weight=input_params.get('smoothnessWeight', 0.1),
-			clearance_safety_margin=input_params.get('clearanceSafetyMargin', 0.1),
-			min_gear_clearance=input_params.get('minGearClearance', 0.05),
-			piston_area_mm2=input_params.get('pistonAreaMm2', 100.0),
-			cylinder_pressure_bar=input_params.get('cylinderPressureBar', 10.0),
-			material_strength_mpa=input_params.get('materialStrengthMpa', 500.0)
-		)
 		
-		# Create Phase 2 optimizer with parameters
-		phase2_optimizer = Phase2GearOptimizer(phase2_params)
-		
-		# Run Phase 2 optimization
-		gear_solution = phase2_optimizer.optimize_gear_profiles(motion_law, input_params)
-		
-		if not gear_solution.success:
-			return {
-				'status': 'failed',
-				'stage': 'gear_optimization',
-				'error': gear_solution.solver_status,
-			}
-		
-		# Convert gear solution to the format expected by downstream components
-		optimal_profiles = {
-			# Use the keys expected by tooth generator
-			'theta_deg': gear_solution.theta_grid,
-			'r_sun': gear_solution.sun_radius,
-			'r_planet': gear_solution.planet_radius,
-			'r_ring_inner': gear_solution.ring_radius,
-			# Keep additional data for analysis
-			'gear_clearance': gear_solution.gear_clearance,
-			'force_transfer_efficiency': gear_solution.force_transfer_efficiency,
-			'max_contact_stress': gear_solution.max_contact_stress,
-			'objective_value': gear_solution.objective_value,
-			'constraint_violation': gear_solution.constraint_violation,
-			'iterations': gear_solution.iterations,
-			'execution_time': gear_solution.execution_time,
-			'solver_status': gear_solution.solver_status
-		}
-
-		# Phase 3: Tooth profile generation
+		# Phase 4: Tooth profile generation
 		# Use the optimal profiles directly from Phase 2
 		tooth_profiles = self.tooth_generator.generate_tooth_profiles(optimal_profiles, input_params)
 
-		# Phase 4: FEA analysis
+		# Phase 5: FEA analysis
+		# TODO: FUTURE ENHANCEMENT - Add RPM sweep analysis capability
+		# The FEA analyzer will be extended to support RPM sweep analysis across multiple
+		# operating speeds (e.g., 500-10000 RPM in 500 RPM steps) to identify resonant
+		# frequencies and critical operating speeds. This will provide much more comprehensive
+		# analysis results but is not currently a priority.
 		fea_results = self.fea_analyzer.analyze_assembly(optimal_profiles, tooth_profiles, motion_law, input_params)
 
+		total_time = time.time() - start_time
+		log.info(f"Enhanced optimization pipeline completed in {total_time:.3f}s")
+
+		# Ensure all arrays are numpy arrays for consistency
+		motion_law = ResultAdapter.ensure_numpy_arrays(motion_law)
+		optimal_profiles = ResultAdapter.ensure_numpy_arrays(optimal_profiles)
+		
 		compiled = {
 			'status': 'success',
 			'motion_law': motion_law,
 			'optimal_profiles': optimal_profiles,
+			'efficiency_analysis': efficiency_analysis,
 			'tooth_profiles': tooth_profiles,
 			'fea': fea_results,
+			# Add performance data
+			'performance': {
+				'phase1_time_s': phase1_time,
+				'phase2_time_s': phase2_time,
+				'total_time_s': total_time,
+				'optimizer_type': 'enhanced'
+			}
 		}
-		log.info("Unified optimization pipeline completed")
 		return compiled
+	

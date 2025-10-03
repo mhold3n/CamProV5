@@ -71,60 +71,60 @@ fun ResizeHandle(
 
     Box(
         modifier =
-            handleModifier
-                .zIndex(if (type.name.contains("_")) 2f else 1f) // Corner handles on top
-                .pointerHoverIcon(
-                    if (isEnabled) {
-                        PointerIcon(java.awt.Cursor(cursorType))
-                    } else {
-                        PointerIcon(java.awt.Cursor(Cursor.DEFAULT_CURSOR))
-                    },
-                ).background(
-                    when {
-                        !isEnabled -> Color.Transparent
-                        isDragging -> MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                        isHovered -> MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                        showVisualIndicator -> MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                        else -> Color.Transparent
-                    },
-                ).clip(MaterialTheme.shapes.extraSmall)
-                .pointerInput(type, isEnabled) {
-                    if (isEnabled) {
-                        detectDragGestures(
-                            onDragStart = { offset ->
-                                isDragging = true
-                                onDragStart()
-                            },
-                            onDragEnd = {
-                                isDragging = false
-                                onDragEnd()
-                            },
-                            onDrag = { change, dragAmount ->
-                                onDrag(dragAmount)
-                            },
-                        )
-                    }
-                }.hoverable(
-                    interactionSource = interactionSource,
-                    enabled = isEnabled,
-                ),
+        handleModifier
+            .zIndex(if (type.name.contains("_")) 2f else 1f) // Corner handles on top
+            .pointerHoverIcon(
+                if (isEnabled) {
+                    PointerIcon(java.awt.Cursor(cursorType))
+                } else {
+                    PointerIcon(java.awt.Cursor(Cursor.DEFAULT_CURSOR))
+                },
+            ).background(
+                when {
+                    !isEnabled -> Color.Transparent
+                    isDragging -> MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                    isHovered -> MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                    showVisualIndicator -> MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                    else -> Color.Transparent
+                },
+            ).clip(MaterialTheme.shapes.extraSmall)
+            .pointerInput(type, isEnabled) {
+                if (isEnabled) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            isDragging = true
+                            onDragStart()
+                        },
+                        onDragEnd = {
+                            isDragging = false
+                            onDragEnd()
+                        },
+                        onDrag = { change, dragAmount ->
+                            onDrag(dragAmount)
+                        },
+                    )
+                }
+            }.hoverable(
+                interactionSource = interactionSource,
+                enabled = isEnabled,
+            ),
     ) {
         // Visual feedback for resize handle
         if (showVisualIndicator && (isHovered || isDragging)) {
             Box(
                 modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .border(
-                            width = 1.dp,
-                            color =
-                                if (isDragging) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                                },
-                            shape = MaterialTheme.shapes.extraSmall,
-                        ),
+                Modifier
+                    .fillMaxSize()
+                    .border(
+                        width = 1.dp,
+                        color =
+                        if (isDragging) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                        },
+                        shape = MaterialTheme.shapes.extraSmall,
+                    ),
             )
         }
 
@@ -168,9 +168,9 @@ private fun BoxScope.HandleGripPattern(type: ResizeHandleType) {
                 repeat(3) {
                     Box(
                         modifier =
-                            Modifier
-                                .size(width = 8.dp, height = gripSize)
-                                .background(gripColor, MaterialTheme.shapes.extraSmall),
+                        Modifier
+                            .size(width = 8.dp, height = gripSize)
+                            .background(gripColor, MaterialTheme.shapes.extraSmall),
                     )
                 }
             }
@@ -184,9 +184,9 @@ private fun BoxScope.HandleGripPattern(type: ResizeHandleType) {
                 repeat(3) {
                     Box(
                         modifier =
-                            Modifier
-                                .size(width = gripSize, height = 8.dp)
-                                .background(gripColor, MaterialTheme.shapes.extraSmall),
+                        Modifier
+                            .size(width = gripSize, height = 8.dp)
+                            .background(gripColor, MaterialTheme.shapes.extraSmall),
                     )
                 }
             }
@@ -197,10 +197,10 @@ private fun BoxScope.HandleGripPattern(type: ResizeHandleType) {
             // Diagonal grip pattern for corners
             Box(
                 modifier =
-                    Modifier
-                        .align(androidx.compose.ui.Alignment.Center)
-                        .size(6.dp)
-                        .background(gripColor, MaterialTheme.shapes.small),
+                Modifier
+                    .align(androidx.compose.ui.Alignment.Center)
+                    .size(6.dp)
+                    .background(gripColor, MaterialTheme.shapes.small),
             )
         }
     }

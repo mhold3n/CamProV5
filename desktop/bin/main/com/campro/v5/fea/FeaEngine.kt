@@ -137,32 +137,28 @@ class FeaEngine {
      * @param parameters The parameters for the analysis
      * @return The path to the results file
      */
-    suspend fun runAnalysis(
-        modelFile: File,
-        parameters: Map<String, String>,
-    ): File =
-        withContext(Dispatchers.IO) {
-            try {
-                // Create a temporary file for the results
-                val resultsFile = File.createTempFile("fea_results_", ".json")
-                resultsFile.deleteOnExit()
+    suspend fun runAnalysis(modelFile: File, parameters: Map<String, String>): File = withContext(Dispatchers.IO) {
+        try {
+            // Create a temporary file for the results
+            val resultsFile = File.createTempFile("fea_results_", ".json")
+            resultsFile.deleteOnExit()
 
-                // Convert parameters to a format that can be passed to the native method
-                val parameterArray = parameters.entries.flatMap { listOf(it.key, it.value) }.toTypedArray()
+            // Convert parameters to a format that can be passed to the native method
+            val parameterArray = parameters.entries.flatMap { listOf(it.key, it.value) }.toTypedArray()
 
-                // Call the native method
-                runAnalysisNative(
-                    modelFile.absolutePath,
-                    resultsFile.absolutePath,
-                    parameterArray,
-                )
+            // Call the native method
+            runAnalysisNative(
+                modelFile.absolutePath,
+                resultsFile.absolutePath,
+                parameterArray,
+            )
 
-                return@withContext resultsFile
-            } catch (e: Exception) {
-                emitError("Failed to run FEA analysis: ${e.message}")
-                throw e
-            }
+            return@withContext resultsFile
+        } catch (e: Exception) {
+            emitError("Failed to run FEA analysis: ${e.message}")
+            throw e
         }
+    }
 
     /**
      * Run a stress analysis on the given model.
@@ -171,32 +167,28 @@ class FeaEngine {
      * @param parameters The parameters for the analysis
      * @return The path to the results file
      */
-    suspend fun runStressAnalysis(
-        modelFile: File,
-        parameters: Map<String, String>,
-    ): File =
-        withContext(Dispatchers.IO) {
-            try {
-                // Create a temporary file for the results
-                val resultsFile = File.createTempFile("stress_results_", ".json")
-                resultsFile.deleteOnExit()
+    suspend fun runStressAnalysis(modelFile: File, parameters: Map<String, String>): File = withContext(Dispatchers.IO) {
+        try {
+            // Create a temporary file for the results
+            val resultsFile = File.createTempFile("stress_results_", ".json")
+            resultsFile.deleteOnExit()
 
-                // Convert parameters to a format that can be passed to the native method
-                val parameterArray = parameters.entries.flatMap { listOf(it.key, it.value) }.toTypedArray()
+            // Convert parameters to a format that can be passed to the native method
+            val parameterArray = parameters.entries.flatMap { listOf(it.key, it.value) }.toTypedArray()
 
-                // Call the native method
-                runStressAnalysisNative(
-                    modelFile.absolutePath,
-                    resultsFile.absolutePath,
-                    parameterArray,
-                )
+            // Call the native method
+            runStressAnalysisNative(
+                modelFile.absolutePath,
+                resultsFile.absolutePath,
+                parameterArray,
+            )
 
-                return@withContext resultsFile
-            } catch (e: Exception) {
-                emitError("Failed to run stress analysis: ${e.message}")
-                throw e
-            }
+            return@withContext resultsFile
+        } catch (e: Exception) {
+            emitError("Failed to run stress analysis: ${e.message}")
+            throw e
         }
+    }
 
     /**
      * Run a vibration analysis on the given model.
@@ -205,32 +197,28 @@ class FeaEngine {
      * @param parameters The parameters for the analysis
      * @return The path to the results file
      */
-    suspend fun runVibrationAnalysis(
-        modelFile: File,
-        parameters: Map<String, String>,
-    ): File =
-        withContext(Dispatchers.IO) {
-            try {
-                // Create a temporary file for the results
-                val resultsFile = File.createTempFile("vibration_results_", ".json")
-                resultsFile.deleteOnExit()
+    suspend fun runVibrationAnalysis(modelFile: File, parameters: Map<String, String>): File = withContext(Dispatchers.IO) {
+        try {
+            // Create a temporary file for the results
+            val resultsFile = File.createTempFile("vibration_results_", ".json")
+            resultsFile.deleteOnExit()
 
-                // Convert parameters to a format that can be passed to the native method
-                val parameterArray = parameters.entries.flatMap { listOf(it.key, it.value) }.toTypedArray()
+            // Convert parameters to a format that can be passed to the native method
+            val parameterArray = parameters.entries.flatMap { listOf(it.key, it.value) }.toTypedArray()
 
-                // Call the native method
-                runVibrationAnalysisNative(
-                    modelFile.absolutePath,
-                    resultsFile.absolutePath,
-                    parameterArray,
-                )
+            // Call the native method
+            runVibrationAnalysisNative(
+                modelFile.absolutePath,
+                resultsFile.absolutePath,
+                parameterArray,
+            )
 
-                return@withContext resultsFile
-            } catch (e: Exception) {
-                emitError("Failed to run vibration analysis: ${e.message}")
-                throw e
-            }
+            return@withContext resultsFile
+        } catch (e: Exception) {
+            emitError("Failed to run vibration analysis: ${e.message}")
+            throw e
         }
+    }
 
     /**
      * Generate a mesh for the given model.
@@ -239,62 +227,56 @@ class FeaEngine {
      * @param parameters The parameters for mesh generation
      * @return The path to the mesh file
      */
-    suspend fun generateMesh(
-        modelFile: File,
-        parameters: Map<String, String>,
-    ): File =
-        withContext(Dispatchers.IO) {
-            try {
-                // Create a temporary file for the mesh
-                val meshFile = File.createTempFile("mesh_", ".json")
-                meshFile.deleteOnExit()
+    suspend fun generateMesh(modelFile: File, parameters: Map<String, String>): File = withContext(Dispatchers.IO) {
+        try {
+            // Create a temporary file for the mesh
+            val meshFile = File.createTempFile("mesh_", ".json")
+            meshFile.deleteOnExit()
 
-                // Convert parameters to a format that can be passed to the native method
-                val parameterArray = parameters.entries.flatMap { listOf(it.key, it.value) }.toTypedArray()
+            // Convert parameters to a format that can be passed to the native method
+            val parameterArray = parameters.entries.flatMap { listOf(it.key, it.value) }.toTypedArray()
 
-                // Call the native method
-                generateMeshNative(
-                    modelFile.absolutePath,
-                    meshFile.absolutePath,
-                    parameterArray,
-                )
+            // Call the native method
+            generateMeshNative(
+                modelFile.absolutePath,
+                meshFile.absolutePath,
+                parameterArray,
+            )
 
-                return@withContext meshFile
-            } catch (e: Exception) {
-                emitError("Failed to generate mesh: ${e.message}")
-                throw e
-            }
+            return@withContext meshFile
+        } catch (e: Exception) {
+            emitError("Failed to generate mesh: ${e.message}")
+            throw e
         }
+    }
 
     /**
      * Check if the Rust FEA engine is available.
      *
      * @return True if the Rust FEA engine is available, false otherwise
      */
-    fun isAvailable(): Boolean =
-        try {
-            // Use the companion object's testNativeLibraryNative() function
-            // instead of the non-existent checkAvailabilityNative() function
-            val testValue = Companion.testNativeLibraryNative()
-            testValue == 42 // Expected return value
-        } catch (e: Throwable) {
-            // Catch UnsatisfiedLinkError and any other linkage/runtime issues
-            false
-        }
+    fun isAvailable(): Boolean = try {
+        // Use the companion object's testNativeLibraryNative() function
+        // instead of the non-existent checkAvailabilityNative() function
+        val testValue = Companion.testNativeLibraryNative()
+        testValue == 42 // Expected return value
+    } catch (e: Throwable) {
+        // Catch UnsatisfiedLinkError and any other linkage/runtime issues
+        false
+    }
 
     /**
      * Get the version of the Rust FEA engine.
      *
      * @return The version of the Rust FEA engine
      */
-    fun getVersion(): String =
-        try {
-            // Return a hardcoded version string instead of calling the non-existent native method
-            // This is a temporary fix until the native method is implemented
-            "1.0.0"
-        } catch (e: Exception) {
-            "Unknown"
-        }
+    fun getVersion(): String = try {
+        // Return a hardcoded version string instead of calling the non-existent native method
+        // This is a temporary fix until the native method is implemented
+        "1.0.0"
+    } catch (e: Exception) {
+        "Unknown"
+    }
 
     // Native methods
 
@@ -305,11 +287,7 @@ class FeaEngine {
      * @param resultsFilePath The path to the results file
      * @param parameters The parameters for the analysis
      */
-    private external fun runAnalysisNative(
-        modelFilePath: String,
-        resultsFilePath: String,
-        parameters: Array<String>,
-    )
+    private external fun runAnalysisNative(modelFilePath: String, resultsFilePath: String, parameters: Array<String>)
 
     /**
      * Native method to run a stress analysis.
@@ -318,11 +296,7 @@ class FeaEngine {
      * @param resultsFilePath The path to the results file
      * @param parameters The parameters for the analysis
      */
-    private external fun runStressAnalysisNative(
-        modelFilePath: String,
-        resultsFilePath: String,
-        parameters: Array<String>,
-    )
+    private external fun runStressAnalysisNative(modelFilePath: String, resultsFilePath: String, parameters: Array<String>)
 
     /**
      * Native method to run a vibration analysis.
@@ -331,11 +305,7 @@ class FeaEngine {
      * @param resultsFilePath The path to the results file
      * @param parameters The parameters for the analysis
      */
-    private external fun runVibrationAnalysisNative(
-        modelFilePath: String,
-        resultsFilePath: String,
-        parameters: Array<String>,
-    )
+    private external fun runVibrationAnalysisNative(modelFilePath: String, resultsFilePath: String, parameters: Array<String>)
 
     /**
      * Native method to generate a mesh.
@@ -344,11 +314,7 @@ class FeaEngine {
      * @param meshFilePath The path to the mesh file
      * @param parameters The parameters for mesh generation
      */
-    private external fun generateMeshNative(
-        modelFilePath: String,
-        meshFilePath: String,
-        parameters: Array<String>,
-    )
+    private external fun generateMeshNative(modelFilePath: String, meshFilePath: String, parameters: Array<String>)
 
     /**
      * Native method to check if the Rust FEA engine is available.
@@ -372,10 +338,9 @@ class FeaEngine {
      * Check if this FEA engine instance is functional.
      * This verifies that the native methods are available and working.
      */
-    fun isFunctional(): Boolean =
-        try {
-            testNativeLibraryNative() == 42
-        } catch (_: Throwable) {
-            false
-        }
+    fun isFunctional(): Boolean = try {
+        testNativeLibraryNative() == 42
+    } catch (_: Throwable) {
+        false
+    }
 }

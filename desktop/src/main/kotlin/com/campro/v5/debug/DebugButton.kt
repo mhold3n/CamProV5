@@ -1,16 +1,14 @@
 package com.campro.v5.debug
 
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.slf4j.LoggerFactory
@@ -43,12 +41,7 @@ fun DebugButton(
 }
 
 @Composable
-fun DebugOutlinedButton(
-    buttonId: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
+fun DebugOutlinedButton(buttonId: String, onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     OutlinedButton(
         onClick = {
             if (DebugManager.settings.buttonDebug) {
@@ -66,12 +59,7 @@ fun DebugOutlinedButton(
 }
 
 @Composable
-fun DebugTextButton(
-    buttonId: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
+fun DebugTextButton(buttonId: String, onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     TextButton(
         onClick = {
             if (DebugManager.settings.buttonDebug) {
@@ -87,12 +75,7 @@ fun DebugTextButton(
 }
 
 @Composable
-fun DebugIconButton(
-    buttonId: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
+fun DebugIconButton(buttonId: String, onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     IconButton(
         onClick = {
             if (DebugManager.settings.buttonDebug) {
@@ -108,12 +91,7 @@ fun DebugIconButton(
 }
 
 @Composable
-fun DebugFab(
-    buttonId: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
+fun DebugFab(buttonId: String, onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     FloatingActionButton(onClick = {
         if (DebugManager.settings.buttonDebug) {
             buttonLogger.info("[button-debug] click id={} type=fab", buttonId)
@@ -150,12 +128,7 @@ fun DebugExtendedFab(
 }
 
 @Composable
-fun DebugFilledTonalButton(
-    buttonId: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
+fun DebugFilledTonalButton(buttonId: String, onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     FilledTonalButton(onClick = {
         if (DebugManager.settings.buttonDebug) {
             buttonLogger.info("[button-debug] click id={} type=filled-tonal", buttonId)
@@ -166,5 +139,3 @@ fun DebugFilledTonalButton(
         onClick()
     }, modifier = modifier) { content() }
 }
-
-

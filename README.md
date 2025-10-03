@@ -1,19 +1,19 @@
 # CamProV5
 
-Multi-platform project combining Desktop (Kotlin/Compose), Android, Python tooling, Rust engines, and C++ components.
+Multi-platform project combining Desktop (Kotlin/Compose), Python tooling, Rust engines, and C++ components.
 
 ## Modules Overview
 - desktop: Kotlin/Compose Desktop application
-- android: Android application module
 - camprofw/rust: Rust crates (e.g., fea-engine)
 - cpp: Native C++ components
 - campro, layouts: Python packages and templates
+
+> **Note**: Android support has been temporarily removed to focus development efforts on the desktop application. Future Android packaging stubs are available in `docs/android-stubs/` for when mobile support is needed.
 
 See [README_CROSS_PLATFORM.md](README_CROSS_PLATFORM.md) for environment setup and cross-platform details.
 
 ## Building
 - JVM/Desktop: `./gradlew :desktop:build`
-- Android (CI/CLI): `./gradlew :android:assembleDebug`
 - Rust: `cargo test` inside each crate (e.g., camprofw/rust/fea-engine)
 - Python: `pip install -r requirements.txt && pytest`
 

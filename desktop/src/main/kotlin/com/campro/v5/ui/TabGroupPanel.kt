@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import com.campro.v5.debug.DebugIconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +23,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.campro.v5.debug.DebugIconButton
 import kotlinx.coroutines.launch
 
 /**
@@ -61,25 +61,25 @@ fun TabGroupPanel(
 
     Box(
         modifier =
-            modifier
-                .size(
-                    width = tabGroup.size.first,
-                    height = tabGroup.size.second,
-                ).offset(
-                    x = if (isDragging) with(density) { dragOffset.x.toDp() } else tabGroup.position.x,
-                    y = if (isDragging) with(density) { dragOffset.y.toDp() } else tabGroup.position.y,
-                ).zIndex(if (isDragging) 10f else 1f),
+        modifier
+            .size(
+                width = tabGroup.size.first,
+                height = tabGroup.size.second,
+            ).offset(
+                x = if (isDragging) with(density) { dragOffset.x.toDp() } else tabGroup.position.x,
+                y = if (isDragging) with(density) { dragOffset.y.toDp() } else tabGroup.position.y,
+            ).zIndex(if (isDragging) 10f else 1f),
     ) {
         Card(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .shadow(elevation, RoundedCornerShape(8.dp)),
+            Modifier
+                .fillMaxSize()
+                .shadow(elevation, RoundedCornerShape(8.dp)),
             elevation = CardDefaults.cardElevation(defaultElevation = elevation),
             colors =
-                CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                ),
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            ),
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Tab bar
@@ -122,9 +122,9 @@ fun TabGroupPanel(
                 // Active panel content
                 Box(
                     modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(8.dp),
+                    Modifier
+                        .fillMaxSize()
+                        .padding(8.dp),
                 ) {
                     val activePanel = panels[tabGroup.activePanel]
                     if (activePanel != null) {
@@ -163,9 +163,9 @@ private fun TabGroupHeader(
 ) {
     Surface(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(48.dp),
+        Modifier
+            .fillMaxWidth()
+            .height(48.dp),
         color = MaterialTheme.colorScheme.primaryContainer,
         tonalElevation = 2.dp,
     ) {
@@ -177,22 +177,22 @@ private fun TabGroupHeader(
             if (enableDocking) {
                 Box(
                     modifier =
-                        Modifier
-                            .width(32.dp)
-                            .fillMaxHeight()
-                            .pointerInput(Unit) {
-                                detectDragGestures(
-                                    onDragStart = { offset ->
-                                        onDragStart(offset)
-                                    },
-                                    onDrag = { _, dragAmount ->
-                                        onDrag(dragAmount)
-                                    },
-                                    onDragEnd = {
-                                        onDragEnd()
-                                    },
-                                )
-                            },
+                    Modifier
+                        .width(32.dp)
+                        .fillMaxHeight()
+                        .pointerInput(Unit) {
+                            detectDragGestures(
+                                onDragStart = { offset ->
+                                    onDragStart(offset)
+                                },
+                                onDrag = { _, dragAmount ->
+                                    onDrag(dragAmount)
+                                },
+                                onDragEnd = {
+                                    onDragEnd()
+                                },
+                            )
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -286,21 +286,21 @@ private fun TabItem(
     // Animation states
     val backgroundColor by animateColorAsState(
         targetValue =
-            when {
-                isActive -> MaterialTheme.colorScheme.primary
-                isHovered -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                else -> Color.Transparent
-            },
+        when {
+            isActive -> MaterialTheme.colorScheme.primary
+            isHovered -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+            else -> Color.Transparent
+        },
         animationSpec = tween(200),
     )
 
     val textColor by animateColorAsState(
         targetValue =
-            if (isActive) {
-                MaterialTheme.colorScheme.onPrimary
-            } else {
-                MaterialTheme.colorScheme.onPrimaryContainer
-            },
+        if (isActive) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        },
         animationSpec = tween(200),
     )
 
@@ -311,38 +311,38 @@ private fun TabItem(
 
     Card(
         modifier =
-            Modifier
-                .widthIn(min = 80.dp, max = maxWidth)
-                .height(36.dp)
-                .alpha(if (isDragging) 0.8f else 1f)
-                .pointerInput(panelId) {
-                    if (enableReordering) {
-                        detectDragGestures(
-                            onDragStart = {
-                                isDragging = true
-                            },
-                            onDragEnd = {
-                                isDragging = false
-                            },
-                            onDrag = { _, _ ->
-                                // TODO(#21): Implement tab reordering logic (drag-and-drop, keyboard shortcuts). Persist order in state.
-                            },
-                        )
-                    }
-                },
+        Modifier
+            .widthIn(min = 80.dp, max = maxWidth)
+            .height(36.dp)
+            .alpha(if (isDragging) 0.8f else 1f)
+            .pointerInput(panelId) {
+                if (enableReordering) {
+                    detectDragGestures(
+                        onDragStart = {
+                            isDragging = true
+                        },
+                        onDragEnd = {
+                            isDragging = false
+                        },
+                        onDrag = { _, _ ->
+                            // TODO(#21): Implement tab reordering logic (drag-and-drop, keyboard shortcuts). Persist order in state.
+                        },
+                    )
+                }
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = elevation),
         colors =
-            CardDefaults.cardColors(
-                containerColor = backgroundColor,
-            ),
+        CardDefaults.cardColors(
+            containerColor = backgroundColor,
+        ),
         shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
     ) {
         Row(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .clickable { onSelect() }
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            Modifier
+                .fillMaxSize()
+                .clickable { onSelect() }
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -377,10 +377,7 @@ private fun TabItem(
  * Default content for tabs when no specific content is provided
  */
 @Composable
-private fun DefaultTabContent(
-    panelId: String,
-    panelTitle: String,
-) {
+private fun DefaultTabContent(panelId: String, panelTitle: String) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,

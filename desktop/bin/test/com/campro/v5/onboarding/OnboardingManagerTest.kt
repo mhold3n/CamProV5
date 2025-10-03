@@ -61,284 +61,276 @@ class OnboardingManagerTest {
      * Test that starting onboarding emits events.
      */
     @Test
-    fun testStartOnboardingEmitsEvents() =
-        runBlocking {
-            // Set up a collector for onboarding events
-            val events = EventSystem.events("onboarding_started")
+    fun testStartOnboardingEmitsEvents() = runBlocking {
+        // Set up a collector for onboarding events
+        val events = EventSystem.events("onboarding_started")
 
-            // Start onboarding
-            onboardingManager.startOnboarding()
+        // Start onboarding
+        onboardingManager.startOnboarding()
 
-            // Collect the event with a timeout
-            val receivedEvent =
-                withTimeout(1000) {
-                    events.first()
-                }
+        // Collect the event with a timeout
+        val receivedEvent =
+            withTimeout(1000) {
+                events.first()
+            }
 
-            // Verify the event
-            assertTrue(receivedEvent is OnboardingEvent.OnboardingStarted, "Received event should be an OnboardingStarted event")
+        // Verify the event
+        assertTrue(receivedEvent is OnboardingEvent.OnboardingStarted, "Received event should be an OnboardingStarted event")
 
-            // Verify that onboarding is not completed
-            assertFalse(onboardingManager.isOnboardingCompleted(), "Onboarding should not be completed")
+        // Verify that onboarding is not completed
+        assertFalse(onboardingManager.isOnboardingCompleted(), "Onboarding should not be completed")
 
-            // Verify that the current step is "welcome"
-            assertEquals("welcome", onboardingManager.getCurrentStep()?.id, "Current step should be welcome")
+        // Verify that the current step is "welcome"
+        assertEquals("welcome", onboardingManager.getCurrentStep()?.id, "Current step should be welcome")
 
-            println("[DEBUG_LOG] Start onboarding event test complete")
-        }
+        println("[DEBUG_LOG] Start onboarding event test complete")
+    }
 
     /**
      * Test navigation through onboarding steps.
      */
     @Test
-    fun testOnboardingStepNavigation() =
-        runBlocking {
-            // Set up a collector for step changed events
-            val events = EventSystem.events("step_changed")
+    fun testOnboardingStepNavigation() = runBlocking {
+        // Set up a collector for step changed events
+        val events = EventSystem.events("step_changed")
 
-            // Start onboarding
-            onboardingManager.startOnboarding()
+        // Start onboarding
+        onboardingManager.startOnboarding()
 
-            // Go to next step
-            val nextStepResult = onboardingManager.nextStep()
+        // Go to next step
+        val nextStepResult = onboardingManager.nextStep()
 
-            // Verify that next step was successful
-            assertTrue(nextStepResult, "Next step should be successful")
+        // Verify that next step was successful
+        assertTrue(nextStepResult, "Next step should be successful")
 
-            // Collect the event with a timeout
-            val receivedEvent =
-                withTimeout(1000) {
-                    events.first()
-                }
+        // Collect the event with a timeout
+        val receivedEvent =
+            withTimeout(1000) {
+                events.first()
+            }
 
-            // Verify the event
-            assertTrue(receivedEvent is OnboardingEvent.StepChanged, "Received event should be a StepChanged event")
-            assertEquals("ui_overview", (receivedEvent as OnboardingEvent.StepChanged).step.id, "Step ID should be ui_overview")
+        // Verify the event
+        assertTrue(receivedEvent is OnboardingEvent.StepChanged, "Received event should be a StepChanged event")
+        assertEquals("ui_overview", (receivedEvent as OnboardingEvent.StepChanged).step.id, "Step ID should be ui_overview")
 
-            // Verify that the current step is "ui_overview"
-            assertEquals("ui_overview", onboardingManager.getCurrentStep()?.id, "Current step should be ui_overview")
+        // Verify that the current step is "ui_overview"
+        assertEquals("ui_overview", onboardingManager.getCurrentStep()?.id, "Current step should be ui_overview")
 
-            // Go to previous step
-            val previousStepResult = onboardingManager.previousStep()
+        // Go to previous step
+        val previousStepResult = onboardingManager.previousStep()
 
-            // Verify that previous step was successful
-            assertTrue(previousStepResult, "Previous step should be successful")
+        // Verify that previous step was successful
+        assertTrue(previousStepResult, "Previous step should be successful")
 
-            // Verify that the current step is "welcome"
-            assertEquals("welcome", onboardingManager.getCurrentStep()?.id, "Current step should be welcome")
+        // Verify that the current step is "welcome"
+        assertEquals("welcome", onboardingManager.getCurrentStep()?.id, "Current step should be welcome")
 
-            // Go to a specific step
-            val goToStepResult = onboardingManager.goToStep("parameters")
+        // Go to a specific step
+        val goToStepResult = onboardingManager.goToStep("parameters")
 
-            // Verify that go to step was successful
-            assertTrue(goToStepResult, "Go to step should be successful")
+        // Verify that go to step was successful
+        assertTrue(goToStepResult, "Go to step should be successful")
 
-            // Verify that the current step is "parameters"
-            assertEquals("parameters", onboardingManager.getCurrentStep()?.id, "Current step should be parameters")
+        // Verify that the current step is "parameters"
+        assertEquals("parameters", onboardingManager.getCurrentStep()?.id, "Current step should be parameters")
 
-            println("[DEBUG_LOG] Onboarding step navigation test complete")
-        }
+        println("[DEBUG_LOG] Onboarding step navigation test complete")
+    }
 
     /**
      * Test completing the onboarding process.
      */
     @Test
-    fun testCompletingOnboarding() =
-        runBlocking {
-            // Set up a collector for onboarding completed events
-            val events = EventSystem.events("onboarding_completed")
+    fun testCompletingOnboarding() = runBlocking {
+        // Set up a collector for onboarding completed events
+        val events = EventSystem.events("onboarding_completed")
 
-            // Start onboarding
-            onboardingManager.startOnboarding()
+        // Start onboarding
+        onboardingManager.startOnboarding()
 
-            // Go through all steps until completion
-            var result = true
-            while (result) {
-                result = onboardingManager.nextStep()
+        // Go through all steps until completion
+        var result = true
+        while (result) {
+            result = onboardingManager.nextStep()
+        }
+
+        // Collect the event with a timeout
+        val receivedEvent =
+            withTimeout(1000) {
+                events.first()
             }
 
-            // Collect the event with a timeout
-            val receivedEvent =
-                withTimeout(1000) {
-                    events.first()
-                }
+        // Verify the event
+        assertTrue(receivedEvent is OnboardingEvent.OnboardingCompleted, "Received event should be an OnboardingCompleted event")
 
-            // Verify the event
-            assertTrue(receivedEvent is OnboardingEvent.OnboardingCompleted, "Received event should be an OnboardingCompleted event")
+        // Verify that onboarding is completed
+        assertTrue(onboardingManager.isOnboardingCompleted(), "Onboarding should be completed")
 
-            // Verify that onboarding is completed
-            assertTrue(onboardingManager.isOnboardingCompleted(), "Onboarding should be completed")
+        // Verify that the current step is null
+        assertNull(onboardingManager.getCurrentStep(), "Current step should be null")
 
-            // Verify that the current step is null
-            assertNull(onboardingManager.getCurrentStep(), "Current step should be null")
-
-            println("[DEBUG_LOG] Completing onboarding test complete")
-        }
+        println("[DEBUG_LOG] Completing onboarding test complete")
+    }
 
     /**
      * Test skipping the onboarding process.
      */
     @Test
-    fun testSkippingOnboarding() =
-        runBlocking {
-            // Set up a collector for onboarding skipped events
-            val events = EventSystem.events("onboarding_skipped")
+    fun testSkippingOnboarding() = runBlocking {
+        // Set up a collector for onboarding skipped events
+        val events = EventSystem.events("onboarding_skipped")
 
-            // Start onboarding
-            onboardingManager.startOnboarding()
+        // Start onboarding
+        onboardingManager.startOnboarding()
 
-            // Skip onboarding
-            onboardingManager.skipOnboarding()
+        // Skip onboarding
+        onboardingManager.skipOnboarding()
 
-            // Collect the event with a timeout
-            val receivedEvent =
-                withTimeout(1000) {
-                    events.first()
-                }
+        // Collect the event with a timeout
+        val receivedEvent =
+            withTimeout(1000) {
+                events.first()
+            }
 
-            // Verify the event
-            assertTrue(receivedEvent is OnboardingEvent.OnboardingSkipped, "Received event should be an OnboardingSkipped event")
+        // Verify the event
+        assertTrue(receivedEvent is OnboardingEvent.OnboardingSkipped, "Received event should be an OnboardingSkipped event")
 
-            // Verify that onboarding is completed
-            assertTrue(onboardingManager.isOnboardingCompleted(), "Onboarding should be completed")
+        // Verify that onboarding is completed
+        assertTrue(onboardingManager.isOnboardingCompleted(), "Onboarding should be completed")
 
-            // Verify that the current step is null
-            assertNull(onboardingManager.getCurrentStep(), "Current step should be null")
+        // Verify that the current step is null
+        assertNull(onboardingManager.getCurrentStep(), "Current step should be null")
 
-            println("[DEBUG_LOG] Skipping onboarding test complete")
-        }
+        println("[DEBUG_LOG] Skipping onboarding test complete")
+    }
 
     /**
      * Test resetting the onboarding process.
      */
     @Test
-    fun testResettingOnboarding() =
-        runBlocking {
-            // Set up a collector for onboarding reset events
-            val events = EventSystem.events("onboarding_reset")
+    fun testResettingOnboarding() = runBlocking {
+        // Set up a collector for onboarding reset events
+        val events = EventSystem.events("onboarding_reset")
 
-            // Start and skip onboarding
-            onboardingManager.startOnboarding()
-            onboardingManager.skipOnboarding()
+        // Start and skip onboarding
+        onboardingManager.startOnboarding()
+        onboardingManager.skipOnboarding()
 
-            // Reset onboarding
-            onboardingManager.resetOnboarding()
+        // Reset onboarding
+        onboardingManager.resetOnboarding()
 
-            // Collect the event with a timeout
-            val receivedEvent =
-                withTimeout(1000) {
-                    events.first()
-                }
+        // Collect the event with a timeout
+        val receivedEvent =
+            withTimeout(1000) {
+                events.first()
+            }
 
-            // Verify the event
-            assertTrue(receivedEvent is OnboardingEvent.OnboardingReset, "Received event should be an OnboardingReset event")
+        // Verify the event
+        assertTrue(receivedEvent is OnboardingEvent.OnboardingReset, "Received event should be an OnboardingReset event")
 
-            // Verify that onboarding is not completed
-            assertFalse(onboardingManager.isOnboardingCompleted(), "Onboarding should not be completed")
+        // Verify that onboarding is not completed
+        assertFalse(onboardingManager.isOnboardingCompleted(), "Onboarding should not be completed")
 
-            // Verify that the current step is "welcome"
-            assertEquals("welcome", onboardingManager.getCurrentStep()?.id, "Current step should be welcome")
+        // Verify that the current step is "welcome"
+        assertEquals("welcome", onboardingManager.getCurrentStep()?.id, "Current step should be welcome")
 
-            println("[DEBUG_LOG] Resetting onboarding test complete")
-        }
+        println("[DEBUG_LOG] Resetting onboarding test complete")
+    }
 
     /**
      * Test starting a tutorial.
      */
     @Test
-    fun testStartingTutorial() =
-        runBlocking {
-            // Set up a collector for tutorial started events
-            val events = EventSystem.events("tutorial_started")
+    fun testStartingTutorial() = runBlocking {
+        // Set up a collector for tutorial started events
+        val events = EventSystem.events("tutorial_started")
 
-            // Start a tutorial
-            val result = onboardingManager.startTutorial("basic_mechanism")
+        // Start a tutorial
+        val result = onboardingManager.startTutorial("basic_mechanism")
 
-            // Verify that starting the tutorial was successful
-            assertTrue(result, "Starting tutorial should be successful")
+        // Verify that starting the tutorial was successful
+        assertTrue(result, "Starting tutorial should be successful")
 
-            // Collect the event with a timeout
-            val receivedEvent =
-                withTimeout(1000) {
-                    events.first()
-                }
+        // Collect the event with a timeout
+        val receivedEvent =
+            withTimeout(1000) {
+                events.first()
+            }
 
-            // Verify the event
-            assertTrue(receivedEvent is OnboardingEvent.TutorialStarted, "Received event should be a TutorialStarted event")
-            assertEquals(
-                "basic_mechanism",
-                (receivedEvent as OnboardingEvent.TutorialStarted).tutorial.id,
-                "Tutorial ID should be basic_mechanism",
-            )
+        // Verify the event
+        assertTrue(receivedEvent is OnboardingEvent.TutorialStarted, "Received event should be a TutorialStarted event")
+        assertEquals(
+            "basic_mechanism",
+            (receivedEvent as OnboardingEvent.TutorialStarted).tutorial.id,
+            "Tutorial ID should be basic_mechanism",
+        )
 
-            println("[DEBUG_LOG] Starting tutorial test complete")
-        }
+        println("[DEBUG_LOG] Starting tutorial test complete")
+    }
 
     /**
      * Test completing a tutorial.
      */
     @Test
-    fun testCompletingTutorial() =
-        runBlocking {
-            // Set up a collector for tutorial completed events
-            val events = EventSystem.events("tutorial_completed")
+    fun testCompletingTutorial() = runBlocking {
+        // Set up a collector for tutorial completed events
+        val events = EventSystem.events("tutorial_completed")
 
-            // Start and complete a tutorial
-            onboardingManager.startTutorial("basic_mechanism")
-            val result = onboardingManager.completeTutorial("basic_mechanism")
+        // Start and complete a tutorial
+        onboardingManager.startTutorial("basic_mechanism")
+        val result = onboardingManager.completeTutorial("basic_mechanism")
 
-            // Verify that completing the tutorial was successful
-            assertTrue(result, "Completing tutorial should be successful")
+        // Verify that completing the tutorial was successful
+        assertTrue(result, "Completing tutorial should be successful")
 
-            // Collect the event with a timeout
-            val receivedEvent =
-                withTimeout(1000) {
-                    events.first()
-                }
+        // Collect the event with a timeout
+        val receivedEvent =
+            withTimeout(1000) {
+                events.first()
+            }
 
-            // Verify the event
-            assertTrue(receivedEvent is OnboardingEvent.TutorialCompleted, "Received event should be a TutorialCompleted event")
-            assertEquals(
-                "basic_mechanism",
-                (receivedEvent as OnboardingEvent.TutorialCompleted).tutorial.id,
-                "Tutorial ID should be basic_mechanism",
-            )
+        // Verify the event
+        assertTrue(receivedEvent is OnboardingEvent.TutorialCompleted, "Received event should be a TutorialCompleted event")
+        assertEquals(
+            "basic_mechanism",
+            (receivedEvent as OnboardingEvent.TutorialCompleted).tutorial.id,
+            "Tutorial ID should be basic_mechanism",
+        )
 
-            println("[DEBUG_LOG] Completing tutorial test complete")
-        }
+        println("[DEBUG_LOG] Completing tutorial test complete")
+    }
 
     /**
      * Test loading a sample project.
      */
     @Test
-    fun testLoadingSampleProject() =
-        runBlocking {
-            // Set up a collector for sample project loaded events
-            val events = EventSystem.events("sample_project_loaded")
+    fun testLoadingSampleProject() = runBlocking {
+        // Set up a collector for sample project loaded events
+        val events = EventSystem.events("sample_project_loaded")
 
-            // Load a sample project
-            val parameters = onboardingManager.loadSampleProject("basic_mechanism")
+        // Load a sample project
+        val parameters = onboardingManager.loadSampleProject("basic_mechanism")
 
-            // Verify that parameters were returned
-            assertNotNull(parameters, "Parameters should not be null")
-            assertTrue(parameters!!.isNotEmpty(), "Parameters should not be empty")
+        // Verify that parameters were returned
+        assertNotNull(parameters, "Parameters should not be null")
+        assertTrue(parameters!!.isNotEmpty(), "Parameters should not be empty")
 
-            // Collect the event with a timeout
-            val receivedEvent =
-                withTimeout(1000) {
-                    events.first()
-                }
+        // Collect the event with a timeout
+        val receivedEvent =
+            withTimeout(1000) {
+                events.first()
+            }
 
-            // Verify the event
-            assertTrue(receivedEvent is OnboardingEvent.SampleProjectLoaded, "Received event should be a SampleProjectLoaded event")
-            assertEquals(
-                "basic_mechanism",
-                (receivedEvent as OnboardingEvent.SampleProjectLoaded).project.id,
-                "Project ID should be basic_mechanism",
-            )
+        // Verify the event
+        assertTrue(receivedEvent is OnboardingEvent.SampleProjectLoaded, "Received event should be a SampleProjectLoaded event")
+        assertEquals(
+            "basic_mechanism",
+            (receivedEvent as OnboardingEvent.SampleProjectLoaded).project.id,
+            "Project ID should be basic_mechanism",
+        )
 
-            println("[DEBUG_LOG] Loading sample project test complete")
-        }
+        println("[DEBUG_LOG] Loading sample project test complete")
+    }
 
     /**
      * Test getting onboarding steps, tutorials, and sample projects.

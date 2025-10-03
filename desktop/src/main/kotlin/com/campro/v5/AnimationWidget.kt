@@ -39,10 +39,7 @@ import java.io.File
  * @param testingMode Whether the widget is in testing mode
  */
 @Composable
-fun AnimationWidget(
-    parameters: Map<String, String>,
-    testingMode: Boolean = false,
-) {
+fun AnimationWidget(parameters: Map<String, String>, testingMode: Boolean = false) {
     // Create animation manager
     val animationManager = remember { AnimationManager() }
     val coroutineScope = rememberCoroutineScope()
@@ -302,14 +299,14 @@ fun AnimationWidget(
                     }
                 },
                 colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor =
-                            if (selectedAnimationType == AnimationType.COMPONENT_BASED) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.secondary
-                            },
-                    ),
+                ButtonDefaults.buttonColors(
+                    containerColor =
+                    if (selectedAnimationType == AnimationType.COMPONENT_BASED) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.secondary
+                    },
+                ),
                 modifier = Modifier.padding(horizontal = 4.dp),
             ) {
                 Text("Component-Based")
@@ -356,14 +353,14 @@ fun AnimationWidget(
                     }
                 },
                 colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor =
-                            if (selectedAnimationType == AnimationType.FEA_BASED) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.secondary
-                            },
-                    ),
+                ButtonDefaults.buttonColors(
+                    containerColor =
+                    if (selectedAnimationType == AnimationType.FEA_BASED) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.secondary
+                    },
+                ),
                 modifier = Modifier.padding(horizontal = 4.dp),
             ) {
                 Text("FEA-Based")
@@ -375,35 +372,35 @@ fun AnimationWidget(
         // Animation canvas
         Box(
             modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .weight(1f, fill = false) // Keep square drawing area
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, zoom, _ ->
-                            scale = (scale * zoom).coerceIn(0.1f, 5f)
-                            offset += pan
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .weight(1f, fill = false) // Keep square drawing area
+                .clip(MaterialTheme.shapes.medium)
+                .background(MaterialTheme.colorScheme.surface)
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        scale = (scale * zoom).coerceIn(0.1f, 5f)
+                        offset += pan
+                        if (testingMode) {
+                            println(
+                                "EVENT:{\"type\":\"gesture\",\"component\":\"AnimationCanvas\",\"action\":\"pan_zoom\",\"scale\":\"$scale\",\"offset\":\"$offset\"}",
+                            )
+                        }
+                    }
+                }.pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = {
+                            scale = 1f
+                            offset = Offset.Zero
                             if (testingMode) {
                                 println(
-                                    "EVENT:{\"type\":\"gesture\",\"component\":\"AnimationCanvas\",\"action\":\"pan_zoom\",\"scale\":\"$scale\",\"offset\":\"$offset\"}",
+                                    "EVENT:{\"type\":\"gesture\",\"component\":\"AnimationCanvas\",\"action\":\"double_tap_reset\"}",
                                 )
                             }
-                        }
-                    }.pointerInput(Unit) {
-                        detectTapGestures(
-                            onDoubleTap = {
-                                scale = 1f
-                                offset = Offset.Zero
-                                if (testingMode) {
-                                    println(
-                                        "EVENT:{\"type\":\"gesture\",\"component\":\"AnimationCanvas\",\"action\":\"double_tap_reset\"}",
-                                    )
-                                }
-                            },
-                        )
-                    },
+                        },
+                    )
+                },
         ) {
             // Use BoxWithConstraints to get the actual size of the container
             BoxWithConstraints(modifier = Modifier.matchParentSize()) {
@@ -635,7 +632,7 @@ fun AnimationWidget(
                                 (
                                     com.campro.v5.animation.MotionLawEngine
                                         .runNativeSmokeTest() ?: -1
-                                )
+                                    )
                             }
                         val ms = (System.nanoTime() - start) / 1_000_000.0
                         lastCode = code

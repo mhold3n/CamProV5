@@ -12,7 +12,11 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from campro.pipeline.unified_optimizer import UnifiedOptimizer
+from campro.pipeline.unified_optimizer import UnifiedOptimizer  # noqa: E402
+from campro.logging import get_logger  # noqa: E402
+
+# Set up logging
+logger = get_logger(__name__)
 
 
 def get_comprehensive_test_parameters():
@@ -106,11 +110,11 @@ def get_comprehensive_test_parameters():
 
 def main():
     """Run the comprehensive unified optimization pipeline demo."""
-    print("🚀 CAMPROV5 COMPREHENSIVE UNIFIED OPTIMIZATION PIPELINE DEMO")
-    print("=" * 70)
-    print("Using the complete test dataset from generate_gear_profiles.py")
-    print("This demonstrates the full capabilities of the unified pipeline")
-    print("=" * 70)
+    logger.info("🚀 CAMPROV5 COMPREHENSIVE UNIFIED OPTIMIZATION PIPELINE DEMO")
+    logger.info("=" * 70)
+    logger.info("Using the complete test dataset from generate_gear_profiles.py")
+    logger.info("This demonstrates the full capabilities of the unified pipeline")
+    logger.info("=" * 70)
     
     # Create output directory
     output_dir = Path("comprehensive_demo_output")
@@ -119,35 +123,35 @@ def main():
     # Get comprehensive test parameters
     params = get_comprehensive_test_parameters()
     
-    print(f"\n📋 COMPREHENSIVE TEST PARAMETERS:")
-    print(f"  • Stroke Length: {params['strokeLengthMm']} mm")
-    print(f"  • Gear Ratio: {params['gearRatio']}:1 (Planet:Ring)")
-    print(f"  • Ring Rotation: {params['ringRotationDeg']}°")
-    print(f"  • Planet Rotation: {params['planetRotationDeg']}°")
-    print(f"  • Planet Count: {params['planetCount']}")
-    print(f"  • RPM: {params['rpm']}")
-    print(f"  • Sampling Step: {params['samplingStepDeg']}°")
-    print(f"  • Rod Length: {params['rodLength']} mm")
-    print(f"  • Journal Radius: {params['journalRadius']} mm")
-    print(f"  • Planet Radius: {params['planetRadius']} mm")
-    print(f"  • Ring Inner Radius Base: {params['ringInnerRadiusBase']} mm")
-    print(f"  • Ring Thickness: {params['ringThickness']} mm")
-    print(f"  • Planet Teeth: {params['planetTeeth']}")
-    print(f"  • Ring Teeth: {params['ringTeeth']}")
-    print(f"  • Tooth Module: {params['toothModule']} mm")
+    logger.info("\n📋 COMPREHENSIVE TEST PARAMETERS:")
+    logger.info(f"  • Stroke Length: {params['strokeLengthMm']} mm")
+    logger.info(f"  • Gear Ratio: {params['gearRatio']}:1 (Planet:Ring)")
+    logger.info(f"  • Ring Rotation: {params['ringRotationDeg']}°")
+    logger.info(f"  • Planet Rotation: {params['planetRotationDeg']}°")
+    logger.info(f"  • Planet Count: {params['planetCount']}")
+    logger.info(f"  • RPM: {params['rpm']}")
+    logger.info(f"  • Sampling Step: {params['samplingStepDeg']}°")
+    logger.info(f"  • Rod Length: {params['rodLength']} mm")
+    logger.info(f"  • Journal Radius: {params['journalRadius']} mm")
+    logger.info(f"  • Planet Radius: {params['planetRadius']} mm")
+    logger.info(f"  • Ring Inner Radius Base: {params['ringInnerRadiusBase']} mm")
+    logger.info(f"  • Ring Thickness: {params['ringThickness']} mm")
+    logger.info(f"  • Planet Teeth: {params['planetTeeth']}")
+    logger.info(f"  • Ring Teeth: {params['ringTeeth']}")
+    logger.info(f"  • Tooth Module: {params['toothModule']} mm")
     
     # Initialize the unified optimizer
-    print(f"\n🔧 INITIALIZING UNIFIED OPTIMIZER...")
+    logger.info("\n🔧 INITIALIZING UNIFIED OPTIMIZER...")
     optimizer = UnifiedOptimizer(output_dir=output_dir)
     
     # Run the complete pipeline
-    print(f"\n⚡ RUNNING COMPREHENSIVE UNIFIED OPTIMIZATION PIPELINE...")
-    print("   This will execute all phases with the full test dataset:")
-    print("   1. Motion Law Generation (with piecewise motion law)")
-    print("   2. Dual Solution Methods (Litvin + Collocation)")
-    print("   3. Efficiency Optimization (comparing both methods)")
-    print("   4. Tooth Profile Generation (detailed tooth geometry)")
-    print("   5. FEA Analysis (stress, vibration, fatigue)")
+    logger.info("\n⚡ RUNNING COMPREHENSIVE UNIFIED OPTIMIZATION PIPELINE...")
+    logger.info("   This will execute all phases with the full test dataset:")
+    logger.info("   1. Motion Law Generation (with piecewise motion law)")
+    logger.info("   2. Dual Solution Methods (Litvin + Collocation)")
+    logger.info("   3. Efficiency Optimization (comparing both methods)")
+    logger.info("   4. Tooth Profile Generation (detailed tooth geometry)")
+    logger.info("   5. FEA Analysis (stress, vibration, fatigue)")
     
     start_time = time.time()
     
@@ -155,86 +159,86 @@ def main():
         result = optimizer.run_pipeline(params)
         execution_time = time.time() - start_time
         
-        print(f"\n📊 COMPREHENSIVE RESULTS:")
-        print(f"  • Status: {result['status']}")
-        print(f"  • Execution Time: {execution_time:.2f} seconds")
+        logger.info("\n📊 COMPREHENSIVE RESULTS:")
+        logger.info(f"  • Status: {result['status']}")
+        logger.info(f"  • Execution Time: {execution_time:.2f} seconds")
         
         if result['status'] == 'success':
             # Motion Law Results
             motion_law = result['motion_law']
-            print(f"\n📈 MOTION LAW RESULTS:")
-            print(f"  • Data Points: {len(motion_law['theta_deg'])}")
-            print(f"  • Max Displacement: {max(motion_law['displacement']):.1f} mm")
-            print(f"  • Max Velocity: {max(motion_law['velocity']):.1f} mm/deg")
-            print(f"  • Max Acceleration: {max(motion_law['acceleration']):.1f} mm/deg²")
+            logger.info("\n📈 MOTION LAW RESULTS:")
+            logger.info(f"  • Data Points: {len(motion_law['theta_deg'])}")
+            logger.info(f"  • Max Displacement: {max(motion_law['displacement']):.1f} mm")
+            logger.info(f"  • Max Velocity: {max(motion_law['velocity']):.1f} mm/deg")
+            logger.info(f"  • Max Acceleration: {max(motion_law['acceleration']):.1f} mm/deg²")
             
             # Optimal Profiles Results
             optimal_profiles = result['optimal_profiles']
-            print(f"\n⚙️  OPTIMAL GEAR PROFILES:")
-            print(f"  • Optimal Method: {optimal_profiles['optimal_solution'].upper()}")
+            logger.info("\n⚙️  OPTIMAL GEAR PROFILES:")
+            logger.info(f"  • Optimal Method: {optimal_profiles['optimal_solution'].upper()}")
             
             profiles = optimal_profiles['optimal_profiles']
-            print(f"  • Sun Radius Range: {min(profiles['r_sun']):.1f} - {max(profiles['r_sun']):.1f} mm")
-            print(f"  • Planet Radius Range: {min(profiles['r_planet']):.1f} - {max(profiles['r_planet']):.1f} mm")
-            print(f"  • Ring Inner Radius Range: {min(profiles['r_ring_inner']):.1f} - {max(profiles['r_ring_inner']):.1f} mm")
-            print(f"  • Gear Ratio: {profiles['gear_ratio']:.1f}:1")
+            logger.info(f"  • Sun Radius Range: {min(profiles['r_sun']):.1f} - {max(profiles['r_sun']):.1f} mm")
+            logger.info(f"  • Planet Radius Range: {min(profiles['r_planet']):.1f} - {max(profiles['r_planet']):.1f} mm")
+            logger.info(f"  • Ring Inner Radius Range: {min(profiles['r_ring_inner']):.1f} - {max(profiles['r_ring_inner']):.1f} mm")
+            logger.info(f"  • Gear Ratio: {profiles['gear_ratio']:.1f}:1")
             
             # Efficiency Analysis
             if 'efficiency_analysis' in optimal_profiles:
                 eff_analysis = optimal_profiles['efficiency_analysis']
-                print(f"\n⚡ EFFICIENCY ANALYSIS:")
-                print(f"  • Litvin Method Efficiency: {eff_analysis.get('litvin_efficiency', 'N/A')}")
-                print(f"  • Collocation Method Efficiency: {eff_analysis.get('collocation_efficiency', 'N/A')}")
-                print(f"  • Optimal Method: {eff_analysis.get('optimal_method', 'N/A')}")
+                logger.info("\n⚡ EFFICIENCY ANALYSIS:")
+                logger.info(f"  • Litvin Method Efficiency: {eff_analysis.get('litvin_efficiency', 'N/A')}")
+                logger.info(f"  • Collocation Method Efficiency: {eff_analysis.get('collocation_efficiency', 'N/A')}")
+                logger.info(f"  • Optimal Method: {eff_analysis.get('optimal_method', 'N/A')}")
             
             # Tooth Profiles Results
             tooth_profiles = result['tooth_profiles']
-            print(f"\n🦷 TOOTH PROFILE GENERATION:")
+            logger.info("\n🦷 TOOTH PROFILE GENERATION:")
             for gear_type in ['sun_teeth', 'planet_teeth', 'ring_teeth']:
                 if gear_type in tooth_profiles and tooth_profiles[gear_type] is not None:
-                    print(f"  • {gear_type.replace('_', ' ').title()}: Generated")
+                    logger.info(f"  • {gear_type.replace('_', ' ').title()}: Generated")
                 else:
-                    print(f"  • {gear_type.replace('_', ' ').title()}: Not available")
+                    logger.info(f"  • {gear_type.replace('_', ' ').title()}: Not available")
             
             # FEA Analysis Results
             fea = result['fea']
-            print(f"\n🔬 FEA ANALYSIS RESULTS:")
-            print(f"  • Analysis Status: {fea.get('status', 'Unknown')}")
+            logger.info("\n🔬 FEA ANALYSIS RESULTS:")
+            logger.info(f"  • Analysis Status: {fea.get('status', 'Unknown')}")
             
             if 'analysis_summary' in fea:
                 summary = fea['analysis_summary']
-                print(f"  • Max Stress: {summary.get('max_stress', 'N/A')} Pa")
-                print(f"  • Natural Frequencies: {len(summary.get('natural_frequencies', []))} modes")
-                print(f"  • Fatigue Life: {summary.get('fatigue_life', 'N/A')} cycles")
+                logger.info(f"  • Max Stress: {summary.get('max_stress', 'N/A')} Pa")
+                logger.info(f"  • Natural Frequencies: {len(summary.get('natural_frequencies', []))} modes")
+                logger.info(f"  • Fatigue Life: {summary.get('fatigue_life', 'N/A')} cycles")
             
-            print(f"\n🎉 COMPREHENSIVE DEMO COMPLETED SUCCESSFULLY!")
-            print("   The unified optimization pipeline processed the full test dataset")
-            print("   and produced comprehensive analysis results across all phases.")
+            logger.info("\n🎉 COMPREHENSIVE DEMO COMPLETED SUCCESSFULLY!")
+            logger.info("   The unified optimization pipeline processed the full test dataset")
+            logger.info("   and produced comprehensive analysis results across all phases.")
             
         else:
-            print(f"\n❌ OPTIMIZATION FAILED:")
+            logger.info("\n❌ OPTIMIZATION FAILED:")
             if 'error' in result:
-                print(f"  • Error: {result['error']}")
+                logger.info(f"  • Error: {result['error']}")
             if 'stage' in result:
-                print(f"  • Failed at stage: {result['stage']}")
+                logger.info(f"  • Failed at stage: {result['stage']}")
         
         # Save comprehensive results
         results_file = output_dir / "comprehensive_results.json"
         with open(results_file, 'w') as f:
             json.dump(result, f, indent=2, default=str)
-        print(f"\n💾 Comprehensive results saved to: {results_file}")
+        logger.info(f"\n💾 Comprehensive results saved to: {results_file}")
         
         # Save parameters for reference
         params_file = output_dir / "test_parameters.json"
         with open(params_file, 'w') as f:
             json.dump(params, f, indent=2, default=str)
-        print(f"💾 Test parameters saved to: {params_file}")
+        logger.info(f"💾 Test parameters saved to: {params_file}")
         
     except Exception as e:
         execution_time = time.time() - start_time
-        print(f"\n❌ COMPREHENSIVE DEMO FAILED:")
-        print(f"   Error: {str(e)}")
-        print(f"   Execution time: {execution_time:.2f} seconds")
+        logger.info("\n❌ COMPREHENSIVE DEMO FAILED:")
+        logger.info(f"   Error: {str(e)}")
+        logger.info(f"   Execution time: {execution_time:.2f} seconds")
         return 1
     
     return 0

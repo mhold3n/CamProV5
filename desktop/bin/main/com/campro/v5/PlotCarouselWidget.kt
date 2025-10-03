@@ -36,10 +36,7 @@ import kotlin.math.*
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlotCarouselWidget(
-    parameters: Map<String, String>,
-    testingMode: Boolean = false,
-) {
+fun PlotCarouselWidget(parameters: Map<String, String>, testingMode: Boolean = false) {
     // Extract key parameters with defaults if not present
     val pistonDiameter = parameters["Piston Diameter"]?.toFloatOrNull() ?: 70f
     val stroke = parameters["Stroke"]?.toFloatOrNull() ?: 20f
@@ -176,21 +173,21 @@ fun PlotCarouselWidget(
         // Plot canvas
         Box(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, zoom, _ ->
-                            scale = (scale * zoom).coerceIn(0.1f, 5f)
-                            offset += pan
-                            if (testingMode) {
-                                println(
-                                    "EVENT:{\"type\":\"gesture\",\"component\":\"PlotCanvas\",\"action\":\"pan_zoom\",\"scale\":\"$scale\",\"offset\":\"$offset\"}",
-                                )
-                            }
+            Modifier
+                .fillMaxSize()
+                .clip(MaterialTheme.shapes.medium)
+                .background(MaterialTheme.colorScheme.surface)
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        scale = (scale * zoom).coerceIn(0.1f, 5f)
+                        offset += pan
+                        if (testingMode) {
+                            println(
+                                "EVENT:{\"type\":\"gesture\",\"component\":\"PlotCanvas\",\"action\":\"pan_zoom\",\"scale\":\"$scale\",\"offset\":\"$offset\"}",
+                            )
                         }
-                    },
+                    }
+                },
         ) {
             Canvas(
                 modifier = Modifier.fillMaxSize(),
@@ -353,8 +350,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDisplacementPlo
         end = Offset(canvasWidth - 50f, startY - plotHeight / 2),
         strokeWidth = 1f,
         pathEffect =
-            androidx.compose.ui.graphics.PathEffect
-                .dashPathEffect(floatArrayOf(5f, 5f)),
+        androidx.compose.ui.graphics.PathEffect
+            .dashPathEffect(floatArrayOf(5f, 5f)),
     )
 }
 
@@ -397,8 +394,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawVelocityPlot(
         end = Offset(canvasWidth - 50f, startY - plotHeight / 2),
         strokeWidth = 1f,
         pathEffect =
-            androidx.compose.ui.graphics.PathEffect
-                .dashPathEffect(floatArrayOf(5f, 5f)),
+        androidx.compose.ui.graphics.PathEffect
+            .dashPathEffect(floatArrayOf(5f, 5f)),
     )
 }
 
@@ -441,8 +438,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawAccelerationPlo
         end = Offset(canvasWidth - 50f, startY - plotHeight / 2),
         strokeWidth = 1f,
         pathEffect =
-            androidx.compose.ui.graphics.PathEffect
-                .dashPathEffect(floatArrayOf(5f, 5f)),
+        androidx.compose.ui.graphics.PathEffect
+            .dashPathEffect(floatArrayOf(5f, 5f)),
     )
 }
 
@@ -487,8 +484,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawForcePlot(
         end = Offset(canvasWidth - 50f, startY - plotHeight / 2),
         strokeWidth = 1f,
         pathEffect =
-            androidx.compose.ui.graphics.PathEffect
-                .dashPathEffect(floatArrayOf(5f, 5f)),
+        androidx.compose.ui.graphics.PathEffect
+            .dashPathEffect(floatArrayOf(5f, 5f)),
     )
 }
 
@@ -533,7 +530,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawStressPlot(
         end = Offset(canvasWidth - 50f, startY - plotHeight / 2),
         strokeWidth = 1f,
         pathEffect =
-            androidx.compose.ui.graphics.PathEffect
-                .dashPathEffect(floatArrayOf(5f, 5f)),
+        androidx.compose.ui.graphics.PathEffect
+            .dashPathEffect(floatArrayOf(5f, 5f)),
     )
 }

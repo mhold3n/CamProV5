@@ -84,11 +84,7 @@ class SharingManager {
     /**
      * Share a project with specified options.
      */
-    suspend fun shareProject(
-        projectData: ProjectData,
-        platform: String,
-        options: SharingOptions = SharingOptions(),
-    ): SharingResult =
+    suspend fun shareProject(projectData: ProjectData, platform: String, options: SharingOptions = SharingOptions()): SharingResult =
         withContext(Dispatchers.IO) {
             try {
                 _isSharing.value = true
@@ -169,207 +165,187 @@ class SharingManager {
         projectData: ProjectData,
         collaborators: List<Collaborator>,
         options: CollaborationOptions = CollaborationOptions(),
-    ): CollaborationResult =
-        withContext(Dispatchers.IO) {
-            try {
-                val sessionId = generateSessionId()
-                val session =
-                    CollaborationSession(
-                        id = sessionId,
-                        projectName = projectData.metadata.name,
-                        owner = getCurrentUser(),
-                        collaborators = collaborators,
-                        startTime = Date(),
-                        isActive = true,
-                        permissions = options.permissions,
-                    )
+    ): CollaborationResult = withContext(Dispatchers.IO) {
+        try {
+            val sessionId = generateSessionId()
+            val session =
+                CollaborationSession(
+                    id = sessionId,
+                    projectName = projectData.metadata.name,
+                    owner = getCurrentUser(),
+                    collaborators = collaborators,
+                    startTime = Date(),
+                    isActive = true,
+                    permissions = options.permissions,
+                )
 
-                // Share project with collaborators
-                val shareResult =
-                    shareProject(
-                        projectData,
-                        "cloud",
-                        SharingOptions(
-                            accessLevel = AccessLevel.EDIT,
-                            allowCollaboration = true,
-                            expirationDate = options.sessionDuration?.let { Date(System.currentTimeMillis() + it) },
-                        ),
-                    )
+            // Share project with collaborators
+            val shareResult =
+                shareProject(
+                    projectData,
+                    "cloud",
+                    SharingOptions(
+                        accessLevel = AccessLevel.EDIT,
+                        allowCollaboration = true,
+                        expirationDate = options.sessionDuration?.let { Date(System.currentTimeMillis() + it) },
+                    ),
+                )
 
-                when (shareResult) {
-                    is SharingResult.Success -> {
-                        session.shareUrl = shareResult.shareUrl
-                        addCollaborationSession(session)
+            when (shareResult) {
+                is SharingResult.Success -> {
+                    session.shareUrl = shareResult.shareUrl
+                    addCollaborationSession(session)
 
-                        // Notify collaborators
-                        notifyCollaborators(session, collaborators)
+                    // Notify collaborators
+                    notifyCollaborators(session, collaborators)
 
-                        emitEvent(SharingEvent.CollaborationStarted(sessionId, collaborators.size))
-                        CollaborationResult.Success(session)
-                    }
-                    is SharingResult.Error -> {
-                        CollaborationResult.Error("Failed to start collaboration: ${shareResult.message}")
-                    }
+                    emitEvent(SharingEvent.CollaborationStarted(sessionId, collaborators.size))
+                    CollaborationResult.Success(session)
                 }
-            } catch (e: Exception) {
-                CollaborationResult.Error("Collaboration failed: ${e.message}")
+                is SharingResult.Error -> {
+                    CollaborationResult.Error("Failed to start collaboration: ${shareResult.message}")
+                }
             }
+        } catch (e: Exception) {
+            CollaborationResult.Error("Collaboration failed: ${e.message}")
         }
+    }
 
     /**
      * Share to cloud storage.
      */
-    private suspend fun shareToCloud(
-        projectData: ProjectData,
-        options: SharingOptions,
-    ): SharingResult =
-        withContext(Dispatchers.IO) {
-            try {
-                _sharingProgress.value = 0.2f
+    private suspend fun shareToCloud(projectData: ProjectData, options: SharingOptions): SharingResult = withContext(Dispatchers.IO) {
+        try {
+            _sharingProgress.value = 0.2f
 
-                // Encrypt data if required
-                val dataToShare =
-                    if (options.encrypt) {
-                        encryptProjectData(projectData)
-                    } else {
-                        gson.toJson(projectData)
-                    }
+            // Encrypt data if required
+            val dataToShare =
+                if (options.encrypt) {
+                    encryptProjectData(projectData)
+                } else {
+                    gson.toJson(projectData)
+                }
 
-                _sharingProgress.value = 0.5f
+            _sharingProgress.value = 0.5f
 
-                // Simulate cloud upload
-                val cloudUrl = uploadToCloud(dataToShare, projectData.metadata.name, options)
+            // Simulate cloud upload
+            val cloudUrl = uploadToCloud(dataToShare, projectData.metadata.name, options)
 
-                _sharingProgress.value = 0.8f
+            _sharingProgress.value = 0.8f
 
-                // Generate access token if needed
-                val accessToken =
-                    if (options.requireAuthentication) {
-                        generateAccessToken()
-                    } else {
-                        null
-                    }
+            // Generate access token if needed
+            val accessToken =
+                if (options.requireAuthentication) {
+                    generateAccessToken()
+                } else {
+                    null
+                }
 
-                val shareUrl =
-                    if (accessToken != null) {
-                        "$cloudUrl?token=$accessToken"
-                    } else {
-                        cloudUrl
-                    }
+            val shareUrl =
+                if (accessToken != null) {
+                    "$cloudUrl?token=$accessToken"
+                } else {
+                    cloudUrl
+                }
 
-                SharingResult.Success(shareUrl)
-            } catch (e: Exception) {
-                SharingResult.Error("Cloud sharing failed: ${e.message}")
-            }
+            SharingResult.Success(shareUrl)
+        } catch (e: Exception) {
+            SharingResult.Error("Cloud sharing failed: ${e.message}")
         }
+    }
 
     /**
      * Share via email.
      */
-    private suspend fun shareViaEmail(
-        projectData: ProjectData,
-        options: SharingOptions,
-    ): SharingResult =
-        withContext(Dispatchers.IO) {
-            try {
-                _sharingProgress.value = 0.3f
+    private suspend fun shareViaEmail(projectData: ProjectData, options: SharingOptions): SharingResult = withContext(Dispatchers.IO) {
+        try {
+            _sharingProgress.value = 0.3f
 
-                // Create email content
-                val emailContent = createEmailContent(projectData, options)
+            // Create email content
+            val emailContent = createEmailContent(projectData, options)
 
-                _sharingProgress.value = 0.6f
+            _sharingProgress.value = 0.6f
 
-                // Simulate email sending
-                val emailResult =
-                    sendEmail(
-                        to = options.recipients,
-                        subject = "CamPro v5 Project: ${projectData.metadata.name}",
-                        content = emailContent,
-                        attachments = if (options.includeAttachment) listOf(projectData) else emptyList(),
-                    )
+            // Simulate email sending
+            val emailResult =
+                sendEmail(
+                    to = options.recipients,
+                    subject = "CamPro v5 Project: ${projectData.metadata.name}",
+                    content = emailContent,
+                    attachments = if (options.includeAttachment) listOf(projectData) else emptyList(),
+                )
 
-                _sharingProgress.value = 0.9f
+            _sharingProgress.value = 0.9f
 
-                if (emailResult) {
-                    SharingResult.Success("Email sent to ${options.recipients.joinToString(", ")}")
-                } else {
-                    SharingResult.Error("Failed to send email")
-                }
-            } catch (e: Exception) {
-                SharingResult.Error("Email sharing failed: ${e.message}")
+            if (emailResult) {
+                SharingResult.Success("Email sent to ${options.recipients.joinToString(", ")}")
+            } else {
+                SharingResult.Error("Failed to send email")
             }
+        } catch (e: Exception) {
+            SharingResult.Error("Email sharing failed: ${e.message}")
         }
+    }
 
     /**
      * Generate shareable link.
      */
-    private suspend fun generateShareLink(
-        projectData: ProjectData,
-        options: SharingOptions,
-    ): SharingResult =
-        withContext(Dispatchers.IO) {
-            try {
-                _sharingProgress.value = 0.4f
+    private suspend fun generateShareLink(projectData: ProjectData, options: SharingOptions): SharingResult = withContext(Dispatchers.IO) {
+        try {
+            _sharingProgress.value = 0.4f
 
-                val shareId = generateShareId()
-                val linkData =
-                    ShareLinkData(
-                        shareId = shareId,
-                        projectData = projectData,
-                        accessLevel = options.accessLevel,
-                        expirationDate = options.expirationDate,
-                        createdDate = Date(),
-                    )
+            val shareId = generateShareId()
+            val linkData =
+                ShareLinkData(
+                    shareId = shareId,
+                    projectData = projectData,
+                    accessLevel = options.accessLevel,
+                    expirationDate = options.expirationDate,
+                    createdDate = Date(),
+                )
 
-                _sharingProgress.value = 0.7f
+            _sharingProgress.value = 0.7f
 
-                // Store link data
-                storeLinkData(shareId, linkData)
+            // Store link data
+            storeLinkData(shareId, linkData)
 
-                val baseUrl = getBaseShareUrl()
-                val shareUrl = "$baseUrl/share/$shareId"
+            val baseUrl = getBaseShareUrl()
+            val shareUrl = "$baseUrl/share/$shareId"
 
-                SharingResult.Success(shareUrl)
-            } catch (e: Exception) {
-                SharingResult.Error("Link generation failed: ${e.message}")
-            }
+            SharingResult.Success(shareUrl)
+        } catch (e: Exception) {
+            SharingResult.Error("Link generation failed: ${e.message}")
         }
+    }
 
     /**
      * Generate QR code for sharing.
      */
-    private suspend fun generateQRCode(
-        projectData: ProjectData,
-        options: SharingOptions,
-    ): SharingResult =
-        withContext(Dispatchers.IO) {
-            try {
-                // First generate a share link
-                val linkResult = generateShareLink(projectData, options)
+    private suspend fun generateQRCode(projectData: ProjectData, options: SharingOptions): SharingResult = withContext(Dispatchers.IO) {
+        try {
+            // First generate a share link
+            val linkResult = generateShareLink(projectData, options)
 
-                when (linkResult) {
-                    is SharingResult.Success -> {
-                        _sharingProgress.value = 0.8f
+            when (linkResult) {
+                is SharingResult.Success -> {
+                    _sharingProgress.value = 0.8f
 
-                        // Generate QR code for the link
-                        val qrCodePath = generateQRCodeImage(linkResult.shareUrl, projectData.metadata.name)
+                    // Generate QR code for the link
+                    val qrCodePath = generateQRCodeImage(linkResult.shareUrl, projectData.metadata.name)
 
-                        SharingResult.Success("QR Code generated: $qrCodePath")
-                    }
-                    is SharingResult.Error -> linkResult
+                    SharingResult.Success("QR Code generated: $qrCodePath")
                 }
-            } catch (e: Exception) {
-                SharingResult.Error("QR code generation failed: ${e.message}")
+                is SharingResult.Error -> linkResult
             }
+        } catch (e: Exception) {
+            SharingResult.Error("QR code generation failed: ${e.message}")
         }
+    }
 
     /**
      * Share on local network.
      */
-    private suspend fun shareOnLocalNetwork(
-        projectData: ProjectData,
-        options: SharingOptions,
-    ): SharingResult =
+    private suspend fun shareOnLocalNetwork(projectData: ProjectData, options: SharingOptions): SharingResult =
         withContext(Dispatchers.IO) {
             try {
                 _sharingProgress.value = 0.3f
@@ -392,82 +368,76 @@ class SharingManager {
     /**
      * Share via Git repository.
      */
-    private suspend fun shareViaGit(
-        projectData: ProjectData,
-        options: SharingOptions,
-    ): SharingResult =
-        withContext(Dispatchers.IO) {
-            try {
-                _sharingProgress.value = 0.2f
+    private suspend fun shareViaGit(projectData: ProjectData, options: SharingOptions): SharingResult = withContext(Dispatchers.IO) {
+        try {
+            _sharingProgress.value = 0.2f
 
-                // Create Git repository structure
-                val repoPath = createGitRepository(projectData)
+            // Create Git repository structure
+            val repoPath = createGitRepository(projectData)
 
-                _sharingProgress.value = 0.5f
+            _sharingProgress.value = 0.5f
 
-                // Push to remote if specified
-                val remoteUrl = options.gitRemoteUrl
-                if (remoteUrl != null) {
-                    pushToRemote(repoPath, remoteUrl)
-                    _sharingProgress.value = 0.9f
-                    SharingResult.Success("Pushed to Git repository: $remoteUrl")
-                } else {
-                    SharingResult.Success("Local Git repository created: $repoPath")
-                }
-            } catch (e: Exception) {
-                SharingResult.Error("Git sharing failed: ${e.message}")
+            // Push to remote if specified
+            val remoteUrl = options.gitRemoteUrl
+            if (remoteUrl != null) {
+                pushToRemote(repoPath, remoteUrl)
+                _sharingProgress.value = 0.9f
+                SharingResult.Success("Pushed to Git repository: $remoteUrl")
+            } else {
+                SharingResult.Success("Local Git repository created: $repoPath")
             }
+        } catch (e: Exception) {
+            SharingResult.Error("Git sharing failed: ${e.message}")
         }
+    }
 
     /**
      * Revoke a shared project.
      */
-    suspend fun revokeShare(shareId: String): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                val share = _activeShares.value.find { it.id == shareId }
-                if (share != null) {
-                    // Deactivate share
-                    val updatedShare = share.copy(isActive = false, revokedDate = Date())
-                    updateActiveShare(updatedShare)
+    suspend fun revokeShare(shareId: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val share = _activeShares.value.find { it.id == shareId }
+            if (share != null) {
+                // Deactivate share
+                val updatedShare = share.copy(isActive = false, revokedDate = Date())
+                updateActiveShare(updatedShare)
 
-                    // Remove from cloud/platform if needed
-                    revokeFromPlatform(share)
+                // Remove from cloud/platform if needed
+                revokeFromPlatform(share)
 
-                    emitEvent(SharingEvent.ShareRevoked(shareId))
-                    true
-                } else {
-                    false
-                }
-            } catch (e: Exception) {
-                emitEvent(SharingEvent.SharingFailed("revoke", "Failed to revoke share: ${e.message}"))
+                emitEvent(SharingEvent.ShareRevoked(shareId))
+                true
+            } else {
                 false
             }
+        } catch (e: Exception) {
+            emitEvent(SharingEvent.SharingFailed("revoke", "Failed to revoke share: ${e.message}"))
+            false
         }
+    }
 
     /**
      * End a collaboration session.
      */
-    suspend fun endCollaboration(sessionId: String): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                val session = _collaborationSessions.value.find { it.id == sessionId }
-                if (session != null) {
-                    val updatedSession = session.copy(isActive = false, endTime = Date())
-                    updateCollaborationSession(updatedSession)
+    suspend fun endCollaboration(sessionId: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val session = _collaborationSessions.value.find { it.id == sessionId }
+            if (session != null) {
+                val updatedSession = session.copy(isActive = false, endTime = Date())
+                updateCollaborationSession(updatedSession)
 
-                    // Notify collaborators
-                    notifyCollaborationEnd(session)
+                // Notify collaborators
+                notifyCollaborationEnd(session)
 
-                    emitEvent(SharingEvent.CollaborationEnded(sessionId))
-                    true
-                } else {
-                    false
-                }
-            } catch (e: Exception) {
+                emitEvent(SharingEvent.CollaborationEnded(sessionId))
+                true
+            } else {
                 false
             }
+        } catch (e: Exception) {
+            false
         }
+    }
 
     /**
      * Get sharing history.
@@ -561,12 +531,11 @@ class SharingManager {
         stateManager.setState("sharing.history", historyJson)
     }
 
-    private fun generateShareId(): String =
-        UUID
-            .randomUUID()
-            .toString()
-            .replace("-", "")
-            .substring(0, 12)
+    private fun generateShareId(): String = UUID
+        .randomUUID()
+        .toString()
+        .replace("-", "")
+        .substring(0, 12)
 
     private fun generateSessionId(): String = "session_${System.currentTimeMillis()}_${(1000..9999).random()}"
 
@@ -579,22 +548,20 @@ class SharingManager {
             .substring(0, 32)
     }
 
-    private fun encryptProjectData(projectData: ProjectData): String =
-        try {
-            val cipher = Cipher.getInstance("AES")
-            cipher.init(Cipher.ENCRYPT_MODE, encryptionKey)
-            val encrypted = cipher.doFinal(gson.toJson(projectData).toByteArray())
-            Base64.getEncoder().encodeToString(encrypted)
-        } catch (e: Exception) {
-            gson.toJson(projectData) // Fallback to unencrypted
-        }
+    private fun encryptProjectData(projectData: ProjectData): String = try {
+        val cipher = Cipher.getInstance("AES")
+        cipher.init(Cipher.ENCRYPT_MODE, encryptionKey)
+        val encrypted = cipher.doFinal(gson.toJson(projectData).toByteArray())
+        Base64.getEncoder().encodeToString(encrypted)
+    } catch (e: Exception) {
+        gson.toJson(projectData) // Fallback to unencrypted
+    }
 
-    private fun getCurrentUser(): User =
-        User(
-            id = stateManager.getState("user.id", "anonymous"),
-            name = stateManager.getState("user.name", "Anonymous User"),
-            email = stateManager.getState("user.email", ""),
-        )
+    private fun getCurrentUser(): User = User(
+        id = stateManager.getState("user.id", "anonymous"),
+        name = stateManager.getState("user.name", "Anonymous User"),
+        email = stateManager.getState("user.email", ""),
+    )
 
     /**
      * Reset the sharing manager state.
@@ -625,29 +592,17 @@ class SharingManager {
     }
 
     // Placeholder implementations for external services
-    private suspend fun uploadToCloud(
-        data: String,
-        projectName: String,
-        options: SharingOptions,
-    ): String {
+    private suspend fun uploadToCloud(data: String, projectName: String, options: SharingOptions): String {
         // Simulate cloud upload
         return "https://cloud.campro.com/projects/${generateShareId()}"
     }
 
-    private suspend fun sendEmail(
-        to: List<String>,
-        subject: String,
-        content: String,
-        attachments: List<ProjectData>,
-    ): Boolean {
+    private suspend fun sendEmail(to: List<String>, subject: String, content: String, attachments: List<ProjectData>): Boolean {
         // Simulate email sending
         return true
     }
 
-    private fun createEmailContent(
-        projectData: ProjectData,
-        options: SharingOptions,
-    ): String =
+    private fun createEmailContent(projectData: ProjectData, options: SharingOptions): String =
         """
         Hello,
         
@@ -662,20 +617,14 @@ class SharingManager {
         CamPro v5 User
         """.trimIndent()
 
-    private fun storeLinkData(
-        shareId: String,
-        linkData: ShareLinkData,
-    ) {
+    private fun storeLinkData(shareId: String, linkData: ShareLinkData) {
         val linkDataJson = gson.toJson(linkData)
         stateManager.setState("sharing.links.$shareId", linkDataJson)
     }
 
     private fun getBaseShareUrl(): String = stateManager.getState("sharing.baseUrl", "https://share.campro.com")
 
-    private fun generateQRCodeImage(
-        url: String,
-        projectName: String,
-    ): String {
+    private fun generateQRCodeImage(url: String, projectName: String): String {
         // Simulate QR code generation
         val qrCodePath = "${System.getProperty("user.home")}/CamPro_QR_${projectName.replace(" ", "_")}.png"
         return qrCodePath
@@ -683,19 +632,12 @@ class SharingManager {
 
     private fun findAvailablePort(): Int = (8080..8090).random()
 
-    private fun startLocalServer(
-        port: Int,
-        projectData: ProjectData,
-        options: SharingOptions,
-    ): String {
+    private fun startLocalServer(port: Int, projectData: ProjectData, options: SharingOptions): String {
         // Simulate local server start
         return "http://localhost:$port"
     }
 
-    private fun announceOnNetwork(
-        serverUrl: String,
-        projectName: String,
-    ) {
+    private fun announceOnNetwork(serverUrl: String, projectName: String) {
         // Simulate network announcement
     }
 
@@ -704,10 +646,7 @@ class SharingManager {
         return "${System.getProperty("user.home")}/CamPro_Git_${projectData.metadata.name.replace(" ", "_")}"
     }
 
-    private fun pushToRemote(
-        repoPath: String,
-        remoteUrl: String,
-    ) {
+    private fun pushToRemote(repoPath: String, remoteUrl: String) {
         // Simulate Git push
     }
 
@@ -715,10 +654,7 @@ class SharingManager {
         // Revoke access from the specific platform
     }
 
-    private fun notifyCollaborators(
-        session: CollaborationSession,
-        collaborators: List<Collaborator>,
-    ) {
+    private fun notifyCollaborators(session: CollaborationSession, collaborators: List<Collaborator>) {
         // Notify collaborators about the session
     }
 
@@ -730,19 +666,14 @@ class SharingManager {
         @Volatile
         private var INSTANCE: SharingManager? = null
 
-        fun getInstance(): SharingManager =
-            INSTANCE ?: synchronized(this) {
-                INSTANCE ?: SharingManager().also { INSTANCE = it }
-            }
+        fun getInstance(): SharingManager = INSTANCE ?: synchronized(this) {
+            INSTANCE ?: SharingManager().also { INSTANCE = it }
+        }
     }
 }
 
 // Data classes
-data class SharingPlatform(
-    val name: String,
-    val description: String,
-    val requiresAuthentication: Boolean,
-)
+data class SharingPlatform(val name: String, val description: String, val requiresAuthentication: Boolean)
 
 data class SharingOptions(
     val accessLevel: AccessLevel = AccessLevel.VIEW,
@@ -803,17 +734,9 @@ data class SharingHistoryEntry(
     val error: String? = null,
 )
 
-data class User(
-    val id: String,
-    val name: String,
-    val email: String,
-)
+data class User(val id: String, val name: String, val email: String)
 
-data class Collaborator(
-    val user: User,
-    val role: CollaboratorRole,
-    val permissions: List<Permission>,
-)
+data class Collaborator(val user: User, val role: CollaboratorRole, val permissions: List<Permission>)
 
 enum class AccessLevel {
     VIEW,
@@ -838,52 +761,27 @@ enum class Permission {
 }
 
 sealed class SharingResult {
-    data class Success(
-        val shareUrl: String,
-    ) : SharingResult()
+    data class Success(val shareUrl: String) : SharingResult()
 
-    data class Error(
-        val message: String,
-    ) : SharingResult()
+    data class Error(val message: String) : SharingResult()
 }
 
 sealed class CollaborationResult {
-    data class Success(
-        val session: CollaborationSession,
-    ) : CollaborationResult()
+    data class Success(val session: CollaborationSession) : CollaborationResult()
 
-    data class Error(
-        val message: String,
-    ) : CollaborationResult()
+    data class Error(val message: String) : CollaborationResult()
 }
 
 sealed class SharingEvent {
-    data class SharingStarted(
-        val platform: String,
-        val projectName: String,
-    ) : SharingEvent()
+    data class SharingStarted(val platform: String, val projectName: String) : SharingEvent()
 
-    data class SharingCompleted(
-        val platform: String,
-        val shareUrl: String,
-        val shareId: String,
-    ) : SharingEvent()
+    data class SharingCompleted(val platform: String, val shareUrl: String, val shareId: String) : SharingEvent()
 
-    data class SharingFailed(
-        val platform: String,
-        val error: String,
-    ) : SharingEvent()
+    data class SharingFailed(val platform: String, val error: String) : SharingEvent()
 
-    data class ShareRevoked(
-        val shareId: String,
-    ) : SharingEvent()
+    data class ShareRevoked(val shareId: String) : SharingEvent()
 
-    data class CollaborationStarted(
-        val sessionId: String,
-        val collaboratorCount: Int,
-    ) : SharingEvent()
+    data class CollaborationStarted(val sessionId: String, val collaboratorCount: Int) : SharingEvent()
 
-    data class CollaborationEnded(
-        val sessionId: String,
-    ) : SharingEvent()
+    data class CollaborationEnded(val sessionId: String) : SharingEvent()
 }

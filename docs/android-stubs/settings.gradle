@@ -1,0 +1,6 @@
+// Android module settings stub
+// This will be integrated into the main settings.gradle.kts when Android support is re-added
+
+// include(":android")  // Uncomment when Android module is re-implemented
+
+// Note: This stub preserves the Android module configuration for future reference

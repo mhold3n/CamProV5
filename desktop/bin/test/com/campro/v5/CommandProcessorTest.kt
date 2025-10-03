@@ -63,428 +63,417 @@ class CommandProcessorTest {
      * Test that the command processor can process a click command.
      */
     @Test
-    fun testClickCommand() =
-        runBlocking {
-            // Start command processor in a separate coroutine
-            val job =
-                launch {
-                    commandProcessor.start()
-                }
+    fun testClickCommand() = runBlocking {
+        // Start command processor in a separate coroutine
+        val job =
+            launch {
+                commandProcessor.start()
+            }
 
-            // Wait for command processor to start
-            delay(100)
+        // Wait for command processor to start
+        delay(100)
 
-            // Send a click command
-            val command = """COMMAND:{"command":"click","params":{"component":"TestButton"}}"""
-            sendCommand(command)
+        // Send a click command
+        val command = """COMMAND:{"command":"click","params":{"component":"TestButton"}}"""
+        sendCommand(command)
 
-            // Wait for command to be processed
-            delay(100)
+        // Wait for command to be processed
+        delay(100)
 
-            // Get the output
-            val output = outContent.toString()
+        // Get the output
+        val output = outContent.toString()
 
-            // Verify that the command was processed
-            assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
-            assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
-            assertTrue(output.contains("\"command\":\"click\""), "Output should contain command type")
-            assertTrue(output.contains("\"component\":\"TestButton\""), "Output should contain component name")
+        // Verify that the command was processed
+        assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
+        assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
+        assertTrue(output.contains("\"command\":\"click\""), "Output should contain command type")
+        assertTrue(output.contains("\"component\":\"TestButton\""), "Output should contain component name")
 
-            // Stop command processor
-            commandProcessor.stop()
-            job.cancel()
+        // Stop command processor
+        commandProcessor.stop()
+        job.cancel()
 
-            println("[DEBUG_LOG] Click command test complete")
-        }
+        println("[DEBUG_LOG] Click command test complete")
+    }
 
     /**
      * Test that the command processor can process a set_value command.
      */
     @Test
-    fun testSetValueCommand() =
-        runBlocking {
-            // Start command processor in a separate coroutine
-            val job =
-                launch {
-                    commandProcessor.start()
-                }
+    fun testSetValueCommand() = runBlocking {
+        // Start command processor in a separate coroutine
+        val job =
+            launch {
+                commandProcessor.start()
+            }
 
-            // Wait for command processor to start
-            delay(100)
+        // Wait for command processor to start
+        delay(100)
 
-            // Send a set_value command
-            val command = """COMMAND:{"command":"set_value","params":{"component":"TestInput","value":"TestValue"}}"""
-            sendCommand(command)
+        // Send a set_value command
+        val command = """COMMAND:{"command":"set_value","params":{"component":"TestInput","value":"TestValue"}}"""
+        sendCommand(command)
 
-            // Wait for command to be processed
-            delay(100)
+        // Wait for command to be processed
+        delay(100)
 
-            // Get the output
-            val output = outContent.toString()
+        // Get the output
+        val output = outContent.toString()
 
-            // Verify that the command was processed
-            assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
-            assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
-            assertTrue(output.contains("\"command\":\"set_value\""), "Output should contain command type")
-            assertTrue(output.contains("\"component\":\"TestInput\""), "Output should contain component name")
-            assertTrue(output.contains("\"value\":\"TestValue\""), "Output should contain value")
+        // Verify that the command was processed
+        assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
+        assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
+        assertTrue(output.contains("\"command\":\"set_value\""), "Output should contain command type")
+        assertTrue(output.contains("\"component\":\"TestInput\""), "Output should contain component name")
+        assertTrue(output.contains("\"value\":\"TestValue\""), "Output should contain value")
 
-            // Stop command processor
-            commandProcessor.stop()
-            job.cancel()
+        // Stop command processor
+        commandProcessor.stop()
+        job.cancel()
 
-            println("[DEBUG_LOG] Set value command test complete")
-        }
+        println("[DEBUG_LOG] Set value command test complete")
+    }
 
     /**
      * Test that the command processor can process a select_tab command.
      */
     @Test
-    fun testSelectTabCommand() =
-        runBlocking {
-            // Start command processor in a separate coroutine
-            val job =
-                launch {
-                    commandProcessor.start()
-                }
+    fun testSelectTabCommand() = runBlocking {
+        // Start command processor in a separate coroutine
+        val job =
+            launch {
+                commandProcessor.start()
+            }
 
-            // Wait for command processor to start
-            delay(100)
+        // Wait for command processor to start
+        delay(100)
 
-            // Send a select_tab command
-            val command = """COMMAND:{"command":"select_tab","params":{"component":"TestTabs","value":"Tab1"}}"""
-            sendCommand(command)
+        // Send a select_tab command
+        val command = """COMMAND:{"command":"select_tab","params":{"component":"TestTabs","value":"Tab1"}}"""
+        sendCommand(command)
 
-            // Wait for command to be processed
-            delay(100)
+        // Wait for command to be processed
+        delay(100)
 
-            // Get the output
-            val output = outContent.toString()
+        // Get the output
+        val output = outContent.toString()
 
-            // Verify that the command was processed
-            assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
-            assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
-            assertTrue(output.contains("\"command\":\"select_tab\""), "Output should contain command type")
-            assertTrue(output.contains("\"component\":\"TestTabs\""), "Output should contain component name")
-            assertTrue(output.contains("\"value\":\"Tab1\""), "Output should contain value")
+        // Verify that the command was processed
+        assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
+        assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
+        assertTrue(output.contains("\"command\":\"select_tab\""), "Output should contain command type")
+        assertTrue(output.contains("\"component\":\"TestTabs\""), "Output should contain component name")
+        assertTrue(output.contains("\"value\":\"Tab1\""), "Output should contain value")
 
-            // Stop command processor
-            commandProcessor.stop()
-            job.cancel()
+        // Stop command processor
+        commandProcessor.stop()
+        job.cancel()
 
-            println("[DEBUG_LOG] Select tab command test complete")
-        }
+        println("[DEBUG_LOG] Select tab command test complete")
+    }
 
     /**
      * Test that the command processor can process a gesture command.
      */
     @Test
-    fun testGestureCommand() =
-        runBlocking {
-            // Start command processor in a separate coroutine
-            val job =
-                launch {
-                    commandProcessor.start()
-                }
+    fun testGestureCommand() = runBlocking {
+        // Start command processor in a separate coroutine
+        val job =
+            launch {
+                commandProcessor.start()
+            }
 
-            // Wait for command processor to start
-            delay(100)
+        // Wait for command processor to start
+        delay(100)
 
-            // Send a gesture command
-            val command =
-                "COMMAND:{\"command\":\"gesture\",\"params\":{\"component\":\"TestCanvas\"," +
-                    "\"action\":\"pan\",\"offset_x\":\"10\",\"offset_y\":\"20\"}}"
-            sendCommand(command)
+        // Send a gesture command
+        val command =
+            "COMMAND:{\"command\":\"gesture\",\"params\":{\"component\":\"TestCanvas\"," +
+                "\"action\":\"pan\",\"offset_x\":\"10\",\"offset_y\":\"20\"}}"
+        sendCommand(command)
 
-            // Wait for command to be processed
-            delay(100)
+        // Wait for command to be processed
+        delay(100)
 
-            // Get the output
-            val output = outContent.toString()
+        // Get the output
+        val output = outContent.toString()
 
-            // Verify that the command was processed
-            assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
-            assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
-            assertTrue(output.contains("\"command\":\"gesture\""), "Output should contain command type")
-            assertTrue(output.contains("\"component\":\"TestCanvas\""), "Output should contain component name")
-            assertTrue(output.contains("\"action\":\"pan\""), "Output should contain action")
-            assertTrue(output.contains("\"offset_x\":\"10\""), "Output should contain offset_x")
-            assertTrue(output.contains("\"offset_y\":\"20\""), "Output should contain offset_y")
+        // Verify that the command was processed
+        assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
+        assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
+        assertTrue(output.contains("\"command\":\"gesture\""), "Output should contain command type")
+        assertTrue(output.contains("\"component\":\"TestCanvas\""), "Output should contain component name")
+        assertTrue(output.contains("\"action\":\"pan\""), "Output should contain action")
+        assertTrue(output.contains("\"offset_x\":\"10\""), "Output should contain offset_x")
+        assertTrue(output.contains("\"offset_y\":\"20\""), "Output should contain offset_y")
 
-            // Stop command processor
-            commandProcessor.stop()
-            job.cancel()
+        // Stop command processor
+        commandProcessor.stop()
+        job.cancel()
 
-            println("[DEBUG_LOG] Gesture command test complete")
-        }
+        println("[DEBUG_LOG] Gesture command test complete")
+    }
 
     /**
      * Test that the command processor can process a get_state command.
      */
     @Test
-    fun testGetStateCommand() =
-        runBlocking {
-            // Start command processor in a separate coroutine
-            val job =
-                launch {
-                    commandProcessor.start()
-                }
+    fun testGetStateCommand() = runBlocking {
+        // Start command processor in a separate coroutine
+        val job =
+            launch {
+                commandProcessor.start()
+            }
 
-            // Wait for command processor to start
-            delay(100)
+        // Wait for command processor to start
+        delay(100)
 
-            // Send a get_state command
-            val command = """COMMAND:{"command":"get_state","params":{"component":"TestComponent"}}"""
-            sendCommand(command)
+        // Send a get_state command
+        val command = """COMMAND:{"command":"get_state","params":{"component":"TestComponent"}}"""
+        sendCommand(command)
 
-            // Wait for command to be processed
-            delay(100)
+        // Wait for command to be processed
+        delay(100)
 
-            // Get the output
-            val output = outContent.toString()
+        // Get the output
+        val output = outContent.toString()
 
-            // Verify that the command was processed
-            assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
-            assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
-            assertTrue(output.contains("\"command\":\"get_state\""), "Output should contain command type")
-            assertTrue(output.contains("\"component\":\"TestComponent\""), "Output should contain component name")
+        // Verify that the command was processed
+        assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
+        assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
+        assertTrue(output.contains("\"command\":\"get_state\""), "Output should contain command type")
+        assertTrue(output.contains("\"component\":\"TestComponent\""), "Output should contain component name")
 
-            // Stop command processor
-            commandProcessor.stop()
-            job.cancel()
+        // Stop command processor
+        commandProcessor.stop()
+        job.cancel()
 
-            println("[DEBUG_LOG] Get state command test complete")
-        }
+        println("[DEBUG_LOG] Get state command test complete")
+    }
 
     /**
      * Test that the command processor can process a reset command.
      */
     @Test
-    fun testResetCommand() =
-        runBlocking {
-            // Start command processor in a separate coroutine
-            val job =
-                launch {
-                    commandProcessor.start()
-                }
+    fun testResetCommand() = runBlocking {
+        // Start command processor in a separate coroutine
+        val job =
+            launch {
+                commandProcessor.start()
+            }
 
-            // Wait for command processor to start
-            delay(100)
+        // Wait for command processor to start
+        delay(100)
 
-            // Send a reset command
-            val command = """COMMAND:{"command":"reset","params":{"component":"TestComponent"}}"""
-            sendCommand(command)
+        // Send a reset command
+        val command = """COMMAND:{"command":"reset","params":{"component":"TestComponent"}}"""
+        sendCommand(command)
 
-            // Wait for command to be processed
-            delay(100)
+        // Wait for command to be processed
+        delay(100)
 
-            // Get the output
-            val output = outContent.toString()
+        // Get the output
+        val output = outContent.toString()
 
-            // Verify that the command was processed
-            assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
-            assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
-            assertTrue(output.contains("\"command\":\"reset\""), "Output should contain command type")
-            assertTrue(output.contains("\"component\":\"TestComponent\""), "Output should contain component name")
+        // Verify that the command was processed
+        assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
+        assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
+        assertTrue(output.contains("\"command\":\"reset\""), "Output should contain command type")
+        assertTrue(output.contains("\"component\":\"TestComponent\""), "Output should contain component name")
 
-            // Stop command processor
-            commandProcessor.stop()
-            job.cancel()
+        // Stop command processor
+        commandProcessor.stop()
+        job.cancel()
 
-            println("[DEBUG_LOG] Reset command test complete")
-        }
+        println("[DEBUG_LOG] Reset command test complete")
+    }
 
     /**
      * Test that the command processor can process an export command.
      */
     @Test
-    fun testExportCommand() =
-        runBlocking {
-            // Start command processor in a separate coroutine
-            val job =
-                launch {
-                    commandProcessor.start()
-                }
+    fun testExportCommand() = runBlocking {
+        // Start command processor in a separate coroutine
+        val job =
+            launch {
+                commandProcessor.start()
+            }
 
-            // Wait for command processor to start
-            delay(100)
+        // Wait for command processor to start
+        delay(100)
 
-            // Send an export command
-            val command = """COMMAND:{"command":"export","params":{"component":"TestComponent","file_path":"test.json","format":"json"}}"""
-            sendCommand(command)
+        // Send an export command
+        val command = """COMMAND:{"command":"export","params":{"component":"TestComponent","file_path":"test.json","format":"json"}}"""
+        sendCommand(command)
 
-            // Wait for command to be processed
-            delay(100)
+        // Wait for command to be processed
+        delay(100)
 
-            // Get the output
-            val output = outContent.toString()
+        // Get the output
+        val output = outContent.toString()
 
-            // Verify that the command was processed
-            assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
-            assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
-            assertTrue(output.contains("\"command\":\"export\""), "Output should contain command type")
-            assertTrue(output.contains("\"component\":\"TestComponent\""), "Output should contain component name")
-            assertTrue(output.contains("\"file_path\":\"test.json\""), "Output should contain file_path")
-            assertTrue(output.contains("\"format\":\"json\""), "Output should contain format")
+        // Verify that the command was processed
+        assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
+        assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
+        assertTrue(output.contains("\"command\":\"export\""), "Output should contain command type")
+        assertTrue(output.contains("\"component\":\"TestComponent\""), "Output should contain component name")
+        assertTrue(output.contains("\"file_path\":\"test.json\""), "Output should contain file_path")
+        assertTrue(output.contains("\"format\":\"json\""), "Output should contain format")
 
-            // Stop command processor
-            commandProcessor.stop()
-            job.cancel()
+        // Stop command processor
+        commandProcessor.stop()
+        job.cancel()
 
-            println("[DEBUG_LOG] Export command test complete")
-        }
+        println("[DEBUG_LOG] Export command test complete")
+    }
 
     /**
      * Test that the command processor can process an import command.
      */
     @Test
-    fun testImportCommand() =
-        runBlocking {
-            // Start command processor in a separate coroutine
-            val job =
-                launch {
-                    commandProcessor.start()
-                }
+    fun testImportCommand() = runBlocking {
+        // Start command processor in a separate coroutine
+        val job =
+            launch {
+                commandProcessor.start()
+            }
 
-            // Wait for command processor to start
-            delay(100)
+        // Wait for command processor to start
+        delay(100)
 
-            // Send an import command
-            val command = """COMMAND:{"command":"import","params":{"component":"TestComponent","file_path":"test.json"}}"""
-            sendCommand(command)
+        // Send an import command
+        val command = """COMMAND:{"command":"import","params":{"component":"TestComponent","file_path":"test.json"}}"""
+        sendCommand(command)
 
-            // Wait for command to be processed
-            delay(100)
+        // Wait for command to be processed
+        delay(100)
 
-            // Get the output
-            val output = outContent.toString()
+        // Get the output
+        val output = outContent.toString()
 
-            // Verify that the command was processed
-            assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
-            assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
-            assertTrue(output.contains("\"command\":\"import\""), "Output should contain command type")
-            assertTrue(output.contains("\"component\":\"TestComponent\""), "Output should contain component name")
-            assertTrue(output.contains("\"file_path\":\"test.json\""), "Output should contain file_path")
+        // Verify that the command was processed
+        assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
+        assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
+        assertTrue(output.contains("\"command\":\"import\""), "Output should contain command type")
+        assertTrue(output.contains("\"component\":\"TestComponent\""), "Output should contain component name")
+        assertTrue(output.contains("\"file_path\":\"test.json\""), "Output should contain file_path")
 
-            // Stop command processor
-            commandProcessor.stop()
-            job.cancel()
+        // Stop command processor
+        commandProcessor.stop()
+        job.cancel()
 
-            println("[DEBUG_LOG] Import command test complete")
-        }
+        println("[DEBUG_LOG] Import command test complete")
+    }
 
     /**
      * Test that the command processor can process a generate command.
      */
     @Test
-    fun testGenerateCommand() =
-        runBlocking {
-            // Start command processor in a separate coroutine
-            val job =
-                launch {
-                    commandProcessor.start()
-                }
+    fun testGenerateCommand() = runBlocking {
+        // Start command processor in a separate coroutine
+        val job =
+            launch {
+                commandProcessor.start()
+            }
 
-            // Wait for command processor to start
-            delay(100)
+        // Wait for command processor to start
+        delay(100)
 
-            // Send a generate command
-            val command = """COMMAND:{"command":"generate","params":{"component":"TestComponent","type":"report"}}"""
-            sendCommand(command)
+        // Send a generate command
+        val command = """COMMAND:{"command":"generate","params":{"component":"TestComponent","type":"report"}}"""
+        sendCommand(command)
 
-            // Wait for command to be processed
-            delay(100)
+        // Wait for command to be processed
+        delay(100)
 
-            // Get the output
-            val output = outContent.toString()
+        // Get the output
+        val output = outContent.toString()
 
-            // Verify that the command was processed
-            assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
-            assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
-            assertTrue(output.contains("\"command\":\"generate\""), "Output should contain command type")
-            assertTrue(output.contains("\"component\":\"TestComponent\""), "Output should contain component name")
-            assertTrue(output.contains("\"type\":\"report\""), "Output should contain type")
+        // Verify that the command was processed
+        assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
+        assertTrue(output.contains("\"type\":\"command_executed\""), "Output should contain event type")
+        assertTrue(output.contains("\"command\":\"generate\""), "Output should contain command type")
+        assertTrue(output.contains("\"component\":\"TestComponent\""), "Output should contain component name")
+        assertTrue(output.contains("\"type\":\"report\""), "Output should contain type")
 
-            // Stop command processor
-            commandProcessor.stop()
-            job.cancel()
+        // Stop command processor
+        commandProcessor.stop()
+        job.cancel()
 
-            println("[DEBUG_LOG] Generate command test complete")
-        }
+        println("[DEBUG_LOG] Generate command test complete")
+    }
 
     /**
      * Test that the command processor handles unknown commands.
      */
     @Test
-    fun testUnknownCommand() =
-        runBlocking {
-            // Start command processor in a separate coroutine
-            val job =
-                launch {
-                    commandProcessor.start()
-                }
+    fun testUnknownCommand() = runBlocking {
+        // Start command processor in a separate coroutine
+        val job =
+            launch {
+                commandProcessor.start()
+            }
 
-            // Wait for command processor to start
-            delay(100)
+        // Wait for command processor to start
+        delay(100)
 
-            // Send an unknown command
-            val command = """COMMAND:{"command":"unknown","params":{"component":"TestComponent"}}"""
-            sendCommand(command)
+        // Send an unknown command
+        val command = """COMMAND:{"command":"unknown","params":{"component":"TestComponent"}}"""
+        sendCommand(command)
 
-            // Wait for command to be processed
-            delay(100)
+        // Wait for command to be processed
+        delay(100)
 
-            // Get the output
-            val output = outContent.toString()
+        // Get the output
+        val output = outContent.toString()
 
-            // Verify that an error was reported
-            assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
-            assertTrue(output.contains("\"type\":\"error\""), "Output should contain error type")
-            assertTrue(output.contains("\"message\":\"Unknown command: unknown\""), "Output should contain error message")
+        // Verify that an error was reported
+        assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
+        assertTrue(output.contains("\"type\":\"error\""), "Output should contain error type")
+        assertTrue(output.contains("\"message\":\"Unknown command: unknown\""), "Output should contain error message")
 
-            // Stop command processor
-            commandProcessor.stop()
-            job.cancel()
+        // Stop command processor
+        commandProcessor.stop()
+        job.cancel()
 
-            println("[DEBUG_LOG] Unknown command test complete")
-        }
+        println("[DEBUG_LOG] Unknown command test complete")
+    }
 
     /**
      * Test that the command processor handles invalid JSON.
      */
     @Test
-    fun testInvalidJson() =
-        runBlocking {
-            // Start command processor in a separate coroutine
-            val job =
-                launch {
-                    commandProcessor.start()
-                }
+    fun testInvalidJson() = runBlocking {
+        // Start command processor in a separate coroutine
+        val job =
+            launch {
+                commandProcessor.start()
+            }
 
-            // Wait for command processor to start
-            delay(100)
+        // Wait for command processor to start
+        delay(100)
 
-            // Send invalid JSON
-            val command = """COMMAND:{"command":"click","params":{"component":"TestButton"} INVALID"""
-            sendCommand(command)
+        // Send invalid JSON
+        val command = """COMMAND:{"command":"click","params":{"component":"TestButton"} INVALID"""
+        sendCommand(command)
 
-            // Wait for command to be processed
-            delay(100)
+        // Wait for command to be processed
+        delay(100)
 
-            // Get the output
-            val output = outContent.toString()
+        // Get the output
+        val output = outContent.toString()
 
-            // Verify that an error was reported
-            assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
-            assertTrue(output.contains("\"type\":\"error\""), "Output should contain error type")
-            assertTrue(output.contains("\"message\":\"Error processing command:"), "Output should contain error message")
+        // Verify that an error was reported
+        assertTrue(output.contains("EVENT:"), "Output should contain EVENT: prefix")
+        assertTrue(output.contains("\"type\":\"error\""), "Output should contain error type")
+        assertTrue(output.contains("\"message\":\"Error processing command:"), "Output should contain error message")
 
-            // Stop command processor
-            commandProcessor.stop()
-            job.cancel()
+        // Stop command processor
+        commandProcessor.stop()
+        job.cancel()
 
-            println("[DEBUG_LOG] Invalid JSON test complete")
-        }
+        println("[DEBUG_LOG] Invalid JSON test complete")
+    }
 
     /**
      * Helper method to send a command to the command processor.

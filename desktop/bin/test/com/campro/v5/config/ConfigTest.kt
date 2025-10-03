@@ -1,18 +1,16 @@
 package com.campro.v5.config
 
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 class ConfigTest {
 
     @Test
     fun `test valid input output argument parsing`() {
         val args = arrayOf("--input", "test_input.json", "--output", "test_output.json")
-        
+
         // This test would need to be implemented based on the actual CLI parsing logic
         // For now, we'll test the concept
         assertNotNull(args)
@@ -55,7 +53,7 @@ class ConfigTest {
             "/absolute/path/file.json",
             "file_with_underscores.json",
             "file-with-dashes.json",
-            "file123.json"
+            "file123.json",
         )
 
         validPaths.forEach { path ->
@@ -70,14 +68,16 @@ class ConfigTest {
             "file.txt",
             "file",
             "path/with spaces/file.json",
-            "path/with\ttabs/file.json"
+            "path/with\ttabs/file.json",
         )
 
         invalidPaths.forEach { path ->
             if (path.isBlank() || !path.endsWith(".json")) {
                 // These should be considered invalid
-                assertTrue(path.isBlank() || !path.endsWith(".json"), 
-                    "Path should be invalid: '$path'")
+                assertTrue(
+                    path.isBlank() || !path.endsWith(".json"),
+                    "Path should be invalid: '$path'",
+                )
             }
         }
     }
@@ -90,7 +90,7 @@ class ConfigTest {
             "Missing output file" to "Output file is required",
             "Invalid file format" to "File must be valid JSON",
             "File not found" to "File does not exist",
-            "Permission denied" to "Cannot access file"
+            "Permission denied" to "Cannot access file",
         )
 
         errorScenarios.forEach { (scenario, expectedMessage) ->
@@ -136,7 +136,7 @@ class ConfigTest {
             "topDwellTime" to 0.2,
             "bottomDwellTime" to 0.2,
             "rampProfile" to "CYCLOIDAL",
-            "solverMode" to "PIECEWISE"
+            "solverMode" to "PIECEWISE",
         )
 
         assertNotNull(validConfig)
@@ -150,18 +150,20 @@ class ConfigTest {
             mapOf("cycleTime" to 0.0), // Zero cycle time
             mapOf("riseTime" to 1.5), // Rise time > cycle time
             mapOf("rampProfile" to "INVALID_PROFILE"), // Invalid profile
-            mapOf("solverMode" to "INVALID_MODE") // Invalid solver mode
+            mapOf("solverMode" to "INVALID_MODE"), // Invalid solver mode
         )
 
         invalidConfigs.forEach { config ->
             // These configurations should be considered invalid
-            assertTrue(config.size < 8 || 
-                      config["stroke"] == -1.0 || 
-                      config["cycleTime"] == 0.0 ||
-                      config["riseTime"] == 1.5 ||
-                      config["rampProfile"] == "INVALID_PROFILE" ||
-                      config["solverMode"] == "INVALID_MODE",
-                "Config should be invalid: $config")
+            assertTrue(
+                config.size < 8 ||
+                    config["stroke"] == -1.0 ||
+                    config["cycleTime"] == 0.0 ||
+                    config["riseTime"] == 1.5 ||
+                    config["rampProfile"] == "INVALID_PROFILE" ||
+                    config["solverMode"] == "INVALID_MODE",
+                "Config should be invalid: $config",
+            )
         }
     }
 
@@ -174,7 +176,7 @@ class ConfigTest {
             "riseTime" to 0.3,
             "returnTime" to 0.3,
             "topDwellTime" to 0.2,
-            "bottomDwellTime" to 0.2
+            "bottomDwellTime" to 0.2,
         )
 
         numericParams.forEach { (key, value) ->
@@ -185,7 +187,7 @@ class ConfigTest {
         // Test string parameter validation
         val stringParams = mapOf(
             "rampProfile" to "CYCLOIDAL",
-            "solverMode" to "PIECEWISE"
+            "solverMode" to "PIECEWISE",
         )
 
         stringParams.forEach { (key, value) ->
@@ -201,13 +203,17 @@ class ConfigTest {
         val invalidExtensions = listOf(".txt", ".xml", ".csv", ".dat", "")
 
         validExtensions.forEach { ext ->
-            assertTrue(ext.endsWith(".json", ignoreCase = true), 
-                "Extension $ext should be valid JSON extension")
+            assertTrue(
+                ext.endsWith(".json", ignoreCase = true),
+                "Extension $ext should be valid JSON extension",
+            )
         }
 
         invalidExtensions.forEach { ext ->
-            assertTrue(!ext.endsWith(".json", ignoreCase = true), 
-                "Extension $ext should be invalid")
+            assertTrue(
+                !ext.endsWith(".json", ignoreCase = true),
+                "Extension $ext should be invalid",
+            )
         }
     }
 
@@ -234,14 +240,14 @@ class ConfigTest {
     fun `test duplicate argument handling`() {
         // Test handling of duplicate arguments
         val argsWithDuplicates = arrayOf(
-            "--input", "input1.json", 
+            "--input", "input1.json",
             "--output", "output.json",
-            "--input", "input2.json"
+            "--input", "input2.json",
         )
 
         assertNotNull(argsWithDuplicates)
         assertEquals(6, argsWithDuplicates.size)
-        
+
         // Should handle duplicates gracefully (last one wins or error)
         val inputCount = argsWithDuplicates.count { it == "--input" }
         assertEquals(2, inputCount, "Should have 2 --input arguments")
@@ -253,7 +259,7 @@ class ConfigTest {
             " file.json ",
             "\tfile.json\t",
             "\nfile.json\n",
-            "  path/to/file.json  "
+            "  path/to/file.json  ",
         )
 
         pathsWithWhitespace.forEach { path ->

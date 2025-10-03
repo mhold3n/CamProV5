@@ -89,11 +89,7 @@ class ThemeManager {
      * @param secondary The secondary color
      * @param tertiary The tertiary color
      */
-    fun setCustomColorScheme(
-        primary: Color,
-        secondary: Color,
-        tertiary: Color,
-    ) {
+    fun setCustomColorScheme(primary: Color, secondary: Color, tertiary: Color) {
         val colorScheme = createColorScheme(primary, secondary, tertiary)
         _customColorScheme.value = colorScheme
 
@@ -159,13 +155,12 @@ class ThemeManager {
      * @param isDarkTheme Whether to use dark theme colors
      * @return The color scheme
      */
-    fun getColorScheme(isDarkTheme: Boolean): ColorScheme =
-        when (_currentTheme.value) {
-            Theme.LIGHT -> lightColorScheme()
-            Theme.DARK -> darkColorScheme()
-            Theme.SYSTEM -> if (isDarkTheme) darkColorScheme() else lightColorScheme()
-            Theme.CUSTOM -> _customColorScheme.value ?: if (isDarkTheme) darkColorScheme() else lightColorScheme()
-        }
+    fun getColorScheme(isDarkTheme: Boolean): ColorScheme = when (_currentTheme.value) {
+        Theme.LIGHT -> lightColorScheme()
+        Theme.DARK -> darkColorScheme()
+        Theme.SYSTEM -> if (isDarkTheme) darkColorScheme() else lightColorScheme()
+        Theme.CUSTOM -> _customColorScheme.value ?: if (isDarkTheme) darkColorScheme() else lightColorScheme()
+    }
 
     /**
      * Create a color scheme from primary, secondary, and tertiary colors.
@@ -175,24 +170,19 @@ class ThemeManager {
      * @param tertiary The tertiary color
      * @return The color scheme
      */
-    private fun createColorScheme(
-        primary: Color,
-        secondary: Color,
-        tertiary: Color,
-    ): ColorScheme =
-        if (_isDarkTheme.value) {
-            darkColorScheme(
-                primary = primary,
-                secondary = secondary,
-                tertiary = tertiary,
-            )
-        } else {
-            lightColorScheme(
-                primary = primary,
-                secondary = secondary,
-                tertiary = tertiary,
-            )
-        }
+    private fun createColorScheme(primary: Color, secondary: Color, tertiary: Color): ColorScheme = if (_isDarkTheme.value) {
+        darkColorScheme(
+            primary = primary,
+            secondary = secondary,
+            tertiary = tertiary,
+        )
+    } else {
+        lightColorScheme(
+            primary = primary,
+            secondary = secondary,
+            tertiary = tertiary,
+        )
+    }
 
     /**
      * Convert a Color to a hex string.
@@ -259,9 +249,7 @@ sealed class ThemeChangeEvent {
      *
      * @param theme The new theme
      */
-    data class ThemeChanged(
-        val theme: Theme,
-    ) : ThemeChangeEvent()
+    data class ThemeChanged(val theme: Theme) : ThemeChangeEvent()
 
     /**
      * Event emitted when the custom color scheme changes.
@@ -270,11 +258,7 @@ sealed class ThemeChangeEvent {
      * @param secondary The secondary color
      * @param tertiary The tertiary color
      */
-    data class CustomColorSchemeChanged(
-        val primary: Color,
-        val secondary: Color,
-        val tertiary: Color,
-    ) : ThemeChangeEvent()
+    data class CustomColorSchemeChanged(val primary: Color, val secondary: Color, val tertiary: Color) : ThemeChangeEvent()
 
     /**
      * Event emitted when the custom color scheme is cleared.
@@ -286,9 +270,7 @@ sealed class ThemeChangeEvent {
      *
      * @param isDark Whether dark theme is enabled
      */
-    data class DarkThemeChanged(
-        val isDark: Boolean,
-    ) : ThemeChangeEvent()
+    data class DarkThemeChanged(val isDark: Boolean) : ThemeChangeEvent()
 }
 
 /**
@@ -306,10 +288,7 @@ fun rememberThemeManager(): ThemeManager = remember { ThemeManager.getInstance()
  * @param content The content to display
  */
 @Composable
-fun CamProTheme(
-    themeManager: ThemeManager = rememberThemeManager(),
-    content: @Composable () -> Unit,
-) {
+fun CamProTheme(themeManager: ThemeManager = rememberThemeManager(), content: @Composable () -> Unit) {
     // Determine if dark theme should be used
     val systemInDarkTheme = isSystemInDarkTheme()
 
@@ -331,10 +310,9 @@ fun CamProTheme(
  * Default typography for the application.
  */
 @Composable
-fun Typography(): Typography =
-    Typography(
-        // Use default Material 3 typography
-    )
+fun Typography(): Typography = Typography(
+    // Use default Material 3 typography
+)
 
 /**
  * Predefined color schemes for the application.

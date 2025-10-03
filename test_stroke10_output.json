@@ -1,0 +1,41 @@
+{
+  "success": true,
+  "executionTime": 3.282,
+  "motionLaw": {
+    "nodeCount": 181,
+    "discretizationType": "LGL",
+    "positionRange": [
+      0.0,
+      0.01
+    ],
+    "velocityRange": [
+      0.0031830988618378186,
+      0.003183098861837985
+    ],
+    "accelerationRange": [
+      -4.760081218080359e-15,
+      3.191891195797325e-15
+    ]
+  },
+  "gearProfiles": {
+    "sunRadiusRange": [
+      3.0,
+      11.001081666666668
+    ],
+    "planetRadiusRange": [
+      3.000305,
+      11.002181666666667
+    ],
+    "ringRadiusRange": [
+      3.0006049999999997,
+      11.0033
+    ],
+    "forceTransferEfficiency": 0.85,
+    "maxContactStress": 500.0,
+    "minGearClearance": 0.0013999999999985135
+  },
+  "iterations": 0,
+  "objectiveValue": null,
+  "constraintViolation": 0.0,
+  "solverStatus": "Invalid_Option"
+}

@@ -22,10 +22,7 @@ object TransmissionSynthesis {
      * Uses motion-law velocity v(θ)=dx/dθ and simple kinematics to estimate dψ/dα and i(θ)=1+dψ/dα.
      * Also produces prototype pitch curves and computes an arc-length residual metric.
      */
-    fun computeTransmissionAndPitch(
-        motion: MotionLawSamples,
-        params: LitvinUserParams,
-    ): TransmissionAndPitch {
+    fun computeTransmissionAndPitch(motion: MotionLawSamples, params: LitvinUserParams): TransmissionAndPitch {
         return try {
             val n = motion.samples.size
             if (n == 0) return TransmissionAndPitch(emptyList(), emptyList(), emptyList(), 0.0)

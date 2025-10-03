@@ -116,10 +116,7 @@ class ErrorHandler {
      * @param errorType The type of error
      * @param strategy The recovery strategy
      */
-    fun registerRecoveryStrategy(
-        errorType: ErrorType,
-        strategy: RecoveryStrategy,
-    ) {
+    fun registerRecoveryStrategy(errorType: ErrorType, strategy: RecoveryStrategy) {
         recoveryStrategies[errorType] = strategy
     }
 
@@ -129,36 +126,35 @@ class ErrorHandler {
      * @param error The error to handle
      * @return True if recovery was successful, false otherwise
      */
-    suspend fun handleError(error: FeaError): Boolean =
-        withContext(Dispatchers.Default) {
-            // Get the recovery strategy for this error type
-            val strategy = recoveryStrategies[error.type]
+    suspend fun handleError(error: FeaError): Boolean = withContext(Dispatchers.Default) {
+        // Get the recovery strategy for this error type
+        val strategy = recoveryStrategies[error.type]
 
-            if (strategy != null) {
-                // Attempt recovery
-                val recoverySuccessful = strategy.action(error)
+        if (strategy != null) {
+            // Attempt recovery
+            val recoverySuccessful = strategy.action(error)
 
-                // Update error info
-                val errorInfo = errorLog[error.id] ?: ErrorInfo(error)
-                errorInfo.recoveryAttempted = true
-                errorInfo.recoverySuccessful = recoverySuccessful
-                errorLog[error.id] = errorInfo
+            // Update error info
+            val errorInfo = errorLog[error.id] ?: ErrorInfo(error)
+            errorInfo.recoveryAttempted = true
+            errorInfo.recoverySuccessful = recoverySuccessful
+            errorLog[error.id] = errorInfo
 
-                // Emit event
-                if (recoverySuccessful) {
-                    emitError("Recovery successful for error: ${error.message}", "ErrorHandler")
-                } else {
-                    emitError("Recovery failed for error: ${error.message}", "ErrorHandler")
-                }
-
-                return@withContext recoverySuccessful
+            // Emit event
+            if (recoverySuccessful) {
+                emitError("Recovery successful for error: ${error.message}", "ErrorHandler")
             } else {
-                // No recovery strategy available
-                logError(error)
-                emitError("No recovery strategy available for error: ${error.message}", "ErrorHandler")
-                return@withContext false
+                emitError("Recovery failed for error: ${error.message}", "ErrorHandler")
             }
+
+            return@withContext recoverySuccessful
+        } else {
+            // No recovery strategy available
+            logError(error)
+            emitError("No recovery strategy available for error: ${error.message}", "ErrorHandler")
+            return@withContext false
         }
+    }
 
     /**
      * Create a new error.
@@ -169,12 +165,7 @@ class ErrorHandler {
      * @param data Additional data about the error
      * @return The created error
      */
-    fun createError(
-        type: ErrorType,
-        message: String,
-        cause: Throwable? = null,
-        data: Map<String, Any> = emptyMap(),
-    ): FeaError {
+    fun createError(type: ErrorType, message: String, cause: Throwable? = null, data: Map<String, Any> = emptyMap()): FeaError {
         val id = "FEA-${errorCounter.incrementAndGet()}"
         val timestamp = System.currentTimeMillis()
 
@@ -313,11 +304,7 @@ data class FeaError(
  * @param recoveryAttempted Whether recovery was attempted
  * @param recoverySuccessful Whether recovery was successful
  */
-data class ErrorInfo(
-    val error: FeaError,
-    var recoveryAttempted: Boolean = false,
-    var recoverySuccessful: Boolean = false,
-)
+data class ErrorInfo(val error: FeaError, var recoveryAttempted: Boolean = false, var recoverySuccessful: Boolean = false)
 
 /**
  * A strategy for recovering from an error.
@@ -325,10 +312,7 @@ data class ErrorInfo(
  * @param description A description of the recovery strategy
  * @param action The action to take to recover from the error
  */
-data class RecoveryStrategy(
-    val description: String,
-    val action: suspend (FeaError) -> Boolean,
-)
+data class RecoveryStrategy(val description: String, val action: suspend (FeaError) -> Boolean)
 
 /**
  * A diagnostic tool for troubleshooting FEA operations.
@@ -341,74 +325,73 @@ class FeaDiagnostics {
      *
      * @return A diagnostic report
      */
-    suspend fun runDiagnostics(): DiagnosticReport =
-        withContext(Dispatchers.Default) {
-            val report = DiagnosticReport()
+    suspend fun runDiagnostics(): DiagnosticReport = withContext(Dispatchers.Default) {
+        val report = DiagnosticReport()
 
-            // Check if the FEA engine is available
-            try {
-                val feaEngine = FeaEngine()
-                report.feaEngineAvailable = feaEngine.isAvailable()
-                report.feaEngineVersion = feaEngine.getVersion()
-            } catch (e: Throwable) {
-                report.feaEngineAvailable = false
-                report.errors.add(
-                    errorHandler.createError(
-                        ErrorType.LIBRARY_LOADING,
-                        "Failed to load FEA engine: ${e.message}",
-                        e,
-                    ),
-                )
-            }
-
-            // Check if memory-mapped files are supported
-            try {
-                val tempFile = File.createTempFile("fea_diagnostics_", ".tmp")
-                tempFile.deleteOnExit()
-
-                val dataTransfer = DataTransfer()
-                val testData = mapOf("test" to "data")
-
-                dataTransfer.transferLargeDataToRust(testData)
-                report.memoryMappedFilesSupported = true
-            } catch (e: Exception) {
-                report.memoryMappedFilesSupported = false
-                report.errors.add(
-                    errorHandler.createError(
-                        ErrorType.DATA_TRANSFER,
-                        "Memory-mapped files not supported: ${e.message}",
-                        e,
-                    ),
-                )
-            }
-
-            // Check available memory
-            val runtime = Runtime.getRuntime()
-            val maxMemory = runtime.maxMemory()
-            val freeMemory = runtime.freeMemory()
-            val totalMemory = runtime.totalMemory()
-            val usedMemory = totalMemory - freeMemory
-
-            report.maxMemory = maxMemory
-            report.freeMemory = freeMemory
-            report.totalMemory = totalMemory
-            report.usedMemory = usedMemory
-
-            // Check if there's enough memory for FEA operations
-            val requiredMemory = 1024L * 1024L * 1024L // 1 GB
-            report.sufficientMemory = freeMemory > requiredMemory
-
-            if (!report.sufficientMemory) {
-                report.errors.add(
-                    errorHandler.createError(
-                        ErrorType.OUT_OF_MEMORY,
-                        "Insufficient memory for FEA operations: ${freeMemory / (1024 * 1024)} MB available, ${requiredMemory / (1024 * 1024)} MB required",
-                    ),
-                )
-            }
-
-            return@withContext report
+        // Check if the FEA engine is available
+        try {
+            val feaEngine = FeaEngine()
+            report.feaEngineAvailable = feaEngine.isAvailable()
+            report.feaEngineVersion = feaEngine.getVersion()
+        } catch (e: Throwable) {
+            report.feaEngineAvailable = false
+            report.errors.add(
+                errorHandler.createError(
+                    ErrorType.LIBRARY_LOADING,
+                    "Failed to load FEA engine: ${e.message}",
+                    e,
+                ),
+            )
         }
+
+        // Check if memory-mapped files are supported
+        try {
+            val tempFile = File.createTempFile("fea_diagnostics_", ".tmp")
+            tempFile.deleteOnExit()
+
+            val dataTransfer = DataTransfer()
+            val testData = mapOf("test" to "data")
+
+            dataTransfer.transferLargeDataToRust(testData)
+            report.memoryMappedFilesSupported = true
+        } catch (e: Exception) {
+            report.memoryMappedFilesSupported = false
+            report.errors.add(
+                errorHandler.createError(
+                    ErrorType.DATA_TRANSFER,
+                    "Memory-mapped files not supported: ${e.message}",
+                    e,
+                ),
+            )
+        }
+
+        // Check available memory
+        val runtime = Runtime.getRuntime()
+        val maxMemory = runtime.maxMemory()
+        val freeMemory = runtime.freeMemory()
+        val totalMemory = runtime.totalMemory()
+        val usedMemory = totalMemory - freeMemory
+
+        report.maxMemory = maxMemory
+        report.freeMemory = freeMemory
+        report.totalMemory = totalMemory
+        report.usedMemory = usedMemory
+
+        // Check if there's enough memory for FEA operations
+        val requiredMemory = 1024L * 1024L * 1024L // 1 GB
+        report.sufficientMemory = freeMemory > requiredMemory
+
+        if (!report.sufficientMemory) {
+            report.errors.add(
+                errorHandler.createError(
+                    ErrorType.OUT_OF_MEMORY,
+                    "Insufficient memory for FEA operations: ${freeMemory / (1024 * 1024)} MB available, ${requiredMemory / (1024 * 1024)} MB required",
+                ),
+            )
+        }
+
+        return@withContext report
+    }
 }
 
 /**

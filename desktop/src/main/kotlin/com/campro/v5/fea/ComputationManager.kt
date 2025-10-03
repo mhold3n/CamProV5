@@ -35,11 +35,7 @@ class ComputationManager {
      * @param type The type of analysis to run
      * @return The ID of the computation job
      */
-    fun startComputation(
-        modelFile: File,
-        parameters: Map<String, String>,
-        type: ComputationType,
-    ): String {
+    fun startComputation(modelFile: File, parameters: Map<String, String>, type: ComputationType): String {
         val jobId = UUID.randomUUID().toString()
         val progressFlow = MutableStateFlow(0f)
         val resultFlow = MutableStateFlow<ComputationResult?>(null)
@@ -176,18 +172,14 @@ sealed class ComputationResult {
      *
      * @param resultsFile The file containing the computation results
      */
-    data class Success(
-        val resultsFile: File,
-    ) : ComputationResult()
+    data class Success(val resultsFile: File) : ComputationResult()
 
     /**
      * Computation failed with an error.
      *
      * @param message The error message
      */
-    data class Error(
-        val message: String,
-    ) : ComputationResult()
+    data class Error(val message: String) : ComputationResult()
 
     /**
      * Computation was cancelled.

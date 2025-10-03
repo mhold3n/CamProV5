@@ -9,11 +9,9 @@ This module provides logging utilities for CamProV5, including:
 This is a simplified version that only uses Python's built-in logging functionality.
 """
 
-import os
-import json
 import enum
 import logging
-import tempfile
+from logging import LogRecord
 import subprocess
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Union
@@ -30,7 +28,7 @@ logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
 # In-memory log storage
-memory_logs = []
+memory_logs: List[LogRecord] = []
 memory_size_limit = 1000
 
 # Log levels
@@ -264,6 +262,37 @@ def log(
             memory_logs = memory_logs[-memory_size_limit:]
 
 
+def get_logger(name: str) -> logging.Logger:
+    """
+    Get a logger instance for the specified module.
+    
+    This function provides a standardized way to get loggers across the CamProV5 codebase.
+    It ensures consistent logging configuration and follows the project's logging standards.
+    
+    Args:
+        name: The name of the module requesting the logger (typically __name__)
+        
+    Returns:
+        A configured logger instance
+    """
+    # Create logger with module name
+    module_logger = logging.getLogger(name)
+    
+    # Set level to INFO by default (can be overridden by init_logging)
+    if not module_logger.handlers:
+        module_logger.setLevel(logging.INFO)
+        
+        # Add console handler if not already present
+        console_handler = logging.StreamHandler()
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        console_handler.setFormatter(formatter)
+        module_logger.addHandler(console_handler)
+    
+    return module_logger
+
+
 # Convenience functions for logging at different levels
 def trace(message: str, target: str = "campro", file: Optional[str] = None, line: Optional[int] = None) -> None:
     """Log a trace message."""
@@ -309,7 +338,7 @@ def get_logs(n: Optional[int] = None) -> List[LogRecord]:
     global memory_logs
     
     if not memory_logs:
-        return []
+        return []  # type: ignore
     
     if n is None:
         return memory_logs.copy()

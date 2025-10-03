@@ -108,33 +108,32 @@ class FeaEngineTest {
      */
     @Test
     @Disabled("Requires Rust FEA Engine")
-    fun testRunAnalysis() =
-        runBlocking {
-            // Skip test if FEA engine is not available
-            if (!feaEngine.isAvailable()) {
-                println("[DEBUG_LOG] Skipping testRunAnalysis: FEA engine not available")
-                return@runBlocking
-            }
-
-            // Set up test parameters
-            val parameters =
-                mapOf(
-                    "analysis_type" to "static",
-                    "solver" to "direct",
-                    "max_iterations" to "100",
-                    "tolerance" to "1e-6",
-                )
-
-            // Run analysis
-            println("[DEBUG_LOG] Running analysis...")
-            val resultsFile = feaEngine.runAnalysis(testModelFile, parameters)
-
-            // Verify results
-            assertTrue(resultsFile.exists(), "Results file should exist")
-            assertTrue(resultsFile.length() > 0, "Results file should not be empty")
-
-            println("[DEBUG_LOG] Analysis complete. Results file: ${resultsFile.absolutePath}")
+    fun testRunAnalysis() = runBlocking {
+        // Skip test if FEA engine is not available
+        if (!feaEngine.isAvailable()) {
+            println("[DEBUG_LOG] Skipping testRunAnalysis: FEA engine not available")
+            return@runBlocking
         }
+
+        // Set up test parameters
+        val parameters =
+            mapOf(
+                "analysis_type" to "static",
+                "solver" to "direct",
+                "max_iterations" to "100",
+                "tolerance" to "1e-6",
+            )
+
+        // Run analysis
+        println("[DEBUG_LOG] Running analysis...")
+        val resultsFile = feaEngine.runAnalysis(testModelFile, parameters)
+
+        // Verify results
+        assertTrue(resultsFile.exists(), "Results file should exist")
+        assertTrue(resultsFile.length() > 0, "Results file should not be empty")
+
+        println("[DEBUG_LOG] Analysis complete. Results file: ${resultsFile.absolutePath}")
+    }
 
     /**
      * Test the computation manager.
@@ -142,141 +141,138 @@ class FeaEngineTest {
      */
     @Test
     @Disabled("Requires Rust FEA Engine")
-    fun testComputationManager() =
-        runBlocking {
-            // Skip test if FEA engine is not available
-            if (!feaEngine.isAvailable()) {
-                println("[DEBUG_LOG] Skipping testComputationManager: FEA engine not available")
-                return@runBlocking
-            }
-
-            // Set up test parameters
-            val parameters =
-                mapOf(
-                    "analysis_type" to "static",
-                    "solver" to "direct",
-                    "max_iterations" to "100",
-                    "tolerance" to "1e-6",
-                )
-
-            // Start computation
-            println("[DEBUG_LOG] Starting computation...")
-            val jobId =
-                computationManager.startComputation(
-                    testModelFile,
-                    parameters,
-                    ComputationType.GENERAL,
-                )
-
-            // Wait for computation to complete
-            var result: ComputationResult? = null
-            val maxWaitTime = 30000L // 30 seconds
-            val startTime = System.currentTimeMillis()
-
-            while (System.currentTimeMillis() - startTime < maxWaitTime) {
-                val progress = computationManager.getProgress(jobId)?.value ?: 0f
-                println("[DEBUG_LOG] Computation progress: $progress")
-
-                result = computationManager.getResult(jobId)?.value
-                if (result != null) {
-                    break
-                }
-
-                kotlinx.coroutines.delay(1000) // Wait 1 second
-            }
-
-            // Verify result
-            assertNotNull(result, "Computation result should not be null")
-            assertTrue(result!!.isSuccess(), "Computation should succeed")
-
-            val resultsFile = result!!.getResultsFile()
-            assertNotNull(resultsFile, "Results file should not be null")
-            assertTrue(resultsFile!!.exists(), "Results file should exist")
-            assertTrue(resultsFile.length() > 0, "Results file should not be empty")
-
-            println("[DEBUG_LOG] Computation complete. Results file: ${resultsFile.absolutePath}")
+    fun testComputationManager() = runBlocking {
+        // Skip test if FEA engine is not available
+        if (!feaEngine.isAvailable()) {
+            println("[DEBUG_LOG] Skipping testComputationManager: FEA engine not available")
+            return@runBlocking
         }
+
+        // Set up test parameters
+        val parameters =
+            mapOf(
+                "analysis_type" to "static",
+                "solver" to "direct",
+                "max_iterations" to "100",
+                "tolerance" to "1e-6",
+            )
+
+        // Start computation
+        println("[DEBUG_LOG] Starting computation...")
+        val jobId =
+            computationManager.startComputation(
+                testModelFile,
+                parameters,
+                ComputationType.GENERAL,
+            )
+
+        // Wait for computation to complete
+        var result: ComputationResult? = null
+        val maxWaitTime = 30000L // 30 seconds
+        val startTime = System.currentTimeMillis()
+
+        while (System.currentTimeMillis() - startTime < maxWaitTime) {
+            val progress = computationManager.getProgress(jobId)?.value ?: 0f
+            println("[DEBUG_LOG] Computation progress: $progress")
+
+            result = computationManager.getResult(jobId)?.value
+            if (result != null) {
+                break
+            }
+
+            kotlinx.coroutines.delay(1000) // Wait 1 second
+        }
+
+        // Verify result
+        assertNotNull(result, "Computation result should not be null")
+        assertTrue(result!!.isSuccess(), "Computation should succeed")
+
+        val resultsFile = result!!.getResultsFile()
+        assertNotNull(resultsFile, "Results file should not be null")
+        assertTrue(resultsFile!!.exists(), "Results file should exist")
+        assertTrue(resultsFile.length() > 0, "Results file should not be empty")
+
+        println("[DEBUG_LOG] Computation complete. Results file: ${resultsFile.absolutePath}")
+    }
 
     /**
      * Test data transfer between Kotlin and Rust.
      */
     @Test
-    fun testDataTransfer() =
-        runBlocking {
-            // Create test data
-            val testData =
-                mapOf(
-                    "key1" to "value1",
-                    "key2" to 123,
-                    "key3" to listOf(1, 2, 3),
-                )
+    fun testDataTransfer() = runBlocking {
+        // Create test data
+        val testData =
+            mapOf(
+                "key1" to "value1",
+                "key2" to 123,
+                "key3" to listOf(1, 2, 3),
+            )
 
-            // Test transferToRust
-            println("[DEBUG_LOG] Testing transferToRust...")
-            val file1 = dataTransfer.transferToRust(testData)
-            assertTrue(file1.exists(), "File should exist")
-            assertTrue(file1.length() > 0, "File should not be empty")
+        // Test transferToRust
+        println("[DEBUG_LOG] Testing transferToRust...")
+        val file1 = dataTransfer.transferToRust(testData)
+        assertTrue(file1.exists(), "File should exist")
+        assertTrue(file1.length() > 0, "File should not be empty")
 
-            // Test transferLargeDataToRust
-            println("[DEBUG_LOG] Testing transferLargeDataToRust...")
-            val file2 = dataTransfer.transferLargeDataToRust(testData)
-            assertTrue(file2.exists(), "File should exist")
-            assertTrue(file2.length() > 0, "File should not be empty")
+        // Test transferLargeDataToRust
+        println("[DEBUG_LOG] Testing transferLargeDataToRust...")
+        val file2 = dataTransfer.transferLargeDataToRust(testData)
+        assertTrue(file2.exists(), "File should exist")
+        assertTrue(file2.length() > 0, "File should not be empty")
 
-            // Test caching
-            println("[DEBUG_LOG] Testing caching...")
-            val cacheFile = dataTransfer.createCacheFile(testData, "test_cache")
-            assertTrue(cacheFile.exists(), "Cache file should exist")
+        // Test caching
+        println("[DEBUG_LOG] Testing caching...")
+        val cacheFile = dataTransfer.createCacheFile(testData, "test_cache")
+        assertTrue(cacheFile.exists(), "Cache file should exist")
 
-            val cachedData = dataTransfer.readFromCache("test_cache", Map::class.java)
-            assertNotNull(cachedData, "Cached data should not be null")
+        val cachedData = dataTransfer.readFromCache("test_cache", Map::class.java)
+        assertNotNull(cachedData, "Cached data should not be null")
 
-            // Clean up
-            dataTransfer.clearCache()
+        // Clean up
+        dataTransfer.clearCache()
 
-            println("[DEBUG_LOG] Data transfer tests complete")
-        }
+        println("[DEBUG_LOG] Data transfer tests complete")
+    }
 
     /**
      * Test error handling.
      */
     @Test
-    fun testErrorHandling() =
-        runBlocking {
-            // Create test error
-            println("[DEBUG_LOG] Creating test error...")
-            val error =
-                errorHandler.createError(
-                    ErrorType.COMPUTATION,
-                    "Test error message",
-                    Exception("Test exception"),
-                    mapOf("key" to "value"),
-                )
+    fun testErrorHandling() = runBlocking {
+        // Create test error
+        println("[DEBUG_LOG] Creating test error...")
+        val error =
+            errorHandler.createError(
+                ErrorType.COMPUTATION,
+                "Test error message",
+                Exception("Test exception"),
+                mapOf("key" to "value"),
+            )
 
-            // Verify error
-            assertEquals(ErrorType.COMPUTATION, error.type, "Error type should match")
-            assertEquals("Test error message", error.message, "Error message should match")
-            assertNotNull(error.cause, "Error cause should not be null")
-            assertEquals("Test exception", error.cause?.message, "Error cause message should match")
-            assertEquals("value", error.data["key"], "Error data should match")
+        // Verify error
+        assertEquals(ErrorType.COMPUTATION, error.type, "Error type should match")
+        assertEquals("Test error message", error.message, "Error message should match")
+        assertNotNull(error.cause, "Error cause should not be null")
+        assertEquals("Test exception", error.cause?.message, "Error cause message should match")
+        assertEquals("value", error.data["key"], "Error data should match")
 
-            // Test error handling
-            println("[DEBUG_LOG] Testing error handling...")
-            val recoverySuccessful = errorHandler.handleError(error)
-            assertFalse(recoverySuccessful, "Recovery should not be successful for test error")
+        // Test error handling
+        println("[DEBUG_LOG] Testing error handling...")
+        val recoverySuccessful = errorHandler.handleError(error)
+        assertFalse(recoverySuccessful, "Recovery should not be successful for test error")
 
-            // Test diagnostics
-            println("[DEBUG_LOG] Running diagnostics...")
-            val diagnostics = FeaDiagnostics()
-            val report = diagnostics.runDiagnostics()
+        // Test diagnostics
+        println("[DEBUG_LOG] Running diagnostics...")
+        val diagnostics = FeaDiagnostics()
+        val report = diagnostics.runDiagnostics()
 
-            println("[DEBUG_LOG] Diagnostic report:")
-            println(report.getSummary())
+        println("[DEBUG_LOG] Diagnostic report:")
+        println(report.getSummary())
 
-            // Verify report
-            assertNotNull(report.feaEngineVersion, "FEA engine version should not be null")
-            assertTrue(report.maxMemory > 0, "Max memory should be positive")
+        // Verify report
+        assertNotNull(report.feaEngineVersion, "FEA engine version should not be null")
+        assertTrue(report.maxMemory > 0, "Max memory should be positive")
 
-            println("[DEBUG_LOG] Error handling tests complete")
-        }
+        println("[DEBUG_LOG] Error handling tests complete")
+    }
 }

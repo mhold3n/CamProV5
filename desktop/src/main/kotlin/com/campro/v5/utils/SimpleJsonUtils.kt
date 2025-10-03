@@ -1,5 +1,7 @@
 package com.campro.v5.utils
 
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -12,35 +14,33 @@ import java.nio.file.Path
  */
 object SimpleJsonUtils {
     val logger = LoggerFactory.getLogger(SimpleJsonUtils::class.java)
-    
+
     val objectMapper = ObjectMapper().apply {
         registerModule(KotlinModule.Builder().build())
+        configure(JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS, true)
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
-    
+
     /**
      * Convert object to JSON string.
      */
-    fun toJson(obj: Any): String {
-        return try {
-            objectMapper.writeValueAsString(obj)
-        } catch (e: Exception) {
-            logger.error("Failed to convert object to JSON", e)
-            "{}"
-        }
+    fun toJson(obj: Any): String = try {
+        objectMapper.writeValueAsString(obj)
+    } catch (e: Exception) {
+        logger.error("Failed to convert object to JSON", e)
+        "{}"
     }
-    
+
     /**
      * Convert JSON string to object.
      */
-    inline fun <reified T> fromJson(json: String): T? {
-        return try {
-            objectMapper.readValue<T>(json)
-        } catch (e: Exception) {
-            logger.error("Failed to convert JSON to object", e)
-            null
-        }
+    inline fun <reified T> fromJson(json: String): T? = try {
+        objectMapper.readValue<T>(json)
+    } catch (e: Exception) {
+        logger.error("Failed to convert JSON to object", e)
+        null
     }
-    
+
     /**
      * Write object to JSON file.
      */
@@ -51,16 +51,14 @@ object SimpleJsonUtils {
             logger.error("Failed to write JSON to file: $filePath", e)
         }
     }
-    
+
     /**
      * Read JSON file to Map.
      */
-    fun readJsonFile(filePath: Path): Map<String, Any> {
-        return try {
-            objectMapper.readValue(filePath.toFile(), Map::class.java) as Map<String, Any>
-        } catch (e: Exception) {
-            logger.error("Failed to read JSON from file: $filePath", e)
-            emptyMap()
-        }
+    fun readJsonFile(filePath: Path): Map<String, Any> = try {
+        objectMapper.readValue(filePath.toFile(), Map::class.java) as Map<String, Any>
+    } catch (e: Exception) {
+        logger.error("Failed to read JSON from file: $filePath", e)
+        emptyMap()
     }
 }

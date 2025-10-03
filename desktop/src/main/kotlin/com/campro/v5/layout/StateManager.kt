@@ -65,10 +65,7 @@ class StateManager {
      * @param key The state key
      * @param value The state value
      */
-    fun <T : Any> setState(
-        key: String,
-        value: T,
-    ) {
+    fun <T : Any> setState(key: String, value: T) {
         // Update state
         stateMap[key] = value
 
@@ -88,10 +85,7 @@ class StateManager {
      * @return The state value, or the default value if the key doesn't exist
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> getState(
-        key: String,
-        defaultValue: T,
-    ): T = stateMap[key] as? T ?: defaultValue
+    fun <T : Any> getState(key: String, defaultValue: T): T = stateMap[key] as? T ?: defaultValue
 
     /**
      * Check if a state key exists.
@@ -149,43 +143,42 @@ class StateManager {
      * @param file The file to save to, or null to use the default file
      * @return True if the save was successful, false otherwise
      */
-    fun saveState(file: File? = null): Boolean =
-        try {
-            // Create state object
-            val state =
-                StateData(
-                    version = stateVersion,
-                    timestamp = System.currentTimeMillis(),
-                    data = stateMap.toMap(),
-                )
+    fun saveState(file: File? = null): Boolean = try {
+        // Create state object
+        val state =
+            StateData(
+                version = stateVersion,
+                timestamp = System.currentTimeMillis(),
+                data = stateMap.toMap(),
+            )
 
-            // Convert to JSON
-            val gson = GsonBuilder().setPrettyPrinting().create()
-            val json = gson.toJson(state)
+        // Convert to JSON
+        val gson = GsonBuilder().setPrettyPrinting().create()
+        val json = gson.toJson(state)
 
-            // Determine file to save to
-            val saveFile = file ?: getDefaultStateFile()
+        // Determine file to save to
+        val saveFile = file ?: getDefaultStateFile()
 
-            // Ensure directory exists
-            saveFile.parentFile?.mkdirs()
+        // Ensure directory exists
+        saveFile.parentFile?.mkdirs()
 
-            // Write to file
-            saveFile.writeText(json)
+        // Write to file
+        saveFile.writeText(json)
 
-            // Reset dirty flags
-            dirtyKeys.clear()
-            isStateDirty.set(false)
+        // Reset dirty flags
+        dirtyKeys.clear()
+        isStateDirty.set(false)
 
-            // Emit state change event
-            _stateChangeEvents.value = StateChangeEvent.StateSaved(saveFile.absolutePath)
+        // Emit state change event
+        _stateChangeEvents.value = StateChangeEvent.StateSaved(saveFile.absolutePath)
 
-            true
-        } catch (e: Exception) {
-            // Emit error event
-            _stateChangeEvents.value = StateChangeEvent.Error("Failed to save state: ${e.message}")
+        true
+    } catch (e: Exception) {
+        // Emit error event
+        _stateChangeEvents.value = StateChangeEvent.Error("Failed to save state: ${e.message}")
 
-            false
-        }
+        false
+    }
 
     /**
      * Load state from a file.
@@ -253,10 +246,7 @@ class StateManager {
      * @param enabled Whether auto-save should be enabled
      * @param interval The auto-save interval in milliseconds
      */
-    fun setAutoSave(
-        enabled: Boolean,
-        interval: Long = 60000L,
-    ) {
+    fun setAutoSave(enabled: Boolean, interval: Long = 60000L) {
         autoSaveEnabled = enabled
         autoSaveInterval = interval
 
@@ -429,11 +419,7 @@ class StateManager {
  * @param timestamp The timestamp when the state was saved
  * @param data The state data
  */
-data class StateData(
-    val version: Int,
-    val timestamp: Long,
-    val data: Map<String, Any>,
-)
+data class StateData(val version: Int, val timestamp: Long, val data: Map<String, Any>)
 
 /**
  * State change events emitted by the StateManager.
@@ -445,19 +431,14 @@ sealed class StateChangeEvent {
      * @param key The state key
      * @param value The new state value
      */
-    data class StateChanged(
-        val key: String,
-        val value: Any,
-    ) : StateChangeEvent()
+    data class StateChanged(val key: String, val value: Any) : StateChangeEvent()
 
     /**
      * Event emitted when a state value is removed.
      *
      * @param key The state key
      */
-    data class StateRemoved(
-        val key: String,
-    ) : StateChangeEvent()
+    data class StateRemoved(val key: String) : StateChangeEvent()
 
     /**
      * Event emitted when all state values are cleared.
@@ -469,27 +450,21 @@ sealed class StateChangeEvent {
      *
      * @param filePath The path to the file
      */
-    data class StateSaved(
-        val filePath: String,
-    ) : StateChangeEvent()
+    data class StateSaved(val filePath: String) : StateChangeEvent()
 
     /**
      * Event emitted when state is loaded from a file.
      *
      * @param filePath The path to the file
      */
-    data class StateLoaded(
-        val filePath: String,
-    ) : StateChangeEvent()
+    data class StateLoaded(val filePath: String) : StateChangeEvent()
 
     /**
      * Event emitted when an error occurs.
      *
      * @param message The error message
      */
-    data class Error(
-        val message: String,
-    ) : StateChangeEvent()
+    data class Error(val message: String) : StateChangeEvent()
 }
 
 /**
@@ -507,10 +482,7 @@ fun rememberStateManager(): StateManager = remember { StateManager.getInstance()
  * @param defaultValue The default value to return if the key doesn't exist
  * @return The state value, or the default value if the key doesn't exist
  */
-inline fun <reified T : Any> StateManager.get(
-    key: String,
-    defaultValue: T,
-): T = getState(key, defaultValue)
+inline fun <reified T : Any> StateManager.get(key: String, defaultValue: T): T = getState(key, defaultValue)
 
 /**
  * Extension function to set a state value with type inference.
@@ -518,9 +490,6 @@ inline fun <reified T : Any> StateManager.get(
  * @param key The state key
  * @param value The state value
  */
-inline fun <reified T : Any> StateManager.set(
-    key: String,
-    value: T,
-) {
+inline fun <reified T : Any> StateManager.set(key: String, value: T) {
     setState(key, value)
 }

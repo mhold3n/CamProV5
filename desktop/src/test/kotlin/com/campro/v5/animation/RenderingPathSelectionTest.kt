@@ -14,11 +14,7 @@ class RenderingPathSelectionTest {
         MotionLawEngine.resetInstance()
     }
 
-    private fun setPrivateField(
-        target: Any,
-        name: String,
-        value: Any?,
-    ) {
+    private fun setPrivateField(target: Any, name: String, value: Any?) {
         val f: Field = target.javaClass.getDeclaredField(name)
         f.isAccessible = true
         f.set(target, value)

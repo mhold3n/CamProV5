@@ -8,9 +8,7 @@ import kotlin.math.*
  * These matrices allow us to compute derivatives of functions represented
  * on collocation nodes, enforcing periodic boundary conditions.
  */
-class PeriodicDifferentiation(
-    private val nodes: DoubleArray,
-) {
+class PeriodicDifferentiation(private val nodes: DoubleArray) {
     private val n = nodes.size
     private val _firstDerivativeMatrix: Array<DoubleArray> by lazy { computeFirstDerivativeMatrix() }
     private val _secondDerivativeMatrix: Array<DoubleArray> by lazy { computeSecondDerivativeMatrix() }

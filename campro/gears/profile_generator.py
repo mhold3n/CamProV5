@@ -6,7 +6,7 @@ and provides it as a modular component for the unified optimization pipeline.
 """
 
 import numpy as np
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, List, Tuple, Any
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ class GearProfileGenerator:
     
     def __init__(self):
         """Initialize the gear profile generator."""
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
     
     def generate_motion_law_piecewise(self, params: Dict[str, Any]) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
@@ -50,7 +50,7 @@ class GearProfileGenerator:
         acceleration = np.zeros(n)
         
         # Motion law parameters
-        max_lift = params["strokeLengthMm"]
+        stroke_length = params["strokeLengthMm"]  # Full stroke length in mm
         ramp_before_tdc = params["rampBeforeTdcDeg"]
         ramp_after_tdc = params["rampAfterTdcDeg"]
         dwell_tdc = params["dwellTdcDeg"]
@@ -62,14 +62,23 @@ class GearProfileGenerator:
         constant_velocity_tdc = params.get("constantVelocityTdcDeg", 30.0)
         constant_velocity_bdc = params.get("constantVelocityBdcDeg", 40.0)
         
-        phase1_end = ramp_before_tdc  # Acceleration to constant velocity
-        phase2_end = phase1_end + constant_velocity_tdc  # Constant velocity (parameterized)
-        phase3_end = phase2_end + ramp_after_tdc  # Deceleration to dwell
-        phase4_end = phase3_end + dwell_tdc  # Dwell at TDC
-        phase5_end = phase4_end + ramp_before_bdc  # Acceleration to constant velocity
-        phase6_end = phase5_end + constant_velocity_bdc  # Constant velocity (parameterized)
-        phase7_end = phase6_end + ramp_after_bdc  # Deceleration to dwell
-        phase8_end = phase7_end + dwell_bdc  # Dwell at BDC
+        # CORRECTED: Motion law represents piston stroke from BDC (0) to TDC (stroke_length)
+        # Phase 1: Acceleration from BDC to constant velocity
+        phase1_end = ramp_before_bdc
+        # Phase 2: Constant velocity during upstroke
+        phase2_end = phase1_end + constant_velocity_bdc
+        # Phase 3: Deceleration to dwell at TDC
+        phase3_end = phase2_end + ramp_after_bdc
+        # Phase 4: Dwell at TDC (maximum displacement)
+        phase4_end = phase3_end + dwell_bdc
+        # Phase 5: Acceleration from TDC to constant velocity during downstroke
+        phase5_end = phase4_end + ramp_before_tdc
+        # Phase 6: Constant velocity during downstroke
+        phase6_end = phase5_end + constant_velocity_tdc
+        # Phase 7: Deceleration to dwell at BDC
+        phase7_end = phase6_end + ramp_after_tdc
+        # Phase 8: Dwell at BDC (zero displacement)
+        phase8_end = phase7_end + dwell_tdc
         
         # Scale phases to fit 180° ring rotation
         total_phases = phase8_end
@@ -85,67 +94,67 @@ class GearProfileGenerator:
         phase8_end *= scale_factor
         
         self.logger.info(f"Motion law phases (scaled to {ring_rotation_deg}°):")
-        self.logger.info(f"  0-{phase1_end:.1f}°: Acceleration to constant velocity")
-        self.logger.info(f"  {phase1_end:.1f}-{phase2_end:.1f}°: Constant velocity")
-        self.logger.info(f"  {phase2_end:.1f}-{phase3_end:.1f}°: Deceleration to dwell")
-        self.logger.info(f"  {phase3_end:.1f}-{phase4_end:.1f}°: Dwell at TDC")
-        self.logger.info(f"  {phase4_end:.1f}-{phase5_end:.1f}°: Acceleration to constant velocity")
-        self.logger.info(f"  {phase5_end:.1f}-{phase6_end:.1f}°: Constant velocity")
-        self.logger.info(f"  {phase6_end:.1f}-{phase7_end:.1f}°: Deceleration to dwell")
-        self.logger.info(f"  {phase7_end:.1f}-{phase8_end:.1f}°: Dwell at BDC")
+        self.logger.info(f"  0-{phase1_end:.1f}°: Acceleration from BDC to constant velocity")
+        self.logger.info(f"  {phase1_end:.1f}-{phase2_end:.1f}°: Constant velocity during upstroke")
+        self.logger.info(f"  {phase2_end:.1f}-{phase3_end:.1f}°: Deceleration to dwell at TDC")
+        self.logger.info(f"  {phase3_end:.1f}-{phase4_end:.1f}°: Dwell at TDC (max displacement: {stroke_length}mm)")
+        self.logger.info(f"  {phase4_end:.1f}-{phase5_end:.1f}°: Acceleration from TDC to constant velocity")
+        self.logger.info(f"  {phase5_end:.1f}-{phase6_end:.1f}°: Constant velocity during downstroke")
+        self.logger.info(f"  {phase6_end:.1f}-{phase7_end:.1f}°: Deceleration to dwell at BDC")
+        self.logger.info(f"  {phase7_end:.1f}-{phase8_end:.1f}°: Dwell at BDC (zero displacement)")
         
-        # Generate motion law
+        # Generate motion law - CORRECTED to represent proper piston stroke
         for i, theta in enumerate(theta_deg):
             if theta <= phase1_end:
-                # Phase 1: Acceleration to constant velocity
+                # Phase 1: Acceleration from BDC to constant velocity during upstroke
                 beta = theta / phase1_end
-                displacement[i] = max_lift * 0.5 * (beta - np.sin(2 * np.pi * beta) / (2 * np.pi))
-                velocity[i] = max_lift * 0.5 * (1 - np.cos(2 * np.pi * beta)) / (2 * np.pi * phase1_end * np.pi / 180)
-                acceleration[i] = max_lift * 0.5 * np.sin(2 * np.pi * beta) / (phase1_end * np.pi / 180)**2
+                displacement[i] = stroke_length * 0.5 * (beta - np.sin(2 * np.pi * beta) / (2 * np.pi))
+                velocity[i] = stroke_length * 0.5 * (1 - np.cos(2 * np.pi * beta)) / (2 * np.pi * phase1_end * np.pi / 180)
+                acceleration[i] = stroke_length * 0.5 * np.sin(2 * np.pi * beta) / (phase1_end * np.pi / 180)**2
                 
             elif theta <= phase2_end:
-                # Phase 2: Constant velocity
-                displacement[i] = max_lift * 0.5 + max_lift * 0.5 * (theta - phase1_end) / (phase2_end - phase1_end)
-                velocity[i] = max_lift * 0.5 / (phase2_end - phase1_end) * np.pi / 180
+                # Phase 2: Constant velocity during upstroke
+                displacement[i] = stroke_length * 0.5 + stroke_length * 0.5 * (theta - phase1_end) / (phase2_end - phase1_end)
+                velocity[i] = stroke_length * 0.5 / (phase2_end - phase1_end) * np.pi / 180
                 acceleration[i] = 0.0
                 
             elif theta <= phase3_end:
-                # Phase 3: Deceleration to dwell (stay at max_lift, decelerate to zero velocity)
+                # Phase 3: Deceleration to dwell at TDC (stay at max displacement, decelerate to zero velocity)
                 beta = (theta - phase2_end) / (phase3_end - phase2_end)
-                displacement[i] = max_lift  # Stay at maximum displacement during deceleration to dwell
+                displacement[i] = stroke_length  # Stay at maximum displacement during deceleration to dwell
                 # Decelerate from constant velocity to zero velocity
-                velocity[i] = max_lift * 0.5 * (1 - beta) / (phase2_end - phase1_end) * np.pi / 180
-                acceleration[i] = -max_lift * 0.5 / (phase2_end - phase1_end) / (phase3_end - phase2_end) * np.pi / 180
+                velocity[i] = stroke_length * 0.5 * (1 - beta) / (phase2_end - phase1_end) * np.pi / 180
+                acceleration[i] = -stroke_length * 0.5 / (phase2_end - phase1_end) / (phase3_end - phase2_end) * np.pi / 180
                 
             elif theta <= phase4_end:
-                # Phase 4: Dwell at TDC
-                displacement[i] = max_lift
+                # Phase 4: Dwell at TDC (maximum displacement)
+                displacement[i] = stroke_length
                 velocity[i] = 0.0
                 acceleration[i] = 0.0
                 
             elif theta <= phase5_end:
-                # Phase 5: Acceleration to constant velocity
+                # Phase 5: Acceleration from TDC to constant velocity during downstroke
                 beta = (theta - phase4_end) / (phase5_end - phase4_end)
-                displacement[i] = max_lift * (1 - 0.5 * (beta - np.sin(2 * np.pi * beta) / (2 * np.pi)))
-                velocity[i] = -max_lift * 0.5 * (1 - np.cos(2 * np.pi * beta)) / (2 * np.pi * (phase5_end - phase4_end) * np.pi / 180)
-                acceleration[i] = -max_lift * 0.5 * np.sin(2 * np.pi * beta) / ((phase5_end - phase4_end) * np.pi / 180)**2
+                displacement[i] = stroke_length * (1 - 0.5 * (beta - np.sin(2 * np.pi * beta) / (2 * np.pi)))
+                velocity[i] = -stroke_length * 0.5 * (1 - np.cos(2 * np.pi * beta)) / (2 * np.pi * (phase5_end - phase4_end) * np.pi / 180)
+                acceleration[i] = -stroke_length * 0.5 * np.sin(2 * np.pi * beta) / ((phase5_end - phase4_end) * np.pi / 180)**2
                 
             elif theta <= phase6_end:
-                # Phase 6: Constant velocity
-                displacement[i] = max_lift * 0.5 - max_lift * 0.5 * (theta - phase5_end) / (phase6_end - phase5_end)
-                velocity[i] = -max_lift * 0.5 / (phase6_end - phase5_end) * np.pi / 180
+                # Phase 6: Constant velocity during downstroke
+                displacement[i] = stroke_length * 0.5 - stroke_length * 0.5 * (theta - phase5_end) / (phase6_end - phase5_end)
+                velocity[i] = -stroke_length * 0.5 / (phase6_end - phase5_end) * np.pi / 180
                 acceleration[i] = 0.0
                 
             elif theta <= phase7_end:
-                # Phase 7: Deceleration to dwell (stay at zero displacement, decelerate to zero velocity)
+                # Phase 7: Deceleration to dwell at BDC (stay at zero displacement, decelerate to zero velocity)
                 beta = (theta - phase6_end) / (phase7_end - phase6_end)
                 displacement[i] = 0.0  # Stay at zero displacement during deceleration to dwell at BDC
                 # Decelerate from constant velocity to zero velocity
-                velocity[i] = -max_lift * 0.5 * (1 - beta) / (phase6_end - phase5_end) * np.pi / 180
-                acceleration[i] = max_lift * 0.5 / (phase6_end - phase5_end) / (phase7_end - phase6_end) * np.pi / 180
+                velocity[i] = -stroke_length * 0.5 * (1 - beta) / (phase6_end - phase5_end) * np.pi / 180
+                acceleration[i] = stroke_length * 0.5 / (phase6_end - phase5_end) / (phase7_end - phase6_end) * np.pi / 180
                 
             elif theta <= phase8_end:
-                # Phase 8: Dwell at BDC
+                # Phase 8: Dwell at BDC (zero displacement)
                 displacement[i] = 0.0
                 velocity[i] = 0.0
                 acceleration[i] = 0.0
@@ -190,9 +199,9 @@ class GearProfileGenerator:
         # The gearset must be sized to accommodate the full stroke + connecting rod extension
 
         # Step 1: Extract unified inputs
-        stroke_length = params["strokeLengthMm"]  # 100.0 mm
-        rod_length = params["rodLength"]  # 100.0 mm
-        journal_radius = params["journalRadius"]  # 5.0 mm
+        stroke_length = params.get("strokeLengthMm", 10.0)
+        rod_length = params.get("rodLength", 80.0)
+        journal_radius = params.get("journalRadius", 5.0)
         
         # Step 2: Calculate system extension requirements
         # Maximum extension occurs when connecting rod is fully extended
@@ -219,9 +228,12 @@ class GearProfileGenerator:
         # Planet radius must accommodate the connecting rod extension
         # Planet radius varies with displacement to match rod extension (FIXED: parameterized)
         planet_radius_base_factor = params.get("planetRadiusBaseFactor", 0.15)
-        planet_radius_variation_factor = params.get("planetRadiusVariationFactor", 0.05)
         planet_radius_base = max_rod_extension * planet_radius_base_factor
-        planet_radius_variation = max_rod_extension * planet_radius_variation_factor
+        
+        # CORRECTED: Variation should be proportional to stroke length, not just rod extension
+        # For significant asymmetry, variation should be a substantial fraction of the stroke
+        stroke_based_variation_factor = params.get("strokeBasedVariationFactor", 0.3)  # 30% of stroke
+        planet_radius_variation = stroke_length * stroke_based_variation_factor
         
         # Normalize displacement to drive planet radius variation
         displacement_range = max_displacement - min_displacement
@@ -244,9 +256,11 @@ class GearProfileGenerator:
         # Sun gear center is at the connecting rod journal (differentiated from gear center)
         # Sun gear radius must accommodate the connecting rod extension (FIXED: parameterized)
         sun_radius_base_factor = params.get("sunRadiusBaseFactor", 0.1)
-        sun_radius_variation_factor = params.get("sunRadiusVariationFactor", 0.02)
         sun_radius_base = max_rod_extension * sun_radius_base_factor
-        sun_radius_variation = max_rod_extension * sun_radius_variation_factor
+        
+        # CORRECTED: Sun gear variation should also be proportional to stroke length
+        # Sun gear variation should be complementary to planet variation for proper meshing
+        sun_radius_variation = stroke_length * stroke_based_variation_factor * 0.5  # 50% of planet variation
         
         # Sun gear radius varies with displacement (complementary to planet) (FIXED: parameterized)
         sun_radius_min_factor = params.get("sunRadiusMinFactor", 0.9)
@@ -276,7 +290,7 @@ class GearProfileGenerator:
             r_ring_inner = r_sun + 2.0 * r_planet
             self.logger.info(f"Scaled gearset by factor {scale_factor:.2f} to accommodate stroke")
         
-        self.logger.info(f"Gearset sizing for stroke achievability:")
+        self.logger.info("Gearset sizing for stroke achievability:")
         self.logger.info(f"  Stroke length: {stroke_length:.1f} mm")
         self.logger.info(f"  Max rod extension: {max_rod_extension:.1f} mm")
         self.logger.info(f"  Gearset capacity: {gearset_capacity:.1f} mm")
@@ -289,7 +303,8 @@ class GearProfileGenerator:
         # Step 4: Extend 180° motion law to full 360° ring profile
         # For planetary gearset, the motion law spans 180° ring rotation
         # We need to extend this to 360° for the complete ring gear profile
-        if n < 360:  # If we only have 180° of data
+        # Only extend if explicitly requested or if we're generating full cycle profiles
+        if n < 360 and params.get("enableFullCycle", False):  # If we only have 180° of data and full cycle is requested
             # Extend the profiles to 360° by repeating the 180° pattern
             theta_deg_full = np.arange(0, 360, step_deg)
             n_full = len(theta_deg_full)
@@ -310,43 +325,35 @@ class GearProfileGenerator:
             r_ring_inner = r_ring_inner_full
             n = n_full
 
-        # Step 5: Enforce symmetry about 0-180° line for 2:1 gear ratio
-        # The ring profile should be symmetric because planet rotates 2x faster than ring
-        # For 2:1 ratio: profile from 0°-180° should match profile from 180°-360°
-        for i in range(n):
-            theta = theta_deg[i]
-            # For 0-180° symmetry: if theta is in [0,180), symmetric point is theta+180
-            # if theta is in [180,360), symmetric point is theta-180
-            if theta < 180.0:
-                sym_theta = theta + 180.0
-            else:
-                sym_theta = theta - 180.0
+        # Step 5: Optional symmetry prior (disabled by default). Do not force 2:1.
+        if params.get("enableSymmetryPrior", False):
+            symmetry_weight = float(params.get("symmetryWeight", 0.5))
+            for i in range(n):
+                theta = theta_deg[i]
+                sym_theta = theta + 180.0 if theta < 180.0 else theta - 180.0
+                sym_idx = int(sym_theta / step_deg) % n
+                avg_planet = (r_planet[i] + r_planet[sym_idx]) / 2.0
+                avg_sun = (r_sun[i] + r_sun[sym_idx]) / 2.0
+                # Blend towards symmetry without enforcing it strictly
+                r_planet[i] = (1.0 - symmetry_weight) * r_planet[i] + symmetry_weight * avg_planet
+                r_planet[sym_idx] = (1.0 - symmetry_weight) * r_planet[sym_idx] + symmetry_weight * avg_planet
+                r_sun[i] = (1.0 - symmetry_weight) * r_sun[i] + symmetry_weight * avg_sun
+                r_sun[sym_idx] = (1.0 - symmetry_weight) * r_sun[sym_idx] + symmetry_weight * avg_sun
+                r_ring_inner[i] = r_sun[i] + 2.0 * r_planet[i]
+                r_ring_inner[sym_idx] = r_sun[sym_idx] + 2.0 * r_planet[sym_idx]
 
-            sym_idx = int(sym_theta / step_deg) % n
-
-            # Average the radii at theta and its symmetric point to enforce symmetry
-            # UNIFIED CONSTRAINT: Maintain contact point constraint after symmetry enforcement
-            avg_planet = (r_planet[i] + r_planet[sym_idx]) / 2.0
-            avg_sun = (r_sun[i] + r_sun[sym_idx]) / 2.0
-            # UNIFIED CONSTRAINT: R_ring(θ) = R_sun(θ) + 2*R_planet(θ)
-            avg_ring = avg_sun + 2.0 * avg_planet
-            
-            r_planet[i] = avg_planet
-            r_planet[sym_idx] = avg_planet
-            r_sun[i] = avg_sun
-            r_sun[sym_idx] = avg_sun
-            r_ring_inner[i] = avg_ring
-            r_ring_inner[sym_idx] = avg_ring
-
-        # Step 6: Calculate conjugate relationship for specific tooth meshing
-        # For 2:1 gear ratio, planet rotates 2x faster than ring
-        gear_ratio = params["gearRatio"]  # 2.0
-
-        # φ(θ) mapping: ring angle vs planet angle
-        # Since planet rotates 2x faster: φ = 2θ
-        # For 2:1 gear ratio: when ring rotates 180°, planet rotates 360°
-        # When ring rotates 360°, planet rotates 720°
-        phi_of_theta_deg = 2.0 * theta_deg
+        # Step 6: Compute φ(θ) from instantaneous ratio r(θ) if available
+        if "instantaneous_ratio" in params:
+            r_inst = np.asarray(params["instantaneous_ratio"]).astype(float)
+            if r_inst.shape[0] != n:
+                # Try to tile/crop to match length
+                reps = int(np.ceil(n / r_inst.size))
+                r_inst = np.tile(r_inst, reps)[:n]
+            phi_of_theta_deg = np.cumsum(r_inst) * step_deg
+        else:
+            # Fallback: fixed mapping φ = gearRatio * θ
+            gear_ratio = params.get("gearRatio", 2.0)
+            phi_of_theta_deg = gear_ratio * theta_deg
 
         # Step 7: Arc-length conjugacy for proper tooth meshing
         # Each tooth must mesh with the same corresponding tooth throughout the cycle
@@ -375,20 +382,13 @@ class GearProfileGenerator:
         s_ring = np.cumsum(ds_ring)
         s_sun = np.cumsum(ds_sun)
 
-        # Step 8: Verify proper gear ratio through φ(θ) mapping
-        # For 2:1 gear ratio: planet rotates 2x faster than ring
-        # The gear ratio is enforced through the φ(θ) mapping, not arc-length scaling
-        # Both gears should have similar arc-lengths because they complete their respective cycles
-        
-        # Verify the φ(θ) mapping is correct
-        expected_planet_angle_range = 360.0 * gear_ratio  # For 2:1 ratio: 720°
-        actual_planet_angle_range = np.max(phi_of_theta_deg) - np.min(phi_of_theta_deg)
-        
-        self.logger.info(f"Gear ratio verification through φ(θ) mapping:")
+        # Step 8: Verify global mapping consistency (diagnostic only)
+        # actual_planet_angle_range = float(np.max(phi_of_theta_deg) - np.min(phi_of_theta_deg))  # TODO: Use for validation
+        expected_planet_angle_range = float(2.0 * 360.0) if np.max(theta_deg) >= 360.0 else float(2.0 * np.max(theta_deg))
+        self.logger.info("φ(θ) mapping diagnostic:")
         self.logger.info(f"  Ring angle range: {np.min(theta_deg):.1f}° - {np.max(theta_deg):.1f}°")
         self.logger.info(f"  Planet angle range: {np.min(phi_of_theta_deg):.1f}° - {np.max(phi_of_theta_deg):.1f}°")
-        self.logger.info(f"  Expected planet angle range: 0° - {expected_planet_angle_range:.1f}°")
-        self.logger.info(f"  φ(θ) mapping correct: {abs(actual_planet_angle_range - expected_planet_angle_range) < 1.0}")
+        self.logger.info(f"  Expected planet angle range (~2× ring span): 0° - {expected_planet_angle_range:.1f}°")
         
         # The arc-length ratio should be close to 1:1 for proper tooth meshing
         # Both gears complete their respective cycles (ring: 180°, planet: 360°)
@@ -400,7 +400,8 @@ class GearProfileGenerator:
             self.logger.info("This may indicate issues with profile generation or tooth synchronization")
         
         # Step 9: Final clearance check and validation
-        clearance = r_ring_inner - r_planet - params["interferenceBuffer"]
+        clearance_buffer = params.get("interferenceBuffer", 0.5)
+        clearance = r_ring_inner - r_planet - clearance_buffer
         min_clearance = np.min(clearance)
 
         if min_clearance < 0:
@@ -444,7 +445,7 @@ class GearProfileGenerator:
             clearance = r_ring_inner - r_planet - params["interferenceBuffer"]
 
         # Step 10: Calculate ring outer radius based on inner radius + thickness
-        ring_thickness = params["ringThickness"]
+        ring_thickness = params.get("ringThickness", 5.0)
         r_ring_outer = r_ring_inner + ring_thickness
 
         # Step 11: Final validation of UNIFIED CONSTRAINT SYSTEM
@@ -454,7 +455,11 @@ class GearProfileGenerator:
         self.logger.info(f"  Ring inner radius range: {np.min(r_ring_inner):.2f} - {np.max(r_ring_inner):.2f} mm")
         self.logger.info(f"  UNIFIED CONSTRAINT (R_ring = R_sun + 2*R_planet): {np.allclose(r_ring_inner, r_sun + 2.0 * r_planet, atol=0.01)}")
         self.logger.info(f"  Contact point constraint satisfied: {np.allclose(r_ring_inner - r_planet, r_sun + r_planet, atol=0.01)}")
-        self.logger.info(f"  φ(θ) mapping gear ratio: {gear_ratio:.1f}:1 (Planet:Ring)")
+        # Report effective instantaneous/global ratio for diagnostics
+        ring_span = float(np.max(theta_deg) - np.min(theta_deg)) if n > 0 else 0.0
+        planet_span = float(np.max(phi_of_theta_deg) - np.min(phi_of_theta_deg)) if n > 0 else 0.0
+        effective_ratio = (planet_span / ring_span) if ring_span > 0 else 0.0
+        self.logger.info(f"  φ(θ) effective global ratio: {effective_ratio:.3f}:1 (Planet:Ring)")
         self.logger.info(f"  Arc-length ratio: {s_planet[-1]/s_ring[-1]:.3f} (should be ~1.0)")
         self.logger.info(f"  Clearance range: {np.min(clearance):.2f} - {np.max(clearance):.2f} mm")
 
@@ -469,7 +474,7 @@ class GearProfileGenerator:
             "s_sun": s_sun,
             "phi_of_theta_deg": phi_of_theta_deg,
             "clearance": clearance,
-            "gear_ratio": gear_ratio
+            "gear_ratio": effective_ratio
         }
     
     def validate_gearset_constraints(self, gear_profiles: Dict[str, np.ndarray], 
@@ -489,7 +494,7 @@ class GearProfileGenerator:
         r_sun = gear_profiles["r_sun"]
         r_planet = gear_profiles["r_planet"]
         r_ring_inner = gear_profiles["r_ring_inner"]
-        r_ring_outer = gear_profiles["r_ring_outer"]
+        gear_profiles["r_ring_outer"]
         clearance = gear_profiles["clearance"]
         
         # Check UNIFIED CONSTRAINT: R_ring(θ) = R_sun(θ) + 2*R_planet(θ)
@@ -508,7 +513,7 @@ class GearProfileGenerator:
         stroke_achievable = gearset_capacity >= stroke_length * stroke_achievable_factor
         
         # Log validation details for debugging
-        self.logger.debug(f"Validation details:")
+        self.logger.debug("Validation details:")
         self.logger.debug(f"  Unified constraint: {unified_constraint}")
         self.logger.debug(f"  Contact point constraint: {contact_point_constraint}")
         self.logger.debug(f"  Positive clearance: {positive_clearance}")
@@ -558,13 +563,13 @@ class GearProfileGenerator:
         r_ring_inner = gear_profiles["r_ring_inner"]
         r_sun = gear_profiles["r_sun"]
         theta_deg = gear_profiles["theta_deg"]
-        phi_of_theta_deg = gear_profiles["phi_of_theta_deg"]
+        gear_profiles["phi_of_theta_deg"]
         
         # Extract sun center radius (connecting rod journal)
-        sun_center_radius = params["journalRadius"]  # 5.0 mm
+        sun_center_radius = params.get("journalRadius", 5.0)  # 5.0 mm default
         
-        planet_count = params["planetCount"]
-        carrier_offset_deg = params["carrierOffsetDeg"]
+        planet_count = int(params.get("planetCount", 2))
+        carrier_offset_deg = float(params.get("carrierOffsetDeg", 180.0))
         
         planets = []
         
@@ -572,8 +577,10 @@ class GearProfileGenerator:
             # Planet angle relative to carrier
             planet_angle = i * carrier_offset_deg
             
-            # Planet center positions (tangent to inner ring surface)
-            center_distance = r_ring_inner - r_planet  # This ensures tangency
+            # Planet center positions (tangent to both sun and ring)
+            # CORRECTED: Planet center distance = (r_ring_inner - r_sun) / 2
+            # This ensures the planet is tangent to both sun and ring
+            center_distance = (r_ring_inner - r_sun) / 2.0
             center_x = center_distance * np.cos(np.deg2rad(planet_angle))
             center_y = center_distance * np.sin(np.deg2rad(planet_angle))
             

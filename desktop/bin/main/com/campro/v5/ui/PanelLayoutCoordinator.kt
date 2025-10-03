@@ -19,10 +19,7 @@ class PanelLayoutCoordinator {
     /**
      * Register a panel with the coordinator
      */
-    fun registerPanel(
-        id: String,
-        initialState: PanelState,
-    ) {
+    fun registerPanel(id: String, initialState: PanelState) {
         panelStates[id] = initialState
         layoutConstraints[id] =
             LayoutConstraints(
@@ -44,11 +41,7 @@ class PanelLayoutCoordinator {
     /**
      * Update panel size and calculate necessary adjustments for other panels
      */
-    fun updatePanelSize(
-        id: String,
-        newWidth: Dp,
-        newHeight: Dp,
-    ): List<PanelAdjustment> {
+    fun updatePanelSize(id: String, newWidth: Dp, newHeight: Dp): List<PanelAdjustment> {
         val currentState = panelStates[id] ?: return emptyList()
         val constraints = layoutConstraints[id] ?: return emptyList()
 
@@ -71,10 +64,7 @@ class PanelLayoutCoordinator {
     /**
      * Calculate adjustments needed for other panels when one panel is resized
      */
-    private fun calculateAdjustments(
-        resizedPanelId: String,
-        newState: PanelState,
-    ): List<PanelAdjustment> {
+    private fun calculateAdjustments(resizedPanelId: String, newState: PanelState): List<PanelAdjustment> {
         val adjustments = mutableListOf<PanelAdjustment>()
         val resizedPanel = newState
 
@@ -95,11 +85,7 @@ class PanelLayoutCoordinator {
     /**
      * Calculate adjustment for a specific panel relative to the resized panel
      */
-    private fun calculatePanelAdjustment(
-        resizedPanel: PanelState,
-        targetPanel: PanelState,
-        targetPanelId: String,
-    ): PanelAdjustment? {
+    private fun calculatePanelAdjustment(resizedPanel: PanelState, targetPanel: PanelState, targetPanelId: String): PanelAdjustment? {
         // Simple logic: if panels would overlap, move the target panel
         val resizedRight = resizedPanel.x + resizedPanel.width
         val resizedBottom = resizedPanel.y + resizedPanel.height
@@ -257,10 +243,7 @@ class PanelLayoutCoordinator {
     /**
      * Validate that all panels remain within container bounds
      */
-    fun validateLayout(
-        containerWidth: Dp,
-        containerHeight: Dp,
-    ): List<PanelAdjustment> {
+    fun validateLayout(containerWidth: Dp, containerHeight: Dp): List<PanelAdjustment> {
         val adjustments = mutableListOf<PanelAdjustment>()
 
         panelStates.forEach { (panelId, panelState) ->
@@ -336,23 +319,12 @@ data class PanelState(
 /**
  * Data class representing layout constraints for a panel
  */
-data class LayoutConstraints(
-    val minWidth: Dp,
-    val minHeight: Dp,
-    val maxWidth: Dp,
-    val maxHeight: Dp,
-)
+data class LayoutConstraints(val minWidth: Dp, val minHeight: Dp, val maxWidth: Dp, val maxHeight: Dp)
 
 /**
  * Data class representing an adjustment to be made to a panel
  */
-data class PanelAdjustment(
-    val panelId: String,
-    val newX: Dp,
-    val newY: Dp,
-    val newWidth: Dp,
-    val newHeight: Dp,
-)
+data class PanelAdjustment(val panelId: String, val newX: Dp, val newY: Dp, val newWidth: Dp, val newHeight: Dp)
 
 /**
  * Composable function to remember a PanelLayoutCoordinator instance

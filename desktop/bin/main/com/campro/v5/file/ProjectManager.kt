@@ -81,13 +81,13 @@ class ProjectManager {
                 name = "Basic Mechanism",
                 description = "A simple cycloidal mechanism with default parameters",
                 parameters =
-                    mapOf(
-                        "Piston Diameter" to "70.0",
-                        "Stroke" to "20.0",
-                        "Rod Length" to "40.0",
-                        "TDC Offset" to "40.0",
-                        "Cycle Ratio" to "2.0",
-                    ),
+                mapOf(
+                    "Piston Diameter" to "70.0",
+                    "Stroke" to "20.0",
+                    "Rod Length" to "40.0",
+                    "TDC Offset" to "40.0",
+                    "Cycle Ratio" to "2.0",
+                ),
             ),
         )
 
@@ -98,13 +98,13 @@ class ProjectManager {
                 name = "High-Speed Mechanism",
                 description = "A cycloidal mechanism optimized for high speed",
                 parameters =
-                    mapOf(
-                        "Piston Diameter" to "60.0",
-                        "Stroke" to "15.0",
-                        "Rod Length" to "45.0",
-                        "TDC Offset" to "35.0",
-                        "Cycle Ratio" to "3.0",
-                    ),
+                mapOf(
+                    "Piston Diameter" to "60.0",
+                    "Stroke" to "15.0",
+                    "Rod Length" to "45.0",
+                    "TDC Offset" to "35.0",
+                    "Cycle Ratio" to "3.0",
+                ),
             ),
         )
 
@@ -115,13 +115,13 @@ class ProjectManager {
                 name = "High-Torque Mechanism",
                 description = "A cycloidal mechanism optimized for high torque",
                 parameters =
-                    mapOf(
-                        "Piston Diameter" to "80.0",
-                        "Stroke" to "25.0",
-                        "Rod Length" to "35.0",
-                        "TDC Offset" to "45.0",
-                        "Cycle Ratio" to "1.5",
-                    ),
+                mapOf(
+                    "Piston Diameter" to "80.0",
+                    "Stroke" to "25.0",
+                    "Rod Length" to "35.0",
+                    "TDC Offset" to "45.0",
+                    "Cycle Ratio" to "1.5",
+                ),
             ),
         )
     }
@@ -157,10 +157,7 @@ class ProjectManager {
      * @param name The name of the project
      * @return The new project
      */
-    fun createProjectFromTemplate(
-        templateId: String,
-        name: String,
-    ): Project {
+    fun createProjectFromTemplate(templateId: String, name: String): Project {
         val template = projectTemplates[templateId] ?: throw IllegalArgumentException("Template not found: $templateId")
 
         val project =
@@ -168,11 +165,11 @@ class ProjectManager {
                 name = name,
                 parameters = template.parameters.toMutableMap(),
                 metadata =
-                    ProjectMetadata(
-                        createdAt = System.currentTimeMillis(),
-                        modifiedAt = System.currentTimeMillis(),
-                        templateId = templateId,
-                    ),
+                ProjectMetadata(
+                    createdAt = System.currentTimeMillis(),
+                    modifiedAt = System.currentTimeMillis(),
+                    templateId = templateId,
+                ),
             )
 
         // Set as current project
@@ -249,40 +246,39 @@ class ProjectManager {
      * @param file The file to save to
      * @return True if the save was successful, false otherwise
      */
-    suspend fun saveProject(file: File): Boolean =
-        withContext(Dispatchers.IO) {
-            val currentProject = _currentProject.value ?: return@withContext false
+    suspend fun saveProject(file: File): Boolean = withContext(Dispatchers.IO) {
+        val currentProject = _currentProject.value ?: return@withContext false
 
-            try {
-                // Update modification time
-                currentProject.metadata.modifiedAt = System.currentTimeMillis()
+        try {
+            // Update modification time
+            currentProject.metadata.modifiedAt = System.currentTimeMillis()
 
-                // Convert to JSON
-                val json = gson.toJson(currentProject)
+            // Convert to JSON
+            val json = gson.toJson(currentProject)
 
-                // Write to file
-                file.writeText(json)
+            // Write to file
+            file.writeText(json)
 
-                // Update file path
-                currentProject.filePath = file.absolutePath
+            // Update file path
+            currentProject.filePath = file.absolutePath
 
-                // Mark as not modified
-                _isProjectModified.value = false
+            // Mark as not modified
+            _isProjectModified.value = false
 
-                // Save last project path
-                stateManager.setState("project.lastProjectPath", file.absolutePath)
+            // Save last project path
+            stateManager.setState("project.lastProjectPath", file.absolutePath)
 
-                // Emit project event
-                _projectEvents.value = ProjectEvent.ProjectSaved(currentProject)
+            // Emit project event
+            _projectEvents.value = ProjectEvent.ProjectSaved(currentProject)
 
-                return@withContext true
-            } catch (e: Exception) {
-                // Emit error event
-                _projectEvents.value = ProjectEvent.Error("Failed to save project: ${e.message}")
+            return@withContext true
+        } catch (e: Exception) {
+            // Emit error event
+            _projectEvents.value = ProjectEvent.Error("Failed to save project: ${e.message}")
 
-                return@withContext false
-            }
+            return@withContext false
         }
+    }
 
     /**
      * Load a project from a file.
@@ -290,36 +286,35 @@ class ProjectManager {
      * @param file The file to load from
      * @return True if the load was successful, false otherwise
      */
-    suspend fun loadProject(file: File): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                // Read JSON from file
-                val json = file.readText()
+    suspend fun loadProject(file: File): Boolean = withContext(Dispatchers.IO) {
+        try {
+            // Read JSON from file
+            val json = file.readText()
 
-                // Convert from JSON
-                val project = gson.fromJson(json, Project::class.java)
+            // Convert from JSON
+            val project = gson.fromJson(json, Project::class.java)
 
-                // Set file path
-                project.filePath = file.absolutePath
+            // Set file path
+            project.filePath = file.absolutePath
 
-                // Set as current project
-                _currentProject.value = project
-                _isProjectModified.value = false
+            // Set as current project
+            _currentProject.value = project
+            _isProjectModified.value = false
 
-                // Save last project path
-                stateManager.setState("project.lastProjectPath", file.absolutePath)
+            // Save last project path
+            stateManager.setState("project.lastProjectPath", file.absolutePath)
 
-                // Emit project event
-                _projectEvents.value = ProjectEvent.ProjectLoaded(project)
+            // Emit project event
+            _projectEvents.value = ProjectEvent.ProjectLoaded(project)
 
-                return@withContext true
-            } catch (e: Exception) {
-                // Emit error event
-                _projectEvents.value = ProjectEvent.Error("Failed to load project: ${e.message}")
+            return@withContext true
+        } catch (e: Exception) {
+            // Emit error event
+            _projectEvents.value = ProjectEvent.Error("Failed to load project: ${e.message}")
 
-                return@withContext false
-            }
+            return@withContext false
         }
+    }
 
     /**
      * Close the current project.
@@ -346,51 +341,47 @@ class ProjectManager {
      * @param format The format to export to
      * @return True if the export was successful, false otherwise
      */
-    suspend fun exportProject(
-        file: File,
-        format: String,
-    ): Boolean =
-        withContext(Dispatchers.IO) {
-            val currentProject = _currentProject.value ?: return@withContext false
+    suspend fun exportProject(file: File, format: String): Boolean = withContext(Dispatchers.IO) {
+        val currentProject = _currentProject.value ?: return@withContext false
 
-            try {
-                when (format.lowercase()) {
-                    "json" -> {
-                        // Convert to JSON
-                        val json = gson.toJson(currentProject)
+        try {
+            when (format.lowercase()) {
+                "json" -> {
+                    // Convert to JSON
+                    val json = gson.toJson(currentProject)
 
-                        // Write to file
-                        file.writeText(json)
-                    }
-                    "csv" -> {
-                        // Export parameters as CSV
-                        val csv = StringBuilder()
-                        csv.appendLine("Parameter,Value")
-                        currentProject.parameters.forEach { (key, value) ->
-                            csv.appendLine("$key,$value")
-                        }
-
-                        // Write to file
-                        file.writeText(csv.toString())
-                    }
-                    else -> {
-                        // Unsupported format
-                        _projectEvents.value = ProjectEvent.Error("Unsupported export format: $format")
-                        return@withContext false
-                    }
+                    // Write to file
+                    file.writeText(json)
                 }
+                "csv" -> {
+                    // Export parameters as CSV
+                    val csv = StringBuilder()
+                    csv.appendLine("Parameter,Value")
+                    currentProject.parameters.forEach { (key, value) ->
+                        csv.appendLine("$key,$value")
+                    }
 
-                // Emit project event
-                _projectEvents.value = ProjectEvent.ProjectExported(currentProject, file.absolutePath, format)
-
-                return@withContext true
-            } catch (e: Exception) {
-                // Emit error event
-                _projectEvents.value = ProjectEvent.Error("Failed to export project: ${e.message}")
-
-                return@withContext false
+                    // Write to file
+                    file.writeText(csv.toString())
+                }
+                else -> {
+                    // Unsupported format
+                    _projectEvents.value = ProjectEvent.Error("Unsupported export format: $format")
+                    return@withContext false
+                }
             }
+
+            // Emit project event
+            _projectEvents.value = ProjectEvent.ProjectExported(currentProject, file.absolutePath, format)
+
+            return@withContext true
+        } catch (e: Exception) {
+            // Emit error event
+            _projectEvents.value = ProjectEvent.Error("Failed to export project: ${e.message}")
+
+            return@withContext false
         }
+    }
 
     /**
      * Import a project from a file.
@@ -399,112 +390,107 @@ class ProjectManager {
      * @param format The format of the file
      * @return True if the import was successful, false otherwise
      */
-    suspend fun importProject(
-        file: File,
-        format: String,
-    ): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                when (format.lowercase()) {
-                    "json" -> {
-                        // Read JSON from file
-                        val json = file.readText()
+    suspend fun importProject(file: File, format: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            when (format.lowercase()) {
+                "json" -> {
+                    // Read JSON from file
+                    val json = file.readText()
 
-                        // Convert from JSON
-                        val project = gson.fromJson(json, Project::class.java)
+                    // Convert from JSON
+                    val project = gson.fromJson(json, Project::class.java)
 
-                        // Set as current project
-                        _currentProject.value = project
-                        _isProjectModified.value = true
+                    // Set as current project
+                    _currentProject.value = project
+                    _isProjectModified.value = true
 
-                        // Emit project event
-                        _projectEvents.value = ProjectEvent.ProjectImported(project)
+                    // Emit project event
+                    _projectEvents.value = ProjectEvent.ProjectImported(project)
 
-                        return@withContext true
-                    }
-                    "csv" -> {
-                        // Read CSV from file
-                        val lines = file.readLines()
-
-                        // Parse CSV
-                        val parameters = mutableMapOf<String, String>()
-                        for (i in 1 until lines.size) {
-                            val parts = lines[i].split(",")
-                            if (parts.size >= 2) {
-                                parameters[parts[0]] = parts[1]
-                            }
-                        }
-
-                        // Create new project
-                        val project =
-                            Project(
-                                name = file.nameWithoutExtension,
-                                parameters = parameters,
-                                metadata =
-                                    ProjectMetadata(
-                                        createdAt = System.currentTimeMillis(),
-                                        modifiedAt = System.currentTimeMillis(),
-                                    ),
-                            )
-
-                        // Set as current project
-                        _currentProject.value = project
-                        _isProjectModified.value = true
-
-                        // Emit project event
-                        _projectEvents.value = ProjectEvent.ProjectImported(project)
-
-                        return@withContext true
-                    }
-                    else -> {
-                        // Unsupported format
-                        _projectEvents.value = ProjectEvent.Error("Unsupported import format: $format")
-                        return@withContext false
-                    }
+                    return@withContext true
                 }
-            } catch (e: Exception) {
-                // Emit error event
-                _projectEvents.value = ProjectEvent.Error("Failed to import project: ${e.message}")
+                "csv" -> {
+                    // Read CSV from file
+                    val lines = file.readLines()
 
-                return@withContext false
+                    // Parse CSV
+                    val parameters = mutableMapOf<String, String>()
+                    for (i in 1 until lines.size) {
+                        val parts = lines[i].split(",")
+                        if (parts.size >= 2) {
+                            parameters[parts[0]] = parts[1]
+                        }
+                    }
+
+                    // Create new project
+                    val project =
+                        Project(
+                            name = file.nameWithoutExtension,
+                            parameters = parameters,
+                            metadata =
+                            ProjectMetadata(
+                                createdAt = System.currentTimeMillis(),
+                                modifiedAt = System.currentTimeMillis(),
+                            ),
+                        )
+
+                    // Set as current project
+                    _currentProject.value = project
+                    _isProjectModified.value = true
+
+                    // Emit project event
+                    _projectEvents.value = ProjectEvent.ProjectImported(project)
+
+                    return@withContext true
+                }
+                else -> {
+                    // Unsupported format
+                    _projectEvents.value = ProjectEvent.Error("Unsupported import format: $format")
+                    return@withContext false
+                }
             }
+        } catch (e: Exception) {
+            // Emit error event
+            _projectEvents.value = ProjectEvent.Error("Failed to import project: ${e.message}")
+
+            return@withContext false
         }
+    }
 
     /**
      * Create a backup of the current project.
      *
      * @return The backup file, or null if the backup failed
      */
-    suspend fun createBackup(): File? =
-        withContext(Dispatchers.IO) {
-            val currentProject = _currentProject.value ?: return@withContext null
+    suspend fun createBackup(): File? = withContext(Dispatchers.IO) {
+        val currentProject = _currentProject.value ?: return@withContext null
 
-            try {
-                // Create backup directory
-                val backupDir = File(System.getProperty("user.home"), ".campro/backups")
-                backupDir.mkdirs()
+        try {
+            // Create backup directory
+            val backupDir = File(System.getProperty("user.home"), ".campro/backups")
+            backupDir.mkdirs()
 
-                // Create backup file
-                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-                val backupFile = File(backupDir, "${currentProject.name}_$timestamp.json")
+            // Create backup file
+            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+            val backupFile = File(backupDir, "${currentProject.name}_$timestamp.json")
 
-                // Convert to JSON
-                val json = gson.toJson(currentProject)
+            // Convert to JSON
+            val json = gson.toJson(currentProject)
 
-                // Write to file
-                backupFile.writeText(json)
+            // Write to file
+            backupFile.writeText(json)
 
-                // Emit project event
-                _projectEvents.value = ProjectEvent.ProjectBackupCreated(currentProject, backupFile.absolutePath)
+            // Emit project event
+            _projectEvents.value = ProjectEvent.ProjectBackupCreated(currentProject, backupFile.absolutePath)
 
-                return@withContext backupFile
-            } catch (e: Exception) {
-                // Emit error event
-                _projectEvents.value = ProjectEvent.Error("Failed to create backup: ${e.message}")
+            return@withContext backupFile
+        } catch (e: Exception) {
+            // Emit error event
+            _projectEvents.value = ProjectEvent.Error("Failed to create backup: ${e.message}")
 
-                return@withContext null
-            }
+            return@withContext null
         }
+    }
 
     /**
      * Restore a project from a backup.
@@ -512,28 +498,26 @@ class ProjectManager {
      * @param backupFile The backup file to restore from
      * @return True if the restore was successful, false otherwise
      */
-    suspend fun restoreBackup(backupFile: File): Boolean =
-        withContext(Dispatchers.IO) {
-            return@withContext loadProject(backupFile)
-        }
+    suspend fun restoreBackup(backupFile: File): Boolean = withContext(Dispatchers.IO) {
+        return@withContext loadProject(backupFile)
+    }
 
     /**
      * List all available backups.
      *
      * @return A list of backup files
      */
-    suspend fun listBackups(): List<File> =
-        withContext(Dispatchers.IO) {
-            val backupDir = File(System.getProperty("user.home"), ".campro/backups")
-            if (!backupDir.exists() || !backupDir.isDirectory) {
-                return@withContext emptyList()
-            }
-
-            return@withContext backupDir
-                .listFiles { file ->
-                    file.isFile && file.name.endsWith(".json")
-                }?.toList() ?: emptyList()
+    suspend fun listBackups(): List<File> = withContext(Dispatchers.IO) {
+        val backupDir = File(System.getProperty("user.home"), ".campro/backups")
+        if (!backupDir.exists() || !backupDir.isDirectory) {
+            return@withContext emptyList()
         }
+
+        return@withContext backupDir
+            .listFiles { file ->
+                file.isFile && file.name.endsWith(".json")
+            }?.toList() ?: emptyList()
+    }
 
     companion object {
         // Singleton instance
@@ -595,12 +579,7 @@ data class ProjectMetadata(
  * @param description The description of the template
  * @param parameters The default parameters of the template
  */
-data class ProjectTemplate(
-    val id: String,
-    val name: String,
-    val description: String,
-    val parameters: Map<String, String>,
-)
+data class ProjectTemplate(val id: String, val name: String, val description: String, val parameters: Map<String, String>)
 
 /**
  * Project events emitted by the ProjectManager.
@@ -611,45 +590,35 @@ sealed class ProjectEvent {
      *
      * @param project The created project
      */
-    data class ProjectCreated(
-        val project: Project,
-    ) : ProjectEvent()
+    data class ProjectCreated(val project: Project) : ProjectEvent()
 
     /**
      * Event emitted when a project is loaded.
      *
      * @param project The loaded project
      */
-    data class ProjectLoaded(
-        val project: Project,
-    ) : ProjectEvent()
+    data class ProjectLoaded(val project: Project) : ProjectEvent()
 
     /**
      * Event emitted when a project is saved.
      *
      * @param project The saved project
      */
-    data class ProjectSaved(
-        val project: Project,
-    ) : ProjectEvent()
+    data class ProjectSaved(val project: Project) : ProjectEvent()
 
     /**
      * Event emitted when a project is closed.
      *
      * @param project The closed project
      */
-    data class ProjectClosed(
-        val project: Project,
-    ) : ProjectEvent()
+    data class ProjectClosed(val project: Project) : ProjectEvent()
 
     /**
      * Event emitted when a project is updated.
      *
      * @param project The updated project
      */
-    data class ProjectUpdated(
-        val project: Project,
-    ) : ProjectEvent()
+    data class ProjectUpdated(val project: Project) : ProjectEvent()
 
     /**
      * Event emitted when a project is exported.
@@ -658,20 +627,14 @@ sealed class ProjectEvent {
      * @param filePath The path to the exported file
      * @param format The format of the exported file
      */
-    data class ProjectExported(
-        val project: Project,
-        val filePath: String,
-        val format: String,
-    ) : ProjectEvent()
+    data class ProjectExported(val project: Project, val filePath: String, val format: String) : ProjectEvent()
 
     /**
      * Event emitted when a project is imported.
      *
      * @param project The imported project
      */
-    data class ProjectImported(
-        val project: Project,
-    ) : ProjectEvent()
+    data class ProjectImported(val project: Project) : ProjectEvent()
 
     /**
      * Event emitted when a project backup is created.
@@ -679,19 +642,14 @@ sealed class ProjectEvent {
      * @param project The project
      * @param backupPath The path to the backup file
      */
-    data class ProjectBackupCreated(
-        val project: Project,
-        val backupPath: String,
-    ) : ProjectEvent()
+    data class ProjectBackupCreated(val project: Project, val backupPath: String) : ProjectEvent()
 
     /**
      * Event emitted when an error occurs.
      *
      * @param message The error message
      */
-    data class Error(
-        val message: String,
-    ) : ProjectEvent()
+    data class Error(val message: String) : ProjectEvent()
 }
 
 /**

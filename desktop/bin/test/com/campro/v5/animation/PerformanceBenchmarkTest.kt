@@ -48,10 +48,7 @@ class PerformanceBenchmarkTest {
         "Collocation, 2.0",
     )
     @Timeout(60, unit = TimeUnit.SECONDS)
-    fun `solver performance across different step sizes`(
-        solverMode: String,
-        stepDeg: Double,
-    ) {
+    fun `solver performance across different step sizes`(solverMode: String, stepDeg: Double) {
         val params =
             LitvinUserParams(
                 strokeLengthMm = 15.0,
@@ -350,10 +347,7 @@ class PerformanceBenchmarkTest {
     // HELPER METHODS
     // ========================================
 
-    private fun benchmarkSolver(
-        params: LitvinUserParams,
-        name: String,
-    ): BenchmarkResult {
+    private fun benchmarkSolver(params: LitvinUserParams, name: String): BenchmarkResult {
         val startTime = System.currentTimeMillis()
 
         return try {

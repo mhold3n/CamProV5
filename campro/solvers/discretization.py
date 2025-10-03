@@ -6,9 +6,7 @@ including node generation and differentiation matrices.
 """
 
 import numpy as np
-from typing import Tuple, Union
-from scipy.special import legendre
-from scipy.linalg import solve
+from typing import Tuple, Dict, Any
 
 import logging
 
@@ -16,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 # Global cache for collocation matrices
-_MATRIX_CACHE = {}
+_MATRIX_CACHE: Dict[str, Any] = {}
 _CACHE_HITS = 0
 _CACHE_MISSES = 0
 

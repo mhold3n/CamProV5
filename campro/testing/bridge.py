@@ -10,23 +10,28 @@ import os
 import time
 import json
 import threading
+from typing import Dict, Any, Optional, List
+from campro.logging import get_logger
+
+# Set up logging
+logger = get_logger(__name__)
 
 class KotlinUIBridge:
     """Bridge for launching and communicating with the Kotlin UI."""
     
-    def __init__(self, testing_mode=True):
+    def __init__(self, testing_mode: bool = True) -> None:
         """
         Initialize the Kotlin UI bridge.
         
         Args:
             testing_mode (bool): Whether to launch the UI in testing mode.
         """
-        self.process = None
+        self.process: Optional[subprocess.Popen[str]] = None
         self.testing_mode = testing_mode
-        self.event_queue = []
+        self.event_queue: List[Dict[str, Any]] = []
         self.running = False
         
-    def start(self):
+    def start(self) -> bool:
         """
         Launch the Kotlin UI process.
         
@@ -42,7 +47,7 @@ class KotlinUIBridge:
         
         # Check if the JAR file exists
         if not os.path.exists(jar_path):
-            print(f"Desktop launcher JAR not found: {jar_path}")
+            logger.error(f"Desktop launcher JAR not found: {jar_path}")
             return False
         
         # Launch with testing flag
@@ -68,12 +73,12 @@ class KotlinUIBridge:
             
             # Wait for UI to initialize
             time.sleep(2)
-            return self.process.poll() is None
+            return self.process is not None and self.process.poll() is None
         except Exception as e:
             print(f"Error starting Kotlin UI: {e}")
             return False
         
-    def stop(self):
+    def stop(self) -> None:
         """
         Stop the Kotlin UI process.
         """
@@ -86,12 +91,15 @@ class KotlinUIBridge:
                 self.process.kill()
             self.process = None
             
-    def _monitor_process(self):
+    def _monitor_process(self) -> None:
         """
         Monitor the process output for events.
         """
-        while self.running and self.process.poll() is None:
-            line = self.process.stdout.readline()
+        while self.running and self.process is not None and self.process.poll() is None:
+            if self.process.stdout is not None:
+                line = self.process.stdout.readline()
+            else:
+                break
             if line.startswith("EVENT:"):
                 # Parse event from UI
                 try:
@@ -100,7 +108,7 @@ class KotlinUIBridge:
                 except json.JSONDecodeError as e:
                     print(f"Error parsing event: {e}")
                 
-    def send_command(self, command, params=None):
+    def send_command(self, command: str, params: Optional[Dict[str, Any]] = None) -> bool:
         """
         Send a command to the UI.
         
@@ -114,20 +122,21 @@ class KotlinUIBridge:
         if self.process is None or self.process.poll() is not None:
             return False
             
-        cmd_obj = {"command": command}
+        cmd_obj: Dict[str, Any] = {"command": command}
         if params:
             cmd_obj["params"] = params
             
         cmd_str = f"COMMAND:{json.dumps(cmd_obj)}\n"
         try:
-            self.process.stdin.write(cmd_str)
-            self.process.stdin.flush()
+            if self.process.stdin is not None:
+                self.process.stdin.write(cmd_str)
+                self.process.stdin.flush()
             return True
         except Exception as e:
             print(f"Error sending command: {e}")
             return False
         
-    def get_events(self):
+    def get_events(self) -> List[Dict[str, Any]]:
         """
         Get all pending events from the UI.
         
@@ -138,7 +147,7 @@ class KotlinUIBridge:
         self.event_queue.clear()
         return events
     
-    def is_running(self):
+    def is_running(self) -> bool:
         """
         Check if the Kotlin UI process is running.
         
@@ -149,7 +158,7 @@ class KotlinUIBridge:
     
     # ParameterInputForm component methods
     
-    def set_parameter_value(self, parameter_name, value):
+    def set_parameter_value(self, parameter_name: str, value: str) -> bool:
         """
         Set a parameter value in the ParameterInputForm.
         
@@ -165,7 +174,7 @@ class KotlinUIBridge:
             "value": value
         })
     
-    def select_parameter_tab(self, tab_name):
+    def select_parameter_tab(self, tab_name: str) -> bool:
         """
         Select a parameter category tab in the ParameterInputForm.
         
@@ -180,7 +189,7 @@ class KotlinUIBridge:
             "value": tab_name
         })
     
-    def load_preset(self, preset_name=None):
+    def load_preset(self, preset_name: Optional[str] = None) -> bool:
         """
         Load a parameter preset.
         
@@ -195,7 +204,7 @@ class KotlinUIBridge:
             params["preset"] = preset_name
         return self.send_command("click", params)
     
-    def save_preset(self, preset_name=None):
+    def save_preset(self, preset_name: Optional[str] = None) -> bool:
         """
         Save current parameters as a preset.
         
@@ -210,7 +219,7 @@ class KotlinUIBridge:
             params["preset"] = preset_name
         return self.send_command("click", params)
     
-    def import_parameters(self, file_path=None):
+    def import_parameters(self, file_path: Optional[str] = None) -> bool:
         """
         Import parameters from a file.
         
@@ -225,7 +234,7 @@ class KotlinUIBridge:
             params["file_path"] = file_path
         return self.send_command("click", params)
     
-    def export_parameters(self, file_path=None):
+    def export_parameters(self, file_path: Optional[str] = None) -> bool:
         """
         Export parameters to a file.
         
@@ -240,7 +249,7 @@ class KotlinUIBridge:
             params["file_path"] = file_path
         return self.send_command("click", params)
     
-    def generate_animation(self):
+    def generate_animation(self) -> bool:
         """
         Generate the animation with the current parameters.
         
@@ -253,7 +262,7 @@ class KotlinUIBridge:
     
     # CycloidalAnimationWidget component methods
     
-    def play_animation(self):
+    def play_animation(self) -> bool:
         """
         Play the cycloidal animation.
         
@@ -264,7 +273,7 @@ class KotlinUIBridge:
             "component": "PlayButton"
         })
     
-    def pause_animation(self):
+    def pause_animation(self) -> bool:
         """
         Pause the cycloidal animation.
         
@@ -275,7 +284,7 @@ class KotlinUIBridge:
             "component": "PauseButton"
         })
     
-    def set_animation_speed(self, speed):
+    def set_animation_speed(self, speed: float) -> bool:
         """
         Set the speed of the cycloidal animation.
         
@@ -290,7 +299,7 @@ class KotlinUIBridge:
             "value": str(speed)
         })
     
-    def zoom_in_animation(self):
+    def zoom_in_animation(self) -> bool:
         """
         Zoom in on the cycloidal animation.
         
@@ -301,7 +310,7 @@ class KotlinUIBridge:
             "component": "ZoomInButton"
         })
     
-    def zoom_out_animation(self):
+    def zoom_out_animation(self) -> bool:
         """
         Zoom out on the cycloidal animation.
         
@@ -312,7 +321,7 @@ class KotlinUIBridge:
             "component": "ZoomOutButton"
         })
     
-    def reset_animation_view(self):
+    def reset_animation_view(self) -> bool:
         """
         Reset the view of the cycloidal animation.
         
@@ -323,7 +332,7 @@ class KotlinUIBridge:
             "component": "ResetViewButton"
         })
     
-    def export_animation(self, file_path=None):
+    def export_animation(self, file_path: Optional[str] = None) -> bool:
         """
         Export the cycloidal animation.
         
@@ -338,7 +347,7 @@ class KotlinUIBridge:
             params["file_path"] = file_path
         return self.send_command("click", params)
     
-    def pan_zoom_animation(self, offset_x, offset_y, scale):
+    def pan_zoom_animation(self, offset_x: float, offset_y: float, scale: float) -> bool:
         """
         Pan and zoom the cycloidal animation.
         
@@ -360,7 +369,7 @@ class KotlinUIBridge:
     
     # PlotCarouselWidget component methods
     
-    def select_plot_type(self, plot_type):
+    def select_plot_type(self, plot_type: str) -> bool:
         """
         Select a plot type in the PlotCarouselWidget.
         
@@ -375,7 +384,7 @@ class KotlinUIBridge:
             "value": plot_type
         })
     
-    def zoom_in_plot(self):
+    def zoom_in_plot(self) -> bool:
         """
         Zoom in on the plot.
         
@@ -386,7 +395,7 @@ class KotlinUIBridge:
             "component": "PlotZoomInButton"
         })
     
-    def zoom_out_plot(self):
+    def zoom_out_plot(self) -> bool:
         """
         Zoom out on the plot.
         
@@ -397,7 +406,7 @@ class KotlinUIBridge:
             "component": "PlotZoomOutButton"
         })
     
-    def reset_plot_view(self):
+    def reset_plot_view(self) -> bool:
         """
         Reset the view of the plot.
         
@@ -408,7 +417,7 @@ class KotlinUIBridge:
             "component": "PlotResetViewButton"
         })
     
-    def export_plot(self, file_path=None):
+    def export_plot(self, file_path: Optional[str] = None) -> bool:
         """
         Export the plot as an image.
         
@@ -423,7 +432,7 @@ class KotlinUIBridge:
             params["file_path"] = file_path
         return self.send_command("click", params)
     
-    def export_plot_data(self, file_path=None):
+    def export_plot_data(self, file_path: Optional[str] = None) -> bool:
         """
         Export the plot data.
         
@@ -438,7 +447,7 @@ class KotlinUIBridge:
             params["file_path"] = file_path
         return self.send_command("click", params)
     
-    def pan_zoom_plot(self, offset_x, offset_y, scale):
+    def pan_zoom_plot(self, offset_x: float, offset_y: float, scale: float) -> bool:
         """
         Pan and zoom the plot.
         
@@ -460,7 +469,7 @@ class KotlinUIBridge:
     
     # DataDisplayPanel component methods
     
-    def select_data_tab(self, tab_name):
+    def select_data_tab(self, tab_name: str) -> bool:
         """
         Select a data tab in the DataDisplayPanel.
         
@@ -475,7 +484,7 @@ class KotlinUIBridge:
             "value": tab_name
         })
     
-    def export_data_csv(self, file_path=None):
+    def export_data_csv(self, file_path: Optional[str] = None) -> bool:
         """
         Export data as CSV.
         
@@ -490,7 +499,7 @@ class KotlinUIBridge:
             params["file_path"] = file_path
         return self.send_command("click", params)
     
-    def generate_report(self, file_path=None):
+    def generate_report(self, file_path: Optional[str] = None) -> bool:
         """
         Generate a report.
         
@@ -506,7 +515,7 @@ class KotlinUIBridge:
         return self.send_command("click", params)
     
     @staticmethod
-    def is_available():
+    def is_available() -> bool:
         """
         Check if the Kotlin UI is available.
         

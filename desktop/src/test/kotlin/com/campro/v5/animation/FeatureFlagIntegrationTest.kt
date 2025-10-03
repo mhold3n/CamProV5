@@ -215,10 +215,8 @@ class FeatureFlagIntegrationTest {
         File(testConfigFile).writeText(content)
     }
 
-    private fun createTestFeatureFlags(
-        enabled: Boolean,
-        forceFallback: Boolean,
-    ): TestFeatureFlags = TestFeatureFlags(enabled, forceFallback)
+    private fun createTestFeatureFlags(enabled: Boolean, forceFallback: Boolean): TestFeatureFlags =
+        TestFeatureFlags(enabled, forceFallback)
 
     private fun isUIVisible(flags: TestFeatureFlags): Boolean {
         // Simulate the UI visibility logic from ParameterInputForm
@@ -226,10 +224,7 @@ class FeatureFlagIntegrationTest {
     }
 
     // Test double for FeatureFlags.Collocation
-    private class TestFeatureFlags(
-        private val enabled: Boolean,
-        private val forceFallback: Boolean,
-    ) {
+    private class TestFeatureFlags(private val enabled: Boolean, private val forceFallback: Boolean) {
         fun isEnabled(): Boolean = enabled
 
         fun isForceFallback(): Boolean = forceFallback
@@ -237,18 +232,17 @@ class FeatureFlagIntegrationTest {
 }
 
 // Extension function to convert LitvinUserParams to parameter map for engine testing
-private fun LitvinUserParams.toParameterStringMap(): Map<String, String> =
-    mapOf(
-        "samplingStepDeg" to samplingStepDeg.toString(),
-        "Profile Solver" to profileSolverMode.name,
-        "strokeLengthMm" to strokeLengthMm.toString(),
-        "rampProfile" to rampProfile.name,
-        "dwellTdcDeg" to dwellTdcDeg.toString(),
-        "dwellBdcDeg" to dwellBdcDeg.toString(),
-        "rampAfterTdcDeg" to rampAfterTdcDeg.toString(),
-        "rampBeforeBdcDeg" to rampBeforeBdcDeg.toString(),
-        "rampAfterBdcDeg" to rampAfterBdcDeg.toString(),
-        "rampBeforeTdcDeg" to rampBeforeTdcDeg.toString(),
-        "upFraction" to upFraction.toString(),
-        "rpm" to rpm.toString(),
-    )
+private fun LitvinUserParams.toParameterStringMap(): Map<String, String> = mapOf(
+    "samplingStepDeg" to samplingStepDeg.toString(),
+    "Profile Solver" to profileSolverMode.name,
+    "strokeLengthMm" to strokeLengthMm.toString(),
+    "rampProfile" to rampProfile.name,
+    "dwellTdcDeg" to dwellTdcDeg.toString(),
+    "dwellBdcDeg" to dwellBdcDeg.toString(),
+    "rampAfterTdcDeg" to rampAfterTdcDeg.toString(),
+    "rampBeforeBdcDeg" to rampBeforeBdcDeg.toString(),
+    "rampAfterBdcDeg" to rampAfterBdcDeg.toString(),
+    "rampBeforeTdcDeg" to rampBeforeTdcDeg.toString(),
+    "upFraction" to upFraction.toString(),
+    "rpm" to rpm.toString(),
+)

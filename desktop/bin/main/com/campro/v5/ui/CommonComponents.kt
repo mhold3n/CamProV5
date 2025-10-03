@@ -7,17 +7,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import com.campro.v5.debug.DebugOutlinedButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.campro.v5.debug.DebugOutlinedButton
 
 /**
  * Common UI components used across the CamProV5 application.
- * 
+ *
  * This file consolidates frequently used components to eliminate duplication
  * and ensure consistent UI patterns throughout the application.
  */
@@ -26,7 +25,7 @@ import androidx.compose.ui.unit.dp
 
 /**
  * A standardized parameter input field with consistent styling and validation.
- * 
+ *
  * @param label The field label
  * @param value The current value
  * @param unit The unit of measurement (optional)
@@ -47,23 +46,23 @@ fun ParameterField(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         OutlinedTextField(
             value = value.toString(),
-            onValueChange = { 
+            onValueChange = {
                 val newValue = it.toDoubleOrNull() ?: value
                 onValueChange(newValue)
             },
-            label = { 
-                Text("$label ${if (unit.isNotEmpty()) "($unit)" else ""}".trim()) 
+            label = {
+                Text("$label ${if (unit.isNotEmpty()) "($unit)" else ""}".trim())
             },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             isError = isError,
-            supportingText = errorMessage?.let { 
+            supportingText = errorMessage?.let {
                 { Text(it, color = MaterialTheme.colorScheme.error) }
-            }
+            },
         )
     }
 }
@@ -83,7 +82,7 @@ fun StringParameterField(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         OutlinedTextField(
             value = value,
@@ -93,9 +92,9 @@ fun StringParameterField(
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             isError = isError,
-            supportingText = errorMessage?.let { 
+            supportingText = errorMessage?.let {
                 { Text(it, color = MaterialTheme.colorScheme.error) }
-            }
+            },
         )
     }
 }
@@ -104,25 +103,21 @@ fun StringParameterField(
  * A standardized section header for parameter groups.
  */
 @Composable
-fun ParameterSectionHeader(
-    title: String,
-    subtitle: String? = null,
-    modifier: Modifier = Modifier,
-) {
+fun ParameterSectionHeader(title: String, subtitle: String? = null, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
         subtitle?.let {
             Text(
                 text = it,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -132,23 +127,20 @@ fun ParameterSectionHeader(
  * A standardized loading indicator with optional message.
  */
 @Composable
-fun LoadingIndicator(
-    message: String = "Loading...",
-    modifier: Modifier = Modifier,
-) {
+fun LoadingIndicator(message: String = "Loading...", modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             CircularProgressIndicator()
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -158,78 +150,73 @@ fun LoadingIndicator(
  * A standardized error display component.
  */
 @Composable
-fun ErrorDisplay(
-    error: Throwable,
-    onRetry: (() -> Unit)? = null,
-    onDismiss: (() -> Unit)? = null,
-    modifier: Modifier = Modifier,
-) {
+fun ErrorDisplay(error: Throwable, onRetry: (() -> Unit)? = null, onDismiss: (() -> Unit)? = null, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+        ),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.Error,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error
+                    tint = MaterialTheme.colorScheme.error,
                 )
                 Text(
                     text = "Error",
                     style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer
+                    color = MaterialTheme.colorScheme.onErrorContainer,
                 )
             }
-            
+
             Text(
                 text = error.message ?: "An unknown error occurred",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = MaterialTheme.colorScheme.onErrorContainer,
             )
-            
+
             if (onRetry != null || onDismiss != null) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     onRetry?.let {
                         DebugOutlinedButton(
                             buttonId = "error-retry",
                             onClick = it,
                             colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                            )
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            ),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
                                 contentDescription = null,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(16.dp),
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Retry")
                         }
                     }
-                    
+
                     onDismiss?.let {
                         DebugOutlinedButton(
                             buttonId = "error-dismiss",
                             onClick = it,
                             colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                            )
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            ),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = null,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(16.dp),
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Dismiss")
@@ -245,11 +232,7 @@ fun ErrorDisplay(
  * A standardized status indicator for different states.
  */
 @Composable
-fun StatusIndicator(
-    status: StatusType,
-    message: String,
-    modifier: Modifier = Modifier,
-) {
+fun StatusIndicator(status: StatusType, message: String, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -258,13 +241,13 @@ fun StatusIndicator(
                 StatusType.RUNNING -> MaterialTheme.colorScheme.primaryContainer
                 StatusType.SUCCESS -> MaterialTheme.colorScheme.tertiaryContainer
                 StatusType.ERROR -> MaterialTheme.colorScheme.errorContainer
-            }
-        )
+            },
+        ),
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Icon(
                 imageVector = when (status) {
@@ -279,9 +262,9 @@ fun StatusIndicator(
                     StatusType.RUNNING -> MaterialTheme.colorScheme.primary
                     StatusType.SUCCESS -> MaterialTheme.colorScheme.tertiary
                     StatusType.ERROR -> MaterialTheme.colorScheme.error
-                }
+                },
             )
-            
+
             Text(
                 text = message,
                 style = MaterialTheme.typography.titleSmall,
@@ -290,7 +273,7 @@ fun StatusIndicator(
                     StatusType.RUNNING -> MaterialTheme.colorScheme.onPrimaryContainer
                     StatusType.SUCCESS -> MaterialTheme.colorScheme.onTertiaryContainer
                     StatusType.ERROR -> MaterialTheme.colorScheme.onErrorContainer
-                }
+                },
             )
         }
     }
@@ -303,7 +286,7 @@ enum class StatusType {
     IDLE,
     RUNNING,
     SUCCESS,
-    ERROR
+    ERROR,
 }
 
 /**
@@ -323,13 +306,13 @@ fun ActionButton(
             Button(
                 onClick = onClick,
                 modifier = modifier,
-                enabled = enabled
+                enabled = enabled,
             ) {
                 icon?.let {
                     Icon(
                         imageVector = it,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
@@ -340,13 +323,13 @@ fun ActionButton(
             OutlinedButton(
                 onClick = onClick,
                 modifier = modifier,
-                enabled = enabled
+                enabled = enabled,
             ) {
                 icon?.let {
                     Icon(
                         imageVector = it,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
@@ -357,13 +340,13 @@ fun ActionButton(
             TextButton(
                 onClick = onClick,
                 modifier = modifier,
-                enabled = enabled
+                enabled = enabled,
             ) {
                 icon?.let {
                     Icon(
                         imageVector = it,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
@@ -379,22 +362,19 @@ fun ActionButton(
 enum class ButtonVariant {
     PRIMARY,
     OUTLINED,
-    TEXT
+    TEXT,
 }
 
 /**
  * A standardized scrollable container for parameter forms.
  */
 @Composable
-fun ScrollableParameterContainer(
-    content: @Composable ColumnScope.() -> Unit,
-    modifier: Modifier = Modifier,
-) {
+fun ScrollableParameterContainer(content: @Composable ColumnScope.() -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         content()
     }

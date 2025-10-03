@@ -11,6 +11,5 @@ if (GradleVersion.current() < requiredGradle) {
 
 rootProject.name = "CamProV5"
 
-include(":android")
 include(":desktop")
 include(":data-litvin")

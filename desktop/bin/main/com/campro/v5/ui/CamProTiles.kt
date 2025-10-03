@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import com.campro.v5.debug.DebugButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -13,8 +12,8 @@ import androidx.compose.ui.unit.dp
 import com.campro.v5.AnimationWidget
 import com.campro.v5.ParameterInputForm
 import com.campro.v5.animation.MotionLawEngine
+import com.campro.v5.debug.DebugButton
 import com.campro.v5.layout.LayoutManager
-import com.campro.v5.ui.UnifiedOptimizationTile
 
 /**
  * Tile definitions for CamProV5 application
@@ -30,136 +29,135 @@ fun createCamProTiles(
     allParameters: Map<String, String>,
     onParametersChanged: (Map<String, String>) -> Unit,
     layoutManager: LayoutManager,
-): List<TileConfig> =
-    listOf(
-        // Input Tiles
-        TileConfig(
-            id = "parameters",
-            title = "Parameters",
-            icon = Icons.Default.Settings,
-            type = TileType.INPUT,
-            minSize = TileSize.SMALL,
-            maxSize = TileSize.LARGE,
-            defaultSize = TileSize.MEDIUM,
-        ) {
-            ParameterInputForm(
-                testingMode = testingMode,
-                onParametersChanged = onParametersChanged,
-                layoutManager = layoutManager,
-            )
-        },
-        // Unified Optimization Tile
-        TileConfig(
-            id = "unified_optimization",
-            title = "Unified Optimization",
-            icon = Icons.Default.AutoAwesome,
-            type = TileType.GRAPHICS,
-            minSize = TileSize.LARGE,
-            maxSize = TileSize.XLARGE,
-            defaultSize = TileSize.LARGE,
-        ) {
-            UnifiedOptimizationTile(
-                onResultsReceived = { result ->
-                    // Handle optimization results
-                    if (testingMode) {
-                        println("EVENT:{\"type\":\"optimization_completed\",\"status\":\"${result.status}\",\"execution_time\":${result.executionTime}}")
-                    }
+): List<TileConfig> = listOf(
+    // Input Tiles
+    TileConfig(
+        id = "parameters",
+        title = "Parameters",
+        icon = Icons.Default.Settings,
+        type = TileType.INPUT,
+        minSize = TileSize.SMALL,
+        maxSize = TileSize.LARGE,
+        defaultSize = TileSize.MEDIUM,
+    ) {
+        ParameterInputForm(
+            testingMode = testingMode,
+            onParametersChanged = onParametersChanged,
+            layoutManager = layoutManager,
+        )
+    },
+    // Unified Optimization Tile
+    TileConfig(
+        id = "unified_optimization",
+        title = "Unified Optimization",
+        icon = Icons.Default.AutoAwesome,
+        type = TileType.GRAPHICS,
+        minSize = TileSize.LARGE,
+        maxSize = TileSize.XLARGE,
+        defaultSize = TileSize.LARGE,
+    ) {
+        UnifiedOptimizationTile(
+            onResultsReceived = { result ->
+                // Handle optimization results
+                if (testingMode) {
+                    println("EVENT:{\"type\":\"optimization_completed\",\"status\":\"${result.status}\",\"execution_time\":${result.executionTime}}")
                 }
-            )
-        },
-        // Graphics Tiles
-        TileConfig(
-            id = "animation",
-            title = "Animation",
-            icon = Icons.Default.Animation,
-            type = TileType.GRAPHICS,
-            minSize = TileSize.MEDIUM,
-            maxSize = TileSize.XLARGE,
-            defaultSize = TileSize.LARGE,
-        ) {
-            if (animationStarted) {
-                AnimationWidget(
-                    parameters = allParameters,
-                    testingMode = testingMode,
-                )
-            } else {
-                EmptyStateWidget(
-                    message = "Set parameters and start animation to see the cam profile",
-                    icon = Icons.Default.Animation,
-                )
-            }
-        },
-        TileConfig(
-            id = "plots",
-            title = "Motion Profiles",
-            icon = Icons.Default.BarChart,
-            type = TileType.GRAPHICS,
-            minSize = TileSize.SMALL,
-            maxSize = TileSize.LARGE,
-            defaultSize = TileSize.MEDIUM,
-        ) {
-            if (animationStarted) {
-                PreviewsPanel(
-                    engine = MotionLawEngine.getInstance(),
-                    modifier = Modifier.fillMaxSize(),
-                )
-            } else {
-                EmptyStateWidget(
-                    message = "Motion profiles will appear here after animation starts",
-                    icon = Icons.Default.BarChart,
-                )
-            }
-        },
-        // Output Tiles
-        TileConfig(
-            id = "diagnostics",
-            title = "Diagnostics",
-            icon = Icons.Default.Info,
-            type = TileType.OUTPUT,
-            minSize = TileSize.SMALL,
-            maxSize = TileSize.MEDIUM,
-            defaultSize = TileSize.SMALL,
-        ) {
-            DiagnosticsTile()
-        },
-        TileConfig(
-            id = "performance",
-            title = "Performance",
-            icon = Icons.Default.Speed,
-            type = TileType.OUTPUT,
-            minSize = TileSize.SMALL,
-            maxSize = TileSize.MEDIUM,
-            defaultSize = TileSize.SMALL,
-        ) {
-            PerformanceTile()
-        },
-        // Control Tiles
-        TileConfig(
-            id = "playback",
-            title = "Playback Controls",
-            icon = Icons.Default.PlayArrow,
-            type = TileType.CONTROL,
-            minSize = TileSize.SMALL,
-            maxSize = TileSize.SMALL,
-            defaultSize = TileSize.SMALL,
-        ) {
-            PlaybackControlsTile(
+            },
+        )
+    },
+    // Graphics Tiles
+    TileConfig(
+        id = "animation",
+        title = "Animation",
+        icon = Icons.Default.Animation,
+        type = TileType.GRAPHICS,
+        minSize = TileSize.MEDIUM,
+        maxSize = TileSize.XLARGE,
+        defaultSize = TileSize.LARGE,
+    ) {
+        if (animationStarted) {
+            AnimationWidget(
                 parameters = allParameters,
-                onParametersChanged = onParametersChanged,
+                testingMode = testingMode,
             )
-        },
-        TileConfig(
-            id = "view_settings",
-            title = "View Settings",
-            icon = Icons.Default.Visibility,
-            type = TileType.CONTROL,
-            minSize = TileSize.SMALL,
-            maxSize = TileSize.SMALL,
-            defaultSize = TileSize.SMALL,
-        ) {
-            ViewSettingsTile()
-        },
-    )
+        } else {
+            EmptyStateWidget(
+                message = "Set parameters and start animation to see the cam profile",
+                icon = Icons.Default.Animation,
+            )
+        }
+    },
+    TileConfig(
+        id = "plots",
+        title = "Motion Profiles",
+        icon = Icons.Default.BarChart,
+        type = TileType.GRAPHICS,
+        minSize = TileSize.SMALL,
+        maxSize = TileSize.LARGE,
+        defaultSize = TileSize.MEDIUM,
+    ) {
+        if (animationStarted) {
+            PreviewsPanel(
+                engine = MotionLawEngine.getInstance(),
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            EmptyStateWidget(
+                message = "Motion profiles will appear here after animation starts",
+                icon = Icons.Default.BarChart,
+            )
+        }
+    },
+    // Output Tiles
+    TileConfig(
+        id = "diagnostics",
+        title = "Diagnostics",
+        icon = Icons.Default.Info,
+        type = TileType.OUTPUT,
+        minSize = TileSize.SMALL,
+        maxSize = TileSize.MEDIUM,
+        defaultSize = TileSize.SMALL,
+    ) {
+        DiagnosticsTile()
+    },
+    TileConfig(
+        id = "performance",
+        title = "Performance",
+        icon = Icons.Default.Speed,
+        type = TileType.OUTPUT,
+        minSize = TileSize.SMALL,
+        maxSize = TileSize.MEDIUM,
+        defaultSize = TileSize.SMALL,
+    ) {
+        PerformanceTile()
+    },
+    // Control Tiles
+    TileConfig(
+        id = "playback",
+        title = "Playback Controls",
+        icon = Icons.Default.PlayArrow,
+        type = TileType.CONTROL,
+        minSize = TileSize.SMALL,
+        maxSize = TileSize.SMALL,
+        defaultSize = TileSize.SMALL,
+    ) {
+        PlaybackControlsTile(
+            parameters = allParameters,
+            onParametersChanged = onParametersChanged,
+        )
+    },
+    TileConfig(
+        id = "view_settings",
+        title = "View Settings",
+        icon = Icons.Default.Visibility,
+        type = TileType.CONTROL,
+        minSize = TileSize.SMALL,
+        maxSize = TileSize.SMALL,
+        defaultSize = TileSize.SMALL,
+    ) {
+        ViewSettingsTile()
+    },
+)
 
 @Composable
 private fun DiagnosticsTile() {
@@ -243,11 +241,7 @@ private fun PerformanceTile() {
 }
 
 @Composable
-private fun PerformanceMetric(
-    label: String,
-    value: String,
-    unit: String,
-) {
+private fun PerformanceMetric(label: String, value: String, unit: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -278,10 +272,7 @@ private fun PerformanceMetric(
 }
 
 @Composable
-private fun PlaybackControlsTile(
-    parameters: Map<String, String>,
-    onParametersChanged: (Map<String, String>) -> Unit,
-) {
+private fun PlaybackControlsTile(parameters: Map<String, String>, onParametersChanged: (Map<String, String>) -> Unit) {
     var isPlaying by remember { mutableStateOf(parameters["animationStarted"] == "true") }
     var animationSpeed by remember { mutableStateOf(1.0f) }
 
@@ -379,10 +370,7 @@ private fun ViewSettingsTile() {
 }
 
 @Composable
-private fun EmptyStateWidget(
-    message: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-) {
+private fun EmptyStateWidget(message: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,

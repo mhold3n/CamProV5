@@ -17,10 +17,10 @@ class FeaEngineTest {
     fun `test isFunctional method`() {
         val feaEngine = FeaEngine()
         val isFunctional = feaEngine.isFunctional()
-        
+
         // The method should return a boolean value
         assertTrue(isFunctional is Boolean, "isFunctional should return a boolean")
-        
+
         // In test environment, it might return false due to JNI issues
         // This is expected behavior
     }
@@ -29,10 +29,10 @@ class FeaEngineTest {
     fun `test isAvailable method`() {
         val feaEngine = FeaEngine()
         val isAvailable = feaEngine.isAvailable()
-        
+
         // The method should return a boolean value
         assertTrue(isAvailable is Boolean, "isAvailable should return a boolean")
-        
+
         // In test environment, it might return false due to JNI issues
         // This is expected behavior
     }
@@ -41,7 +41,7 @@ class FeaEngineTest {
     fun `test getVersion method`() {
         val feaEngine = FeaEngine()
         val version = feaEngine.getVersion()
-        
+
         // The method should return a string
         assertNotNull(version, "Version should not be null")
         assertTrue(version is String, "Version should be a string")
@@ -51,7 +51,7 @@ class FeaEngineTest {
     @Test
     fun `test FeaEngine error handling`() {
         val feaEngine = FeaEngine()
-        
+
         // Test that the engine handles errors gracefully
         // In test environment without native library, these should not crash
         try {

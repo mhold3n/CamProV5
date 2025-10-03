@@ -76,52 +76,50 @@ class AnnotationManager {
         projectId: String,
         projectName: String,
         options: AnnotationSessionOptions = AnnotationSessionOptions(),
-    ): AnnotationSession =
-        withContext(Dispatchers.IO) {
-            val session =
-                AnnotationSession(
-                    id = generateSessionId(),
-                    projectId = projectId,
-                    projectName = projectName,
-                    owner = getCurrentUser(),
-                    startTime = Date(),
-                    isActive = true,
-                    options = options,
-                )
+    ): AnnotationSession = withContext(Dispatchers.IO) {
+        val session =
+            AnnotationSession(
+                id = generateSessionId(),
+                projectId = projectId,
+                projectName = projectName,
+                owner = getCurrentUser(),
+                startTime = Date(),
+                isActive = true,
+                options = options,
+            )
 
-            _activeSession.value = session
-            _isAnnotating.value = true
+        _activeSession.value = session
+        _isAnnotating.value = true
 
-            emitEvent(AnnotationEvent.SessionStarted(session.id, projectName))
+        emitEvent(AnnotationEvent.SessionStarted(session.id, projectName))
 
-            session
-        }
+        session
+    }
 
     /**
      * End the current annotation session.
      */
-    suspend fun endAnnotationSession(): Boolean =
-        withContext(Dispatchers.IO) {
-            val session = _activeSession.value
-            if (session != null) {
-                val updatedSession =
-                    session.copy(
-                        isActive = false,
-                        endTime = Date(),
-                    )
+    suspend fun endAnnotationSession(): Boolean = withContext(Dispatchers.IO) {
+        val session = _activeSession.value
+        if (session != null) {
+            val updatedSession =
+                session.copy(
+                    isActive = false,
+                    endTime = Date(),
+                )
 
-                _activeSession.value = null
-                _isAnnotating.value = false
+            _activeSession.value = null
+            _isAnnotating.value = false
 
-                // Save session summary
-                saveAnnotationSession(updatedSession)
+            // Save session summary
+            saveAnnotationSession(updatedSession)
 
-                emitEvent(AnnotationEvent.SessionEnded(session.id))
-                true
-            } else {
-                false
-            }
+            emitEvent(AnnotationEvent.SessionEnded(session.id))
+            true
+        } else {
+            false
         }
+    }
 
     /**
      * Add a new annotation.
@@ -131,33 +129,32 @@ class AnnotationManager {
         content: String,
         position: AnnotationPosition,
         metadata: Map<String, Any> = emptyMap(),
-    ): Annotation =
-        withContext(Dispatchers.IO) {
-            val annotation =
-                Annotation(
-                    id = generateAnnotationId(),
-                    type = type,
-                    content = content,
-                    position = position,
-                    author = getCurrentUser(),
-                    timestamp = Date(),
-                    projectId = _activeSession.value?.projectId ?: "",
-                    sessionId = _activeSession.value?.id,
-                    metadata = metadata,
-                    status = AnnotationStatus.ACTIVE,
-                )
+    ): Annotation = withContext(Dispatchers.IO) {
+        val annotation =
+            Annotation(
+                id = generateAnnotationId(),
+                type = type,
+                content = content,
+                position = position,
+                author = getCurrentUser(),
+                timestamp = Date(),
+                projectId = _activeSession.value?.projectId ?: "",
+                sessionId = _activeSession.value?.id,
+                metadata = metadata,
+                status = AnnotationStatus.ACTIVE,
+            )
 
-            val currentAnnotations = _annotations.value.toMutableList()
-            currentAnnotations.add(annotation)
-            _annotations.value = currentAnnotations
+        val currentAnnotations = _annotations.value.toMutableList()
+        currentAnnotations.add(annotation)
+        _annotations.value = currentAnnotations
 
-            // Save to persistent storage
-            saveAnnotations()
+        // Save to persistent storage
+        saveAnnotations()
 
-            emitEvent(AnnotationEvent.AnnotationAdded(annotation.id, type))
+        emitEvent(AnnotationEvent.AnnotationAdded(annotation.id, type))
 
-            annotation
-        }
+        annotation
+    }
 
     /**
      * Update an existing annotation.
@@ -167,62 +164,56 @@ class AnnotationManager {
         content: String? = null,
         position: AnnotationPosition? = null,
         metadata: Map<String, Any>? = null,
-    ): Boolean =
-        withContext(Dispatchers.IO) {
-            val currentAnnotations = _annotations.value.toMutableList()
-            val index = currentAnnotations.indexOfFirst { it.id == annotationId }
+    ): Boolean = withContext(Dispatchers.IO) {
+        val currentAnnotations = _annotations.value.toMutableList()
+        val index = currentAnnotations.indexOfFirst { it.id == annotationId }
 
-            if (index >= 0) {
-                val existingAnnotation = currentAnnotations[index]
-                val updatedAnnotation =
-                    existingAnnotation.copy(
-                        content = content ?: existingAnnotation.content,
-                        position = position ?: existingAnnotation.position,
-                        metadata = metadata ?: existingAnnotation.metadata,
-                        lastModified = Date(),
-                    )
+        if (index >= 0) {
+            val existingAnnotation = currentAnnotations[index]
+            val updatedAnnotation =
+                existingAnnotation.copy(
+                    content = content ?: existingAnnotation.content,
+                    position = position ?: existingAnnotation.position,
+                    metadata = metadata ?: existingAnnotation.metadata,
+                    lastModified = Date(),
+                )
 
-                currentAnnotations[index] = updatedAnnotation
-                _annotations.value = currentAnnotations
+            currentAnnotations[index] = updatedAnnotation
+            _annotations.value = currentAnnotations
 
-                saveAnnotations()
-                emitEvent(AnnotationEvent.AnnotationUpdated(annotationId))
+            saveAnnotations()
+            emitEvent(AnnotationEvent.AnnotationUpdated(annotationId))
 
-                true
-            } else {
-                false
-            }
+            true
+        } else {
+            false
         }
+    }
 
     /**
      * Delete an annotation.
      */
-    suspend fun deleteAnnotation(annotationId: String): Boolean =
-        withContext(Dispatchers.IO) {
-            val currentAnnotations = _annotations.value.toMutableList()
-            val annotation = currentAnnotations.find { it.id == annotationId }
+    suspend fun deleteAnnotation(annotationId: String): Boolean = withContext(Dispatchers.IO) {
+        val currentAnnotations = _annotations.value.toMutableList()
+        val annotation = currentAnnotations.find { it.id == annotationId }
 
-            if (annotation != null) {
-                currentAnnotations.remove(annotation)
-                _annotations.value = currentAnnotations
+        if (annotation != null) {
+            currentAnnotations.remove(annotation)
+            _annotations.value = currentAnnotations
 
-                saveAnnotations()
-                emitEvent(AnnotationEvent.AnnotationDeleted(annotationId))
+            saveAnnotations()
+            emitEvent(AnnotationEvent.AnnotationDeleted(annotationId))
 
-                true
-            } else {
-                false
-            }
+            true
+        } else {
+            false
         }
+    }
 
     /**
      * Add a reply to an annotation.
      */
-    suspend fun addReply(
-        annotationId: String,
-        content: String,
-        metadata: Map<String, Any> = emptyMap(),
-    ): AnnotationReply? =
+    suspend fun addReply(annotationId: String, content: String, metadata: Map<String, Any> = emptyMap()): AnnotationReply? =
         withContext(Dispatchers.IO) {
             val currentAnnotations = _annotations.value.toMutableList()
             val index = currentAnnotations.indexOfFirst { it.id == annotationId }
@@ -259,64 +250,59 @@ class AnnotationManager {
     /**
      * Resolve an annotation.
      */
-    suspend fun resolveAnnotation(
-        annotationId: String,
-        resolution: String,
-    ): Boolean =
-        withContext(Dispatchers.IO) {
-            val currentAnnotations = _annotations.value.toMutableList()
-            val index = currentAnnotations.indexOfFirst { it.id == annotationId }
+    suspend fun resolveAnnotation(annotationId: String, resolution: String): Boolean = withContext(Dispatchers.IO) {
+        val currentAnnotations = _annotations.value.toMutableList()
+        val index = currentAnnotations.indexOfFirst { it.id == annotationId }
 
-            if (index >= 0) {
-                val existingAnnotation = currentAnnotations[index]
-                val updatedAnnotation =
-                    existingAnnotation.copy(
-                        status = AnnotationStatus.RESOLVED,
-                        resolution = resolution,
-                        resolvedBy = getCurrentUser(),
-                        resolvedAt = Date(),
-                        lastModified = Date(),
-                    )
+        if (index >= 0) {
+            val existingAnnotation = currentAnnotations[index]
+            val updatedAnnotation =
+                existingAnnotation.copy(
+                    status = AnnotationStatus.RESOLVED,
+                    resolution = resolution,
+                    resolvedBy = getCurrentUser(),
+                    resolvedAt = Date(),
+                    lastModified = Date(),
+                )
 
-                currentAnnotations[index] = updatedAnnotation
-                _annotations.value = currentAnnotations
+            currentAnnotations[index] = updatedAnnotation
+            _annotations.value = currentAnnotations
 
-                saveAnnotations()
-                emitEvent(AnnotationEvent.AnnotationResolved(annotationId))
+            saveAnnotations()
+            emitEvent(AnnotationEvent.AnnotationResolved(annotationId))
 
-                true
-            } else {
-                false
-            }
+            true
+        } else {
+            false
         }
+    }
 
     /**
      * Archive an annotation.
      */
-    suspend fun archiveAnnotation(annotationId: String): Boolean =
-        withContext(Dispatchers.IO) {
-            val currentAnnotations = _annotations.value.toMutableList()
-            val index = currentAnnotations.indexOfFirst { it.id == annotationId }
+    suspend fun archiveAnnotation(annotationId: String): Boolean = withContext(Dispatchers.IO) {
+        val currentAnnotations = _annotations.value.toMutableList()
+        val index = currentAnnotations.indexOfFirst { it.id == annotationId }
 
-            if (index >= 0) {
-                val existingAnnotation = currentAnnotations[index]
-                val updatedAnnotation =
-                    existingAnnotation.copy(
-                        status = AnnotationStatus.ARCHIVED,
-                        lastModified = Date(),
-                    )
+        if (index >= 0) {
+            val existingAnnotation = currentAnnotations[index]
+            val updatedAnnotation =
+                existingAnnotation.copy(
+                    status = AnnotationStatus.ARCHIVED,
+                    lastModified = Date(),
+                )
 
-                currentAnnotations[index] = updatedAnnotation
-                _annotations.value = currentAnnotations
+            currentAnnotations[index] = updatedAnnotation
+            _annotations.value = currentAnnotations
 
-                saveAnnotations()
-                emitEvent(AnnotationEvent.AnnotationArchived(annotationId))
+            saveAnnotations()
+            emitEvent(AnnotationEvent.AnnotationArchived(annotationId))
 
-                true
-            } else {
-                false
-            }
+            true
+        } else {
+            false
         }
+    }
 
     /**
      * Get annotations for a specific project.
@@ -408,60 +394,51 @@ class AnnotationManager {
     /**
      * Export annotations to various formats.
      */
-    suspend fun exportAnnotations(
-        projectId: String,
-        format: String,
-        filePath: String,
-    ): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                val annotations = getAnnotationsForProject(projectId)
+    suspend fun exportAnnotations(projectId: String, format: String, filePath: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val annotations = getAnnotationsForProject(projectId)
 
-                when (format.lowercase()) {
-                    "json" -> exportToJson(annotations, filePath)
-                    "csv" -> exportToCsv(annotations, filePath)
-                    "html" -> exportToHtml(annotations, filePath)
-                    "pdf" -> exportToPdf(annotations, filePath)
-                    else -> return@withContext false
-                }
-
-                emitEvent(AnnotationEvent.AnnotationsExported(format, filePath))
-                true
-            } catch (e: Exception) {
-                emitEvent(AnnotationEvent.ExportFailed(format, e.message ?: "Unknown error"))
-                false
+            when (format.lowercase()) {
+                "json" -> exportToJson(annotations, filePath)
+                "csv" -> exportToCsv(annotations, filePath)
+                "html" -> exportToHtml(annotations, filePath)
+                "pdf" -> exportToPdf(annotations, filePath)
+                else -> return@withContext false
             }
+
+            emitEvent(AnnotationEvent.AnnotationsExported(format, filePath))
+            true
+        } catch (e: Exception) {
+            emitEvent(AnnotationEvent.ExportFailed(format, e.message ?: "Unknown error"))
+            false
         }
+    }
 
     /**
      * Import annotations from file.
      */
-    suspend fun importAnnotations(
-        filePath: String,
-        format: String,
-    ): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                val importedAnnotations =
-                    when (format.lowercase()) {
-                        "json" -> importFromJson(filePath)
-                        "csv" -> importFromCsv(filePath)
-                        else -> return@withContext false
-                    }
+    suspend fun importAnnotations(filePath: String, format: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val importedAnnotations =
+                when (format.lowercase()) {
+                    "json" -> importFromJson(filePath)
+                    "csv" -> importFromCsv(filePath)
+                    else -> return@withContext false
+                }
 
-                val currentAnnotations = _annotations.value.toMutableList()
-                currentAnnotations.addAll(importedAnnotations)
-                _annotations.value = currentAnnotations
+            val currentAnnotations = _annotations.value.toMutableList()
+            currentAnnotations.addAll(importedAnnotations)
+            _annotations.value = currentAnnotations
 
-                saveAnnotations()
-                emitEvent(AnnotationEvent.AnnotationsImported(format, importedAnnotations.size))
+            saveAnnotations()
+            emitEvent(AnnotationEvent.AnnotationsImported(format, importedAnnotations.size))
 
-                true
-            } catch (e: Exception) {
-                emitEvent(AnnotationEvent.ImportFailed(format, e.message ?: "Unknown error"))
-                false
-            }
+            true
+        } catch (e: Exception) {
+            emitEvent(AnnotationEvent.ImportFailed(format, e.message ?: "Unknown error"))
+            false
         }
+    }
 
     /**
      * Get annotation statistics.
@@ -484,11 +461,11 @@ class AnnotationManager {
             statusBreakdown = statusCount,
             authorBreakdown = authorCount,
             averageRepliesPerAnnotation =
-                if (annotations.isNotEmpty()) {
-                    annotations.sumOf { it.replies.size }.toDouble() / annotations.size
-                } else {
-                    0.0
-                },
+            if (annotations.isNotEmpty()) {
+                annotations.sumOf { it.replies.size }.toDouble() / annotations.size
+            } else {
+                0.0
+            },
             oldestAnnotation = annotations.minByOrNull { it.timestamp }?.timestamp,
             newestAnnotation = annotations.maxByOrNull { it.timestamp }?.timestamp,
         )
@@ -549,12 +526,11 @@ class AnnotationManager {
 
     private fun generateSessionId(): String = "session_${System.currentTimeMillis()}_${(1000..9999).random()}"
 
-    private fun getCurrentUser(): User =
-        User(
-            id = stateManager.getState("user.id", "anonymous"),
-            name = stateManager.getState("user.name", "Anonymous User"),
-            email = stateManager.getState("user.email", ""),
-        )
+    private fun getCurrentUser(): User = User(
+        id = stateManager.getState("user.id", "anonymous"),
+        name = stateManager.getState("user.name", "Anonymous User"),
+        email = stateManager.getState("user.email", ""),
+    )
 
     private fun emitEvent(event: AnnotationEvent) {
         scope.launch {
@@ -563,19 +539,13 @@ class AnnotationManager {
     }
 
     // Export methods
-    private suspend fun exportToJson(
-        annotations: List<Annotation>,
-        filePath: String,
-    ) {
+    private suspend fun exportToJson(annotations: List<Annotation>, filePath: String) {
         val file = java.io.File(filePath)
         file.parentFile?.mkdirs()
         file.writeText(gson.toJson(annotations))
     }
 
-    private suspend fun exportToCsv(
-        annotations: List<Annotation>,
-        filePath: String,
-    ) {
+    private suspend fun exportToCsv(annotations: List<Annotation>, filePath: String) {
         val file = java.io.File(filePath)
         file.parentFile?.mkdirs()
 
@@ -596,10 +566,7 @@ class AnnotationManager {
         file.writeText(csvContent.toString())
     }
 
-    private suspend fun exportToHtml(
-        annotations: List<Annotation>,
-        filePath: String,
-    ) {
+    private suspend fun exportToHtml(annotations: List<Annotation>, filePath: String) {
         val file = java.io.File(filePath)
         file.parentFile?.mkdirs()
 
@@ -632,10 +599,7 @@ class AnnotationManager {
         file.writeText(htmlContent.toString())
     }
 
-    private suspend fun exportToPdf(
-        annotations: List<Annotation>,
-        filePath: String,
-    ) {
+    private suspend fun exportToPdf(annotations: List<Annotation>, filePath: String) {
         // Placeholder implementation - would use a PDF library in real implementation
         val file = java.io.File(filePath)
         file.parentFile?.mkdirs()
@@ -717,19 +681,14 @@ class AnnotationManager {
         @Volatile
         private var INSTANCE: AnnotationManager? = null
 
-        fun getInstance(): AnnotationManager =
-            INSTANCE ?: synchronized(this) {
-                INSTANCE ?: AnnotationManager().also { INSTANCE = it }
-            }
+        fun getInstance(): AnnotationManager = INSTANCE ?: synchronized(this) {
+            INSTANCE ?: AnnotationManager().also { INSTANCE = it }
+        }
     }
 }
 
 // Data classes
-data class AnnotationType(
-    val name: String,
-    val description: String,
-    val color: Color,
-)
+data class AnnotationType(val name: String, val description: String, val color: Color)
 
 data class AnnotationSessionOptions(
     val allowCollaboration: Boolean = true,
@@ -811,62 +770,29 @@ enum class AnnotationStatus {
 }
 
 sealed class AnnotationEvent {
-    data class SessionStarted(
-        val sessionId: String,
-        val projectName: String,
-    ) : AnnotationEvent()
+    data class SessionStarted(val sessionId: String, val projectName: String) : AnnotationEvent()
 
-    data class SessionEnded(
-        val sessionId: String,
-    ) : AnnotationEvent()
+    data class SessionEnded(val sessionId: String) : AnnotationEvent()
 
-    data class AnnotationAdded(
-        val annotationId: String,
-        val type: String,
-    ) : AnnotationEvent()
+    data class AnnotationAdded(val annotationId: String, val type: String) : AnnotationEvent()
 
-    data class AnnotationUpdated(
-        val annotationId: String,
-    ) : AnnotationEvent()
+    data class AnnotationUpdated(val annotationId: String) : AnnotationEvent()
 
-    data class AnnotationDeleted(
-        val annotationId: String,
-    ) : AnnotationEvent()
+    data class AnnotationDeleted(val annotationId: String) : AnnotationEvent()
 
-    data class AnnotationResolved(
-        val annotationId: String,
-    ) : AnnotationEvent()
+    data class AnnotationResolved(val annotationId: String) : AnnotationEvent()
 
-    data class AnnotationArchived(
-        val annotationId: String,
-    ) : AnnotationEvent()
+    data class AnnotationArchived(val annotationId: String) : AnnotationEvent()
 
-    data class ReplyAdded(
-        val annotationId: String,
-        val replyId: String,
-    ) : AnnotationEvent()
+    data class ReplyAdded(val annotationId: String, val replyId: String) : AnnotationEvent()
 
-    data class FiltersApplied(
-        val filters: AnnotationFilters,
-    ) : AnnotationEvent()
+    data class FiltersApplied(val filters: AnnotationFilters) : AnnotationEvent()
 
-    data class AnnotationsExported(
-        val format: String,
-        val filePath: String,
-    ) : AnnotationEvent()
+    data class AnnotationsExported(val format: String, val filePath: String) : AnnotationEvent()
 
-    data class AnnotationsImported(
-        val format: String,
-        val count: Int,
-    ) : AnnotationEvent()
+    data class AnnotationsImported(val format: String, val count: Int) : AnnotationEvent()
 
-    data class ExportFailed(
-        val format: String,
-        val error: String,
-    ) : AnnotationEvent()
+    data class ExportFailed(val format: String, val error: String) : AnnotationEvent()
 
-    data class ImportFailed(
-        val format: String,
-        val error: String,
-    ) : AnnotationEvent()
+    data class ImportFailed(val format: String, val error: String) : AnnotationEvent()
 }

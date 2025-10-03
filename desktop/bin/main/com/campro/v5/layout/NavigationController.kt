@@ -14,10 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class NavigationController {
     // Navigation destinations
-    enum class Destination(
-        val title: String,
-        val route: String,
-    ) {
+    enum class Destination(val title: String, val route: String) {
         HOME("Home", "home"),
         PARAMETERS("Parameters", "parameters"),
         ANIMATION("Animation", "animation"),
@@ -52,10 +49,7 @@ class NavigationController {
      * @param destination The destination to navigate to
      * @param addToHistory Whether to add this destination to the navigation history
      */
-    fun navigateTo(
-        destination: Destination,
-        addToHistory: Boolean = true,
-    ) {
+    fun navigateTo(destination: Destination, addToHistory: Boolean = true) {
         // Add current destination to history if requested
         if (addToHistory && _currentDestination.value != destination) {
             _navigationHistory.value = _navigationHistory.value + _currentDestination.value
@@ -151,41 +145,40 @@ class NavigationController {
      * @param shortcut The keyboard shortcut
      * @return True if the shortcut was handled, false otherwise
      */
-    fun handleShortcut(shortcut: String): Boolean =
-        when (shortcut) {
-            "ctrl+h" -> {
-                navigateTo(Destination.HOME)
-                true
-            }
-            "ctrl+p" -> {
-                navigateTo(Destination.PARAMETERS)
-                true
-            }
-            "ctrl+a" -> {
-                navigateTo(Destination.ANIMATION)
-                true
-            }
-            "ctrl+l" -> {
-                navigateTo(Destination.PLOTS)
-                true
-            }
-            "ctrl+d" -> {
-                navigateTo(Destination.DATA)
-                true
-            }
-            "ctrl+s" -> {
-                navigateTo(Destination.SETTINGS)
-                true
-            }
-            "ctrl+f1" -> {
-                navigateTo(Destination.HELP)
-                true
-            }
-            "alt+left", "backspace" -> {
-                navigateBack()
-            }
-            else -> false
+    fun handleShortcut(shortcut: String): Boolean = when (shortcut) {
+        "ctrl+h" -> {
+            navigateTo(Destination.HOME)
+            true
         }
+        "ctrl+p" -> {
+            navigateTo(Destination.PARAMETERS)
+            true
+        }
+        "ctrl+a" -> {
+            navigateTo(Destination.ANIMATION)
+            true
+        }
+        "ctrl+l" -> {
+            navigateTo(Destination.PLOTS)
+            true
+        }
+        "ctrl+d" -> {
+            navigateTo(Destination.DATA)
+            true
+        }
+        "ctrl+s" -> {
+            navigateTo(Destination.SETTINGS)
+            true
+        }
+        "ctrl+f1" -> {
+            navigateTo(Destination.HELP)
+            true
+        }
+        "alt+left", "backspace" -> {
+            navigateBack()
+        }
+        else -> false
+    }
 
     companion object {
         // Singleton instance
@@ -214,27 +207,21 @@ sealed class NavigationEvent {
      *
      * @param destination The destination navigated to
      */
-    data class Navigated(
-        val destination: NavigationController.Destination,
-    ) : NavigationEvent()
+    data class Navigated(val destination: NavigationController.Destination) : NavigationEvent()
 
     /**
      * Event emitted when navigation back to a previous destination occurs.
      *
      * @param destination The destination navigated back to
      */
-    data class NavigatedBack(
-        val destination: NavigationController.Destination,
-    ) : NavigationEvent()
+    data class NavigatedBack(val destination: NavigationController.Destination) : NavigationEvent()
 
     /**
      * Event emitted when a breadcrumb is added to the navigation path.
      *
      * @param breadcrumb The breadcrumb added
      */
-    data class BreadcrumbAdded(
-        val breadcrumb: String,
-    ) : NavigationEvent()
+    data class BreadcrumbAdded(val breadcrumb: String) : NavigationEvent()
 
     /**
      * Event emitted when navigation to a specific breadcrumb occurs.
@@ -242,10 +229,7 @@ sealed class NavigationEvent {
      * @param index The index of the breadcrumb
      * @param breadcrumb The breadcrumb navigated to
      */
-    data class NavigatedToBreadcrumb(
-        val index: Int,
-        val breadcrumb: String,
-    ) : NavigationEvent()
+    data class NavigatedToBreadcrumb(val index: Int, val breadcrumb: String) : NavigationEvent()
 }
 
 /**
@@ -264,10 +248,7 @@ fun rememberNavigationController(): NavigationController = remember { Navigation
  * @return A composable function that displays the breadcrumb navigation
  */
 @Composable
-fun BreadcrumbNavigation(
-    navigationController: NavigationController = rememberNavigationController(),
-    onBreadcrumbClick: (Int) -> Unit,
-) {
+fun BreadcrumbNavigation(navigationController: NavigationController = rememberNavigationController(), onBreadcrumbClick: (Int) -> Unit) {
     val breadcrumbs = navigationController.breadcrumbs
     val currentDestination = navigationController.currentDestination
 

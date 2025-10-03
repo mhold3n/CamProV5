@@ -11,32 +11,28 @@ import org.slf4j.LoggerFactory
  */
 object JsonUtils {
     private val logger = LoggerFactory.getLogger(JsonUtils::class.java)
-    
+
     private val objectMapper = ObjectMapper().apply {
         registerModule(KotlinModule.Builder().build())
     }
-    
+
     /**
      * Convert object to JSON string.
      */
-    fun toJson(obj: Any): String {
-        return try {
-            objectMapper.writeValueAsString(obj)
-        } catch (e: Exception) {
-            logger.error("Failed to convert object to JSON", e)
-            "{}"
-        }
+    fun toJson(obj: Any): String = try {
+        objectMapper.writeValueAsString(obj)
+    } catch (e: Exception) {
+        logger.error("Failed to convert object to JSON", e)
+        "{}"
     }
-    
+
     /**
      * Convert JSON string to object.
      */
-    inline fun <reified T> fromJson(json: String): T? {
-        return try {
-            objectMapper.readValue<T>(json)
-        } catch (e: Exception) {
-            logger.error("Failed to convert JSON to object", e)
-            null
-        }
+    inline fun <reified T> fromJson(json: String): T? = try {
+        objectMapper.readValue<T>(json)
+    } catch (e: Exception) {
+        logger.error("Failed to convert JSON to object", e)
+        null
     }
 }

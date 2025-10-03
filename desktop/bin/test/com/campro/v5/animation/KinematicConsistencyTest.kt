@@ -7,11 +7,7 @@ import org.junit.jupiter.api.Test
 import java.lang.reflect.Field
 
 class KinematicConsistencyTest {
-    private fun setPrivate(
-        target: Any,
-        name: String,
-        value: Any?,
-    ) {
+    private fun setPrivate(target: Any, name: String, value: Any?) {
         val f: Field = target.javaClass.getDeclaredField(name)
         f.isAccessible = true
         f.set(target, value)

@@ -105,14 +105,13 @@ object EventSystem {
      * @param eventType The type of events
      * @return A mutable shared flow for the specified event type
      */
-    private fun getOrCreateFlow(eventType: String): MutableSharedFlow<Event> =
-        eventFlows.getOrPut(eventType) {
-            // Increase buffer capacity to handle high-volume event processing
-            MutableSharedFlow(
-                replay = 16, // Increase replay cache for late subscribers
-                extraBufferCapacity = 4000, // Significantly larger buffer for performance tests
-            )
-        }
+    private fun getOrCreateFlow(eventType: String): MutableSharedFlow<Event> = eventFlows.getOrPut(eventType) {
+        // Increase buffer capacity to handle high-volume event processing
+        MutableSharedFlow(
+            replay = 16, // Increase replay cache for late subscribers
+            extraBufferCapacity = 4000, // Significantly larger buffer for performance tests
+        )
+    }
 
     /**
      * Emit multiple events efficiently as a batch.
@@ -168,15 +167,11 @@ object EventSystem {
      * @param callback The callback to invoke for each event
      * @return A job that can be cancelled to stop collection
      */
-    fun collectEvents(
-        eventType: String,
-        callback: (Event) -> Unit,
-    ): Job =
-        scope.launch {
-            events(eventType).collect { event ->
-                callback(event)
-            }
+    fun collectEvents(eventType: String, callback: (Event) -> Unit): Job = scope.launch {
+        events(eventType).collect { event ->
+            callback(event)
         }
+    }
 
     /**
      * Clear all event flows.
@@ -210,10 +205,7 @@ abstract class Event {
  * @param component The ID of the component that was clicked
  * @param params Additional parameters for the click event
  */
-data class ClickEvent(
-    val component: String,
-    val params: Map<String, Any> = emptyMap(),
-) : Event() {
+data class ClickEvent(val component: String, val params: Map<String, Any> = emptyMap()) : Event() {
     override val type: String = "click"
 
     override fun toJson(): String {
@@ -233,10 +225,7 @@ data class ClickEvent(
  * @param component The ID of the component whose value changed
  * @param value The new value
  */
-data class ValueChangedEvent(
-    val component: String,
-    val value: String,
-) : Event() {
+data class ValueChangedEvent(val component: String, val value: String) : Event() {
     override val type: String = "value_changed"
 
     override fun toJson(): String = "{\"type\":\"$type\",\"component\":\"$component\",\"value\":\"$value\"}"
@@ -248,10 +237,7 @@ data class ValueChangedEvent(
  * @param component The ID of the tabbed component
  * @param tab The ID or name of the selected tab
  */
-data class TabSelectedEvent(
-    val component: String,
-    val tab: String,
-) : Event() {
+data class TabSelectedEvent(val component: String, val tab: String) : Event() {
     override val type: String = "tab_selected"
 
     override fun toJson(): String = "{\"type\":\"$type\",\"component\":\"$component\",\"tab\":\"$tab\"}"
@@ -264,11 +250,7 @@ data class TabSelectedEvent(
  * @param action The type of gesture (e.g., "pan", "zoom", "pan_zoom")
  * @param params Additional parameters for the gesture
  */
-data class GestureEvent(
-    val component: String,
-    val action: String,
-    val params: Map<String, Any> = emptyMap(),
-) : Event() {
+data class GestureEvent(val component: String, val action: String, val params: Map<String, Any> = emptyMap()) : Event() {
     override val type: String = "gesture"
 
     override fun toJson(): String {
@@ -288,10 +270,7 @@ data class GestureEvent(
  * @param component The ID of the animation component
  * @param params Animation parameters
  */
-data class AnimationStartedEvent(
-    val component: String,
-    val params: Map<String, Any> = emptyMap(),
-) : Event() {
+data class AnimationStartedEvent(val component: String, val params: Map<String, Any> = emptyMap()) : Event() {
     override val type: String = "animation_started"
 
     override fun toJson(): String {
@@ -310,9 +289,7 @@ data class AnimationStartedEvent(
  *
  * @param component The ID of the animation component
  */
-data class AnimationPausedEvent(
-    val component: String,
-) : Event() {
+data class AnimationPausedEvent(val component: String) : Event() {
     override val type: String = "animation_paused"
 
     override fun toJson(): String = "{\"type\":\"$type\",\"component\":\"$component\"}"
@@ -325,11 +302,7 @@ data class AnimationPausedEvent(
  * @param filePath The path to which the data was exported
  * @param format The format of the exported data
  */
-data class ExportEvent(
-    val component: String,
-    val filePath: String,
-    val format: String,
-) : Event() {
+data class ExportEvent(val component: String, val filePath: String, val format: String) : Event() {
     override val type: String = "export"
 
     override fun toJson(): String = "{\"type\":\"$type\",\"component\":\"$component\",\"file_path\":\"$filePath\",\"format\":\"$format\"}"
@@ -341,10 +314,7 @@ data class ExportEvent(
  * @param component The ID of the component to which data was imported
  * @param filePath The path from which the data was imported
  */
-data class ImportEvent(
-    val component: String,
-    val filePath: String,
-) : Event() {
+data class ImportEvent(val component: String, val filePath: String) : Event() {
     override val type: String = "import"
 
     override fun toJson(): String = "{\"type\":\"$type\",\"component\":\"$component\",\"file_path\":\"$filePath\"}"
@@ -357,11 +327,7 @@ data class ImportEvent(
  * @param contentType The type of content that was generated
  * @param filePath The path to which the content was saved
  */
-data class GenerateEvent(
-    val component: String,
-    val contentType: String,
-    val filePath: String? = null,
-) : Event() {
+data class GenerateEvent(val component: String, val contentType: String, val filePath: String? = null) : Event() {
     override val type: String = "generate"
 
     override fun toJson(): String {
@@ -381,10 +347,7 @@ data class GenerateEvent(
  * @param message The error message
  * @param component The ID of the component where the error occurred (optional)
  */
-data class ErrorEvent(
-    val message: String,
-    val component: String? = null,
-) : Event() {
+data class ErrorEvent(val message: String, val component: String? = null) : Event() {
     override val type: String = "error"
 
     override fun toJson(): String {
@@ -405,11 +368,7 @@ data class ErrorEvent(
  * @param component The ID of the component on which the command was executed
  * @param params Additional parameters for the command
  */
-data class CommandExecutedEvent(
-    val command: String,
-    val component: String,
-    val params: Map<String, Any> = emptyMap(),
-) : Event() {
+data class CommandExecutedEvent(val command: String, val component: String, val params: Map<String, Any> = emptyMap()) : Event() {
     override val type: String = "command_executed"
 
     override fun toJson(): String {
@@ -429,10 +388,7 @@ data class CommandExecutedEvent(
  * @param component The ID of the component that was clicked
  * @param params Additional parameters for the click event
  */
-fun emitClick(
-    component: String,
-    params: Map<String, Any> = emptyMap(),
-) {
+fun emitClick(component: String, params: Map<String, Any> = emptyMap()) {
     EventSystem.emit(ClickEvent(component, params))
 }
 
@@ -442,10 +398,7 @@ fun emitClick(
  * @param component The ID of the component whose value changed
  * @param value The new value
  */
-fun emitValueChanged(
-    component: String,
-    value: String,
-) {
+fun emitValueChanged(component: String, value: String) {
     EventSystem.emit(ValueChangedEvent(component, value))
 }
 
@@ -455,10 +408,7 @@ fun emitValueChanged(
  * @param component The ID of the tabbed component
  * @param tab The ID or name of the selected tab
  */
-fun emitTabSelected(
-    component: String,
-    tab: String,
-) {
+fun emitTabSelected(component: String, tab: String) {
     EventSystem.emit(TabSelectedEvent(component, tab))
 }
 
@@ -469,11 +419,7 @@ fun emitTabSelected(
  * @param action The type of gesture (e.g., "pan", "zoom", "pan_zoom")
  * @param params Additional parameters for the gesture
  */
-fun emitGesture(
-    component: String,
-    action: String,
-    params: Map<String, Any> = emptyMap(),
-) {
+fun emitGesture(component: String, action: String, params: Map<String, Any> = emptyMap()) {
     EventSystem.emit(GestureEvent(component, action, params))
 }
 
@@ -483,10 +429,7 @@ fun emitGesture(
  * @param component The ID of the animation component
  * @param params Animation parameters
  */
-fun emitAnimationStarted(
-    component: String,
-    params: Map<String, Any> = emptyMap(),
-) {
+fun emitAnimationStarted(component: String, params: Map<String, Any> = emptyMap()) {
     EventSystem.emit(AnimationStartedEvent(component, params))
 }
 
@@ -506,11 +449,7 @@ fun emitAnimationPaused(component: String) {
  * @param filePath The path to which the data was exported
  * @param format The format of the exported data
  */
-fun emitExport(
-    component: String,
-    filePath: String,
-    format: String,
-) {
+fun emitExport(component: String, filePath: String, format: String) {
     EventSystem.emit(ExportEvent(component, filePath, format))
 }
 
@@ -520,10 +459,7 @@ fun emitExport(
  * @param component The ID of the component to which data was imported
  * @param filePath The path from which the data was imported
  */
-fun emitImport(
-    component: String,
-    filePath: String,
-) {
+fun emitImport(component: String, filePath: String) {
     EventSystem.emit(ImportEvent(component, filePath))
 }
 
@@ -534,11 +470,7 @@ fun emitImport(
  * @param contentType The type of content that was generated
  * @param filePath The path to which the content was saved
  */
-fun emitGenerate(
-    component: String,
-    contentType: String,
-    filePath: String? = null,
-) {
+fun emitGenerate(component: String, contentType: String, filePath: String? = null) {
     EventSystem.emit(GenerateEvent(component, contentType, filePath))
 }
 
@@ -548,10 +480,7 @@ fun emitGenerate(
  * @param message The error message
  * @param component The ID of the component where the error occurred (optional)
  */
-fun emitError(
-    message: String,
-    component: String? = null,
-) {
+fun emitError(message: String, component: String? = null) {
     EventSystem.emit(ErrorEvent(message, component))
 }
 
@@ -562,11 +491,7 @@ fun emitError(
  * @param component The ID of the component on which the command was executed
  * @param params Additional parameters for the command
  */
-fun emitCommandExecuted(
-    command: String,
-    component: String,
-    params: Map<String, Any> = emptyMap(),
-) {
+fun emitCommandExecuted(command: String, component: String, params: Map<String, Any> = emptyMap()) {
     EventSystem.emit(CommandExecutedEvent(command, component, params))
 }
 
@@ -576,10 +501,7 @@ fun emitCommandExecuted(
  * @param action The type of layout change (e.g., "window_size_changed", "template_changed", "density_changed")
  * @param params Additional parameters for the layout change
  */
-data class LayoutEvent(
-    val action: String,
-    val params: Map<String, Any> = emptyMap(),
-) : Event() {
+data class LayoutEvent(val action: String, val params: Map<String, Any> = emptyMap()) : Event() {
     override val type: String = "layout"
 
     override fun toJson(): String {
@@ -599,9 +521,6 @@ data class LayoutEvent(
  * @param action The type of layout change (e.g., "window_size_changed", "template_changed", "density_changed")
  * @param params Additional parameters for the layout change
  */
-fun emitLayout(
-    action: String,
-    params: Map<String, Any> = emptyMap(),
-) {
+fun emitLayout(action: String, params: Map<String, Any> = emptyMap()) {
     EventSystem.emit(LayoutEvent(action, params))
 }

@@ -269,36 +269,35 @@ class AutoSaveManager {
      *
      * @return A list of auto-save files
      */
-    suspend fun listAutoSaves(): List<AutoSaveFile> =
-        withContext(Dispatchers.IO) {
-            val autoSaveDir = getAutoSaveDirectory()
-            if (!autoSaveDir.exists() || !autoSaveDir.isDirectory) {
-                return@withContext emptyList()
-            }
-
-            // Get all auto-save files
-            val autoSaveFiles =
-                autoSaveDir
-                    .listFiles { file ->
-                        file.isFile && file.name.endsWith(".autosave")
-                    }?.toList() ?: emptyList()
-
-            // Convert to AutoSaveFile objects
-            return@withContext autoSaveFiles
-                .map { file ->
-                    val nameWithoutExtension = file.nameWithoutExtension
-                    val projectName = nameWithoutExtension.substringBeforeLast("_")
-                    val timestamp = nameWithoutExtension.substringAfterLast("_")
-
-                    AutoSaveFile(
-                        file = file,
-                        projectName = projectName,
-                        timestamp = timestamp,
-                        size = file.length(),
-                        lastModified = file.lastModified(),
-                    )
-                }.sortedByDescending { it.lastModified }
+    suspend fun listAutoSaves(): List<AutoSaveFile> = withContext(Dispatchers.IO) {
+        val autoSaveDir = getAutoSaveDirectory()
+        if (!autoSaveDir.exists() || !autoSaveDir.isDirectory) {
+            return@withContext emptyList()
         }
+
+        // Get all auto-save files
+        val autoSaveFiles =
+            autoSaveDir
+                .listFiles { file ->
+                    file.isFile && file.name.endsWith(".autosave")
+                }?.toList() ?: emptyList()
+
+        // Convert to AutoSaveFile objects
+        return@withContext autoSaveFiles
+            .map { file ->
+                val nameWithoutExtension = file.nameWithoutExtension
+                val projectName = nameWithoutExtension.substringBeforeLast("_")
+                val timestamp = nameWithoutExtension.substringAfterLast("_")
+
+                AutoSaveFile(
+                    file = file,
+                    projectName = projectName,
+                    timestamp = timestamp,
+                    size = file.length(),
+                    lastModified = file.lastModified(),
+                )
+            }.sortedByDescending { it.lastModified }
+    }
 
     /**
      * Restore a project from an auto-save.
@@ -317,52 +316,50 @@ class AutoSaveManager {
      * @param autoSaveFile The auto-save file to delete
      * @return True if the delete was successful, false otherwise
      */
-    suspend fun deleteAutoSave(autoSaveFile: File): Boolean =
-        withContext(Dispatchers.IO) {
-            val success = autoSaveFile.delete()
+    suspend fun deleteAutoSave(autoSaveFile: File): Boolean = withContext(Dispatchers.IO) {
+        val success = autoSaveFile.delete()
 
-            if (success) {
-                // Emit event
-                _autoSaveEvents.value = AutoSaveEvent.AutoSaveDeleted(autoSaveFile.absolutePath)
-            }
-
-            return@withContext success
+        if (success) {
+            // Emit event
+            _autoSaveEvents.value = AutoSaveEvent.AutoSaveDeleted(autoSaveFile.absolutePath)
         }
+
+        return@withContext success
+    }
 
     /**
      * Delete all auto-save files.
      *
      * @return True if the delete was successful, false otherwise
      */
-    suspend fun deleteAllAutoSaves(): Boolean =
-        withContext(Dispatchers.IO) {
-            val autoSaveDir = getAutoSaveDirectory()
-            if (!autoSaveDir.exists() || !autoSaveDir.isDirectory) {
-                return@withContext true
-            }
-
-            // Get all auto-save files
-            val autoSaveFiles =
-                autoSaveDir
-                    .listFiles { file ->
-                        file.isFile && file.name.endsWith(".autosave")
-                    }?.toList() ?: emptyList()
-
-            // Delete all auto-save files
-            var success = true
-            autoSaveFiles.forEach { file ->
-                if (!file.delete()) {
-                    success = false
-                }
-            }
-
-            if (success) {
-                // Emit event
-                _autoSaveEvents.value = AutoSaveEvent.AllAutoSavesDeleted
-            }
-
-            return@withContext success
+    suspend fun deleteAllAutoSaves(): Boolean = withContext(Dispatchers.IO) {
+        val autoSaveDir = getAutoSaveDirectory()
+        if (!autoSaveDir.exists() || !autoSaveDir.isDirectory) {
+            return@withContext true
         }
+
+        // Get all auto-save files
+        val autoSaveFiles =
+            autoSaveDir
+                .listFiles { file ->
+                    file.isFile && file.name.endsWith(".autosave")
+                }?.toList() ?: emptyList()
+
+        // Delete all auto-save files
+        var success = true
+        autoSaveFiles.forEach { file ->
+            if (!file.delete()) {
+                success = false
+            }
+        }
+
+        if (success) {
+            // Emit event
+            _autoSaveEvents.value = AutoSaveEvent.AllAutoSavesDeleted
+        }
+
+        return@withContext success
+    }
 
     /**
      * Check for auto-save files that can be used for recovery.
@@ -370,11 +367,10 @@ class AutoSaveManager {
      * @param projectName The name of the project to check for
      * @return A list of auto-save files for the project
      */
-    suspend fun checkForRecovery(projectName: String): List<AutoSaveFile> =
-        withContext(Dispatchers.IO) {
-            val autoSaves = listAutoSaves()
-            return@withContext autoSaves.filter { it.projectName == projectName }
-        }
+    suspend fun checkForRecovery(projectName: String): List<AutoSaveFile> = withContext(Dispatchers.IO) {
+        val autoSaves = listAutoSaves()
+        return@withContext autoSaves.filter { it.projectName == projectName }
+    }
 
     /**
      * Clean up resources when the manager is no longer needed.
@@ -415,25 +411,18 @@ class AutoSaveManager {
  * @param size The size of the file in bytes
  * @param lastModified The time the file was last modified
  */
-data class AutoSaveFile(
-    val file: File,
-    val projectName: String,
-    val timestamp: String,
-    val size: Long,
-    val lastModified: Long,
-) {
+data class AutoSaveFile(val file: File, val projectName: String, val timestamp: String, val size: Long, val lastModified: Long) {
     /**
      * Get a formatted string of the file size.
      *
      * @return A formatted string of the file size
      */
-    fun getFormattedSize(): String =
-        when {
-            size < 1024 -> "$size B"
-            size < 1024 * 1024 -> "${size / 1024} KB"
-            size < 1024 * 1024 * 1024 -> "${size / (1024 * 1024)} MB"
-            else -> "${size / (1024 * 1024 * 1024)} GB"
-        }
+    fun getFormattedSize(): String = when {
+        size < 1024 -> "$size B"
+        size < 1024 * 1024 -> "${size / 1024} KB"
+        size < 1024 * 1024 * 1024 -> "${size / (1024 * 1024)} MB"
+        else -> "${size / (1024 * 1024 * 1024)} GB"
+    }
 
     /**
      * Get a formatted string of the last modified time.
@@ -481,45 +470,35 @@ sealed class AutoSaveEvent {
      *
      * @param filePath The path to the auto-save file
      */
-    data class AutoSaveCompleted(
-        val filePath: String,
-    ) : AutoSaveEvent()
+    data class AutoSaveCompleted(val filePath: String) : AutoSaveEvent()
 
     /**
      * Event emitted when an auto-save fails.
      *
      * @param message The error message
      */
-    data class AutoSaveFailed(
-        val message: String,
-    ) : AutoSaveEvent()
+    data class AutoSaveFailed(val message: String) : AutoSaveEvent()
 
     /**
      * Event emitted when the auto-save interval is changed.
      *
      * @param interval The new interval in milliseconds
      */
-    data class AutoSaveIntervalChanged(
-        val interval: Long,
-    ) : AutoSaveEvent()
+    data class AutoSaveIntervalChanged(val interval: Long) : AutoSaveEvent()
 
     /**
      * Event emitted when the maximum number of auto-saves is changed.
      *
      * @param maxSaves The new maximum number of auto-saves
      */
-    data class MaxAutoSavesChanged(
-        val maxSaves: Int,
-    ) : AutoSaveEvent()
+    data class MaxAutoSavesChanged(val maxSaves: Int) : AutoSaveEvent()
 
     /**
      * Event emitted when an auto-save file is deleted.
      *
      * @param filePath The path to the deleted file
      */
-    data class AutoSaveDeleted(
-        val filePath: String,
-    ) : AutoSaveEvent()
+    data class AutoSaveDeleted(val filePath: String) : AutoSaveEvent()
 
     /**
      * Event emitted when all auto-save files are deleted.

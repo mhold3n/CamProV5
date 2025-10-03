@@ -132,10 +132,7 @@ object FeaBasedAnimationRenderer {
     /**
      * Draw a placeholder when no analysis data is available.
      */
-    private fun DrawScope.drawPlaceholderInternal(
-        centerX: Float,
-        centerY: Float,
-    ) {
+    private fun DrawScope.drawPlaceholderInternal(centerX: Float, centerY: Float) {
         // Draw placeholder circle
         drawCircle(
             color = Color.Gray.copy(alpha = 0.3f),
@@ -166,12 +163,7 @@ object FeaBasedAnimationRenderer {
      * @param analysisData The FEA analysis data
      * @param angle The current angle in degrees
      */
-    private fun DrawScope.drawMesh(
-        centerX: Float,
-        centerY: Float,
-        analysisData: AnalysisData,
-        angle: Float,
-    ) {
+    private fun DrawScope.drawMesh(centerX: Float, centerY: Float, analysisData: AnalysisData, angle: Float) {
         // Find the time step closest to the current angle
         val timeStepIndex =
             if (analysisData.timeSteps.isNotEmpty()) {
@@ -220,13 +212,13 @@ object FeaBasedAnimationRenderer {
                 // Draw the quad as two triangles
                 drawPath(
                     path =
-                        androidx.compose.ui.graphics.Path().apply {
-                            moveTo(innerStartX, innerStartY)
-                            lineTo(innerEndX, innerEndY)
-                            lineTo(outerEndX, outerEndY)
-                            lineTo(outerStartX, outerStartY)
-                            close()
-                        },
+                    androidx.compose.ui.graphics.Path().apply {
+                        moveTo(innerStartX, innerStartY)
+                        lineTo(innerEndX, innerEndY)
+                        lineTo(outerEndX, outerEndY)
+                        lineTo(outerStartX, outerStartY)
+                        close()
+                    },
                     color = color,
                     alpha = 0.7f,
                 )
@@ -296,12 +288,7 @@ object FeaBasedAnimationRenderer {
     /**
      * Draw a legend for the stress colors.
      */
-    private fun DrawScope.drawStressLegend(
-        x: Float,
-        y: Float,
-        width: Float,
-        height: Float,
-    ) {
+    private fun DrawScope.drawStressLegend(x: Float, y: Float, width: Float, height: Float) {
         // Draw gradient bar
         val segmentWidth = width / (stressColors.size - 1)
 
@@ -314,8 +301,8 @@ object FeaBasedAnimationRenderer {
                 color = stressColors[i],
                 topLeft = Offset(startX, y),
                 size =
-                    androidx.compose.ui.geometry
-                        .Size(segmentWidth, height),
+                androidx.compose.ui.geometry
+                    .Size(segmentWidth, height),
             )
         }
 
@@ -324,8 +311,8 @@ object FeaBasedAnimationRenderer {
             color = Color.Black,
             topLeft = Offset(x, y),
             size =
-                androidx.compose.ui.geometry
-                    .Size(width, height),
+            androidx.compose.ui.geometry
+                .Size(width, height),
             style = Stroke(width = 1f),
         )
 
@@ -373,9 +360,5 @@ object FeaBasedAnimationRenderer {
     /**
      * Linear interpolation between two values.
      */
-    private fun lerp(
-        start: Float,
-        end: Float,
-        fraction: Float,
-    ): Float = start + (end - start) * fraction
+    private fun lerp(start: Float, end: Float, fraction: Float): Float = start + (end - start) * fraction
 }

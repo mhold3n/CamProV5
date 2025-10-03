@@ -4,11 +4,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class AngleInterpolatorTest {
-    private fun lerp(
-        a: Double,
-        b: Double,
-        t: Double,
-    ): Double = a + (b - a) * t
+    private fun lerp(a: Double, b: Double, t: Double): Double = a + (b - a) * t
 
     @Test
     fun `wrap-around interpolation basic`() {

@@ -7,11 +7,10 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
 import org.junit.platform.launcher.core.LauncherFactory
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener
 import org.junit.platform.launcher.listeners.TestExecutionSummary
-import java.io.PrintWriter
 
 /**
  * Comprehensive test suite runner for the CamProV5 desktop application.
- * 
+ *
  * Runs all test categories including:
  * - Unit tests
  * - Integration tests
@@ -20,23 +19,19 @@ import java.io.PrintWriter
  * - End-to-end tests
  */
 object TestSuiteRunner {
-    
+
     /**
      * Test categories and their descriptions.
      */
-    enum class TestCategory(
-        val displayName: String,
-        val description: String,
-        val packageName: String
-    ) {
+    enum class TestCategory(val displayName: String, val description: String, val packageName: String) {
         UNIT("Unit Tests", "Individual component testing", "com.campro.v5"),
         INTEGRATION("Integration Tests", "Component integration testing", "com.campro.v5.integration"),
         PERFORMANCE("Performance Tests", "Performance validation testing", "com.campro.v5.performance"),
         ACCEPTANCE("User Acceptance Tests", "User experience validation", "com.campro.v5.acceptance"),
         PIPELINE("Pipeline Tests", "Complete pipeline testing", "com.campro.v5.pipeline"),
-        END_TO_END("End-to-End Tests", "Complete system testing", "com.campro.v5.integration")
+        END_TO_END("End-to-End Tests", "Complete system testing", "com.campro.v5.integration"),
     }
-    
+
     /**
      * Test execution results.
      */
@@ -46,42 +41,42 @@ object TestSuiteRunner {
         val successfulTests: Long,
         val failedTests: Long,
         val skippedTests: Long,
-        val executionTime: Long
+        val executionTime: Long,
     ) {
         val successRate: Double
             get() = if (totalTests > 0) (successfulTests.toDouble() / totalTests) * 100 else 0.0
-        
+
         val isSuccessful: Boolean
             get() = failedTests == 0L
     }
-    
+
     /**
      * Run all test categories.
      */
     fun runAllTests(): Map<TestCategory, TestResults> {
         val results = mutableMapOf<TestCategory, TestResults>()
-        
+
         println("🚀 Starting Comprehensive Test Suite for CamProV5 Desktop Application")
         println("=" * 80)
-        
+
         TestCategory.values().forEach { category ->
             println("\n📋 Running ${category.displayName}")
             println("-" * 50)
             println("Description: ${category.description}")
-            
+
             val result = runTestCategory(category)
             results[category] = result
-            
+
             val status = if (result.isSuccessful) "✅ PASSED" else "❌ FAILED"
             println("Result: $status")
             println("Tests: ${result.successfulTests}/${result.totalTests} successful (${String.format("%.1f", result.successRate)}%)")
             println("Time: ${result.executionTime}ms")
         }
-        
+
         printOverallResults(results)
         return results
     }
-    
+
     /**
      * Run a specific test category.
      */
@@ -89,73 +84,73 @@ object TestSuiteRunner {
         val launcher: Launcher = LauncherFactory.create()
         val summaryListener = SummaryGeneratingListener()
         launcher.registerTestExecutionListeners(summaryListener)
-        
+
         val request: LauncherDiscoveryRequest = LauncherDiscoveryRequestBuilder.request()
             .selectors(DiscoverySelectors.selectPackage(category.packageName))
             .build()
-        
+
         val startTime = System.currentTimeMillis()
         launcher.execute(request)
         val endTime = System.currentTimeMillis()
-        
+
         val summary: TestExecutionSummary = summaryListener.summary
-        
+
         return TestResults(
             category = category,
             totalTests = summary.testsFoundCount(),
             successfulTests = summary.testsSucceededCount(),
             failedTests = summary.testsFailedCount(),
             skippedTests = summary.testsSkippedCount(),
-            executionTime = endTime - startTime
+            executionTime = endTime - startTime,
         )
     }
-    
+
     /**
      * Run specific test classes.
      */
     fun runSpecificTests(testClasses: List<String>): Map<String, TestResults> {
         val results = mutableMapOf<String, TestResults>()
-        
+
         println("🎯 Running Specific Test Classes")
         println("=" * 50)
-        
+
         testClasses.forEach { testClass ->
             println("\n📋 Running $testClass")
-            
+
             val launcher: Launcher = LauncherFactory.create()
             val summaryListener = SummaryGeneratingListener()
             launcher.registerTestExecutionListeners(summaryListener)
-            
+
             val request: LauncherDiscoveryRequest = LauncherDiscoveryRequestBuilder.request()
                 .selectors(DiscoverySelectors.selectClass(testClass))
                 .build()
-            
+
             val startTime = System.currentTimeMillis()
             launcher.execute(request)
             val endTime = System.currentTimeMillis()
-            
+
             val summary: TestExecutionSummary = summaryListener.summary
-            
+
             val result = TestResults(
                 category = TestCategory.UNIT, // Default category
                 totalTests = summary.testsFoundCount(),
                 successfulTests = summary.testsSucceededCount(),
                 failedTests = summary.testsFailedCount(),
                 skippedTests = summary.testsSkippedCount(),
-                executionTime = endTime - startTime
+                executionTime = endTime - startTime,
             )
-            
+
             results[testClass] = result
-            
+
             val status = if (result.isSuccessful) "✅ PASSED" else "❌ FAILED"
             println("Result: $status")
             println("Tests: ${result.successfulTests}/${result.totalTests} successful")
             println("Time: ${result.executionTime}ms")
         }
-        
+
         return results
     }
-    
+
     /**
      * Print overall test results.
      */
@@ -163,16 +158,16 @@ object TestSuiteRunner {
         println("\n" + "=" * 80)
         println("📊 OVERALL TEST RESULTS")
         println("=" * 80)
-        
+
         val totalTests = results.values.sumOf { it.totalTests }
         val totalSuccessful = results.values.sumOf { it.successfulTests }
         val totalFailed = results.values.sumOf { it.failedTests }
         val totalSkipped = results.values.sumOf { it.skippedTests }
         val totalTime = results.values.sumOf { it.executionTime }
-        
+
         val overallSuccessRate = if (totalTests > 0) (totalSuccessful.toDouble() / totalTests) * 100 else 0.0
         val overallStatus = if (totalFailed == 0L) "✅ ALL TESTS PASSED" else "❌ SOME TESTS FAILED"
-        
+
         println("Overall Status: $overallStatus")
         println("Total Tests: $totalTests")
         println("Successful: $totalSuccessful")
@@ -180,13 +175,13 @@ object TestSuiteRunner {
         println("Skipped: $totalSkipped")
         println("Success Rate: ${String.format("%.1f", overallSuccessRate)}%")
         println("Total Time: ${totalTime}ms")
-        
+
         println("\n📋 Category Breakdown:")
         results.forEach { (category, result) ->
             val status = if (result.isSuccessful) "✅" else "❌"
             println("  $status ${category.displayName}: ${result.successfulTests}/${result.totalTests} (${String.format("%.1f", result.successRate)}%)")
         }
-        
+
         // Print failed tests details
         val failedCategories = results.filter { !it.value.isSuccessful }
         if (failedCategories.isNotEmpty()) {
@@ -195,17 +190,17 @@ object TestSuiteRunner {
                 println("  - ${category.displayName}: ${result.failedTests} failed tests")
             }
         }
-        
+
         // Print performance summary
         println("\n⏱️ Performance Summary:")
         results.forEach { (category, result) ->
             val avgTimePerTest = if (result.totalTests > 0) result.executionTime / result.totalTests else 0
             println("  - ${category.displayName}: ${result.executionTime}ms total, ${avgTimePerTest}ms avg per test")
         }
-        
+
         println("\n" + "=" * 80)
     }
-    
+
     /**
      * Generate test report.
      */
@@ -214,19 +209,19 @@ object TestSuiteRunner {
             appendLine("# CamProV5 Desktop Application Test Report")
             appendLine("Generated: ${java.time.LocalDateTime.now()}")
             appendLine()
-            
+
             appendLine("## Summary")
             val totalTests = results.values.sumOf { it.totalTests }
             val totalSuccessful = results.values.sumOf { it.successfulTests }
             val totalFailed = results.values.sumOf { it.failedTests }
             val overallSuccessRate = if (totalTests > 0) (totalSuccessful.toDouble() / totalTests) * 100 else 0.0
-            
+
             appendLine("- **Total Tests**: $totalTests")
             appendLine("- **Successful**: $totalSuccessful")
             appendLine("- **Failed**: $totalFailed")
             appendLine("- **Success Rate**: ${String.format("%.1f", overallSuccessRate)}%")
             appendLine()
-            
+
             appendLine("## Test Categories")
             results.forEach { (category, result) ->
                 appendLine("### ${category.displayName}")
@@ -240,15 +235,15 @@ object TestSuiteRunner {
                 appendLine()
             }
         }
-        
+
         java.nio.file.Files.write(
             java.nio.file.Paths.get(outputPath),
-            report.toByteArray()
+            report.toByteArray(),
         )
-        
+
         println("📄 Test report generated: $outputPath")
     }
-    
+
     /**
      * Main function for running tests from command line.
      */

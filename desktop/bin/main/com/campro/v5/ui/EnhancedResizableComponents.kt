@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material3.*
-import com.campro.v5.debug.DebugIconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +32,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.campro.v5.debug.DebugIconButton
 import java.awt.Cursor
 import kotlin.math.max
 
@@ -82,23 +82,23 @@ fun MultiDirectionalResizeHandle(
 
     Box(
         modifier =
-            modifier
-                .size(handleSize)
-                .shadow(shadowElevation, RoundedCornerShape(3.dp))
-                .hoverable(interactionSource)
-                .pointerHoverIcon(PointerIcon(Cursor.getPredefinedCursor(cursor)))
-                .pointerInput(Unit) {
-                    detectDragGestures { change, _ ->
-                        onResize(change.position.x, change.position.y)
-                    }
-                }.background(
-                    MaterialTheme.colorScheme.primary.copy(alpha = handleAlpha),
-                    RoundedCornerShape(3.dp),
-                ).border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(3.dp),
-                ),
+        modifier
+            .size(handleSize)
+            .shadow(shadowElevation, RoundedCornerShape(3.dp))
+            .hoverable(interactionSource)
+            .pointerHoverIcon(PointerIcon(Cursor.getPredefinedCursor(cursor)))
+            .pointerInput(Unit) {
+                detectDragGestures { change, _ ->
+                    onResize(change.position.x, change.position.y)
+                }
+            }.background(
+                MaterialTheme.colorScheme.primary.copy(alpha = handleAlpha),
+                RoundedCornerShape(3.dp),
+            ).border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(3.dp),
+            ),
     )
 }
 
@@ -141,20 +141,20 @@ fun ResizableContainer(
 
     Card(
         modifier =
-            modifier
-                .padding(preservePadding)
-                .then(
-                    if (initialWidth != Dp.Unspecified) {
-                        Modifier.size(
-                            width.coerceAtMost(availableSpace.width - preservePadding * 2),
-                            height.coerceAtMost(availableSpace.height - preservePadding * 2),
-                        )
-                    } else {
-                        Modifier
-                            .fillMaxWidth()
-                            .height(height.coerceAtMost(availableSpace.height - preservePadding * 2))
-                    },
-                ),
+        modifier
+            .padding(preservePadding)
+            .then(
+                if (initialWidth != Dp.Unspecified) {
+                    Modifier.size(
+                        width.coerceAtMost(availableSpace.width - preservePadding * 2),
+                        height.coerceAtMost(availableSpace.height - preservePadding * 2),
+                    )
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .height(height.coerceAtMost(availableSpace.height - preservePadding * 2))
+                },
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
         Column {
@@ -276,15 +276,15 @@ fun EnhancedScrollableContent(
             ) {
                 VerticalScrollbar(
                     modifier =
-                        Modifier
-                            .fillMaxHeight()
-                            .padding(2.dp),
+                    Modifier
+                        .fillMaxHeight()
+                        .padding(2.dp),
                     adapter = rememberScrollbarAdapter(verticalScrollState),
                     style =
-                        LocalScrollbarStyle.current.copy(
-                            unhoverColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                            hoverColor = MaterialTheme.colorScheme.primary,
-                        ),
+                    LocalScrollbarStyle.current.copy(
+                        unhoverColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                        hoverColor = MaterialTheme.colorScheme.primary,
+                    ),
                 )
             }
         }
@@ -298,15 +298,15 @@ fun EnhancedScrollableContent(
             ) {
                 HorizontalScrollbar(
                     modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(2.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(2.dp),
                     adapter = rememberScrollbarAdapter(horizontalScrollState),
                     style =
-                        LocalScrollbarStyle.current.copy(
-                            unhoverColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                            hoverColor = MaterialTheme.colorScheme.primary,
-                        ),
+                    LocalScrollbarStyle.current.copy(
+                        unhoverColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                        hoverColor = MaterialTheme.colorScheme.primary,
+                    ),
                 )
             }
         }
@@ -315,9 +315,9 @@ fun EnhancedScrollableContent(
         if (isScrolling && verticalScrollState.maxValue > 0) {
             Surface(
                 modifier =
-                    Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(16.dp),
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp),
                 shape = RoundedCornerShape(4.dp),
                 color = MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.8f),
             ) {
@@ -357,19 +357,19 @@ fun HorizontalSplitPane(
         // Draggable divider - modified to be less prominent
         Box(
             modifier =
-                Modifier
-                    .width(dividerWidth)
-                    .fillMaxHeight()
-                    .pointerInput(Unit) {
-                        detectDragGestures { change, _ ->
-                            val newRatio =
-                                (currentRatio + change.position.x / size.width)
-                                    .coerceIn(minRatio, maxRatio)
-                            currentRatio = newRatio
-                        }
-                    }.pointerHoverIcon(PointerIcon(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)))
-                    // Use a more subtle color with transparency
-                    .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+            Modifier
+                .width(dividerWidth)
+                .fillMaxHeight()
+                .pointerInput(Unit) {
+                    detectDragGestures { change, _ ->
+                        val newRatio =
+                            (currentRatio + change.position.x / size.width)
+                                .coerceIn(minRatio, maxRatio)
+                        currentRatio = newRatio
+                    }
+                }.pointerHoverIcon(PointerIcon(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)))
+                // Use a more subtle color with transparency
+                .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
         )
 
         // Right panel
@@ -403,18 +403,18 @@ fun VerticalSplitPane(
         // Draggable divider
         Box(
             modifier =
-                Modifier
-                    .height(dividerHeight)
-                    .fillMaxWidth()
-                    .pointerInput(Unit) {
-                        detectDragGestures { change, _ ->
-                            val newRatio =
-                                (currentRatio + change.position.y / size.height)
-                                    .coerceIn(minRatio, maxRatio)
-                            currentRatio = newRatio
-                        }
-                    }.pointerHoverIcon(PointerIcon(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR)))
-                    .background(MaterialTheme.colorScheme.outline),
+            Modifier
+                .height(dividerHeight)
+                .fillMaxWidth()
+                .pointerInput(Unit) {
+                    detectDragGestures { change, _ ->
+                        val newRatio =
+                            (currentRatio + change.position.y / size.height)
+                                .coerceIn(minRatio, maxRatio)
+                        currentRatio = newRatio
+                    }
+                }.pointerHoverIcon(PointerIcon(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR)))
+                .background(MaterialTheme.colorScheme.outline),
         )
 
         // Bottom panel
@@ -464,23 +464,23 @@ fun DraggableResizablePanel(
 
     Box(
         modifier =
-            modifier
-                .zIndex(zIndex)
-                .offset(x = x, y = y)
-                .size(width = width, height = height),
+        modifier
+            .zIndex(zIndex)
+            .offset(x = x, y = y)
+            .size(width = width, height = height),
     ) {
         Card(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .shadow(
-                        elevation = if (isDragging) 16.dp else 4.dp,
-                        shape = RoundedCornerShape(8.dp),
-                    ),
-            elevation =
-                CardDefaults.cardElevation(
-                    defaultElevation = if (isDragging) 8.dp else 4.dp,
+            Modifier
+                .fillMaxSize()
+                .shadow(
+                    elevation = if (isDragging) 16.dp else 4.dp,
+                    shape = RoundedCornerShape(8.dp),
                 ),
+            elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = if (isDragging) 8.dp else 4.dp,
+            ),
         ) {
             Column {
                 // Title bar with drag handle
@@ -490,25 +490,25 @@ fun DraggableResizablePanel(
                 ) {
                     Row(
                         modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .pointerInput(Unit) {
-                                    detectDragGestures(
-                                        onDragStart = {
-                                            isDragging = true
-                                            // Bring panel to front when dragging starts
-                                            onZIndexChange(zIndex + 1f)
-                                        },
-                                        onDragEnd = { isDragging = false },
-                                        onDragCancel = { isDragging = false },
-                                        onDrag = { change, dragAmount ->
-                                            change.consume()
-                                            x += dragAmount.x.toDp()
-                                            y += dragAmount.y.toDp()
-                                        },
-                                    )
-                                }.pointerHoverIcon(PointerIcon(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)))
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                        Modifier
+                            .fillMaxWidth()
+                            .pointerInput(Unit) {
+                                detectDragGestures(
+                                    onDragStart = {
+                                        isDragging = true
+                                        // Bring panel to front when dragging starts
+                                        onZIndexChange(zIndex + 1f)
+                                    },
+                                    onDragEnd = { isDragging = false },
+                                    onDragCancel = { isDragging = false },
+                                    onDrag = { change, dragAmount ->
+                                        change.consume()
+                                        x += dragAmount.x.toDp()
+                                        y += dragAmount.y.toDp()
+                                    },
+                                )
+                            }.pointerHoverIcon(PointerIcon(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)))
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -525,23 +525,23 @@ fun DraggableResizablePanel(
                             DebugIconButton(
                                 buttonId = "resize-dock",
                                 onClick = { /* TODO: Dock */ },
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(20.dp),
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Dock,
                                     contentDescription = "Dock",
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(14.dp),
                                 )
                             }
                             DebugIconButton(
                                 buttonId = "resize-undock",
                                 onClick = { /* TODO: Undock */ },
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(20.dp),
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Undock,
                                     contentDescription = "Undock",
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(14.dp),
                                 )
                             }
                             IconButton(

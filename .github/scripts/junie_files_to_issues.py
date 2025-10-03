@@ -80,8 +80,10 @@ def upsert_issue(md_path: str):
     if number is None:
         payload = {}
         payload["title"] = title or f"Issue from {os.path.basename(md_path)}"
-        if body is not None: payload["body"] = body
-        if labels: payload["labels"] = labels
+        if body is not None:
+            payload["body"] = body
+        if labels:
+            payload["labels"] = labels
         # optional parity: resolve milestone title -> number on create
         if milestone:
             try:
@@ -118,9 +120,11 @@ def upsert_issue(md_path: str):
         raise Conflict(f"{md_path}: remote newer ({remote_updated}) than local ({updated_at_local})")
 
     payload = {}
-    if title: payload["title"] = title
+    if title:
+        payload["title"] = title
     payload["body"] = body
-    if state in ("open", "closed"): payload["state"] = state
+    if state in ("open", "closed"):
+        payload["state"] = state
 
     if milestone:
         # Resolve milestone title -> number; if not found, pass the title as-is for parity
@@ -149,8 +153,8 @@ def upsert_issue(md_path: str):
             requests.put(f"{API}/issues/{number}/labels", headers=HEADERS, json={"labels": labels}).raise_for_status()
         else:
             current = req("GET", f"/issues/{number}/labels").json()
-            current_names = {l["name"] for l in current}
-            to_add = [l for l in labels if l not in current_names]
+            current_names = {label["name"] for label in current}
+            to_add = [label for label in labels if label not in current_names]
             if to_add:
                 req("POST", f"/issues/{number}/labels", json={"labels": to_add})
 

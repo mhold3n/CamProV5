@@ -23,7 +23,7 @@ class FeaResultsLoaderTest {
               ],
               "timeSteps": [0.0, 0.01, 0.02]
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val data = FeaResultsLoader.loadResults(tmp)
@@ -56,7 +56,7 @@ class FeaResultsLoaderTest {
                 "11": 150.0
               }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val data = FeaResultsLoader.loadResults(tmp)
@@ -87,13 +87,13 @@ class FeaResultsLoaderTest {
                 {"element": 5, "vonMises": 120.5}
               ]
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val data = FeaResultsLoader.loadResults(tmp)
         assertNotNull(data.timeSteps)
         assertTrue(data.timeSteps.isEmpty(), "timeSteps should be empty when missing from JSON")
-        
+
         assertEquals(1, data.displacements.size)
         assertEquals(1, data.stresses.size)
 
@@ -112,7 +112,7 @@ class FeaResultsLoaderTest {
               ],
               "timeSteps": [0.0, 0.01]
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val data = FeaResultsLoader.loadResults(tmp)
@@ -138,7 +138,7 @@ class FeaResultsLoaderTest {
               ],
               "timeSteps": [0.0, 0.01]
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         // Should handle malformed data gracefully
@@ -165,7 +165,7 @@ class FeaResultsLoaderTest {
               ],
               "timeSteps": [0.0]
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val data = FeaResultsLoader.loadResults(tmp)
@@ -191,7 +191,7 @@ class FeaResultsLoaderTest {
               ],
               "timeSteps": [0.0]
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val data = FeaResultsLoader.loadResults(tmp)
@@ -213,7 +213,7 @@ class FeaResultsLoaderTest {
               ],
               "timeSteps": [0.0, 0.01]
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val data = FeaResultsLoader.loadResults(tmp)
@@ -235,7 +235,7 @@ class FeaResultsLoaderTest {
               ],
               "timeSteps": [0.0, 0.01]
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val data = FeaResultsLoader.loadResults(tmp)
@@ -275,16 +275,16 @@ class FeaResultsLoaderTest {
     @Test
     fun `handles large datasets efficiently`() {
         val tmp = File.createTempFile("fea_results_large", ".json")
-        
+
         // Generate large dataset
-        val displacements = (1..1000).joinToString(",") { 
+        val displacements = (1..1000).joinToString(",") {
             """{"node": $it, "x": ${it * 0.001}, "y": ${it * -0.0005}}"""
         }
-        val stresses = (1..1000).joinToString(",") { 
+        val stresses = (1..1000).joinToString(",") {
             """{"element": $it, "vonMises": ${it * 0.1}}"""
         }
         val timeSteps = (0..100).joinToString(",") { "${it * 0.01}" }
-        
+
         tmp.writeText(
             """
             {
@@ -292,7 +292,7 @@ class FeaResultsLoaderTest {
               "stresses": [$stresses],
               "timeSteps": [$timeSteps]
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val data = FeaResultsLoader.loadResults(tmp)
@@ -308,5 +308,3 @@ class FeaResultsLoaderTest {
         tmp.delete()
     }
 }
-
-

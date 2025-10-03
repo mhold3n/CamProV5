@@ -211,12 +211,12 @@ class OnboardingManager {
                 title = "Creating a Basic Mechanism",
                 description = "Learn how to create a basic cycloidal mechanism.",
                 steps =
-                    listOf(
-                        "Set the base circle radius",
-                        "Set the rolling circle radius",
-                        "Set the tracing point distance",
-                        "Generate the animation",
-                    ),
+                listOf(
+                    "Set the base circle radius",
+                    "Set the rolling circle radius",
+                    "Set the tracing point distance",
+                    "Generate the animation",
+                ),
                 relatedStepId = "parameters",
             ),
         )
@@ -228,12 +228,12 @@ class OnboardingManager {
                 title = "Using Animation Controls",
                 description = "Learn how to use the animation controls.",
                 steps =
-                    listOf(
-                        "Play and pause the animation",
-                        "Adjust the animation speed",
-                        "Zoom in and out",
-                        "Pan the view",
-                    ),
+                listOf(
+                    "Play and pause the animation",
+                    "Adjust the animation speed",
+                    "Zoom in and out",
+                    "Pan the view",
+                ),
                 relatedStepId = "animation",
             ),
         )
@@ -245,12 +245,12 @@ class OnboardingManager {
                 title = "Analyzing Plots",
                 description = "Learn how to analyze plots of your mechanism's performance.",
                 steps =
-                    listOf(
-                        "Select a plot type",
-                        "Interpret the plot data",
-                        "Zoom and pan the plot",
-                        "Export plot data",
-                    ),
+                listOf(
+                    "Select a plot type",
+                    "Interpret the plot data",
+                    "Zoom and pan the plot",
+                    "Export plot data",
+                ),
                 relatedStepId = "plots",
             ),
         )
@@ -262,12 +262,12 @@ class OnboardingManager {
                 title = "Exporting Data",
                 description = "Learn how to export data about your mechanism.",
                 steps =
-                    listOf(
-                        "View the data summary",
-                        "Export data as CSV",
-                        "Generate a report",
-                        "Share your results",
-                    ),
+                listOf(
+                    "View the data summary",
+                    "Export data as CSV",
+                    "Generate a report",
+                    "Share your results",
+                ),
                 relatedStepId = "data",
             ),
         )
@@ -279,12 +279,12 @@ class OnboardingManager {
                 title = "Using Responsive Layouts",
                 description = "Learn how to use different layout templates and adapt to different screen sizes.",
                 steps =
-                    listOf(
-                        "Switch between layout templates",
-                        "Adapt to different screen sizes",
-                        "Customize layout for your workflow",
-                        "Save your layout preferences",
-                    ),
+                listOf(
+                    "Switch between layout templates",
+                    "Adapt to different screen sizes",
+                    "Customize layout for your workflow",
+                    "Save your layout preferences",
+                ),
                 relatedStepId = "layouts",
             ),
         )
@@ -296,12 +296,12 @@ class OnboardingManager {
                 title = "Working with Recent Files",
                 description = "Learn how to use the recent files feature to quickly access your projects.",
                 steps =
-                    listOf(
-                        "View your recent files",
-                        "Pin important files",
-                        "Filter and sort recent files",
-                        "Preview file contents",
-                    ),
+                listOf(
+                    "View your recent files",
+                    "Pin important files",
+                    "Filter and sort recent files",
+                    "Preview file contents",
+                ),
                 relatedStepId = "file_management",
             ),
         )
@@ -313,12 +313,12 @@ class OnboardingManager {
                 title = "Using Auto-Save",
                 description = "Learn how to use the auto-save feature to protect your work.",
                 steps =
-                    listOf(
-                        "Configure auto-save settings",
-                        "Recover from crashes",
-                        "Manage auto-save backups",
-                        "Restore previous versions",
-                    ),
+                listOf(
+                    "Configure auto-save settings",
+                    "Recover from crashes",
+                    "Manage auto-save backups",
+                    "Restore previous versions",
+                ),
                 relatedStepId = "file_management",
             ),
         )
@@ -330,12 +330,12 @@ class OnboardingManager {
                 title = "Exporting and Sharing",
                 description = "Learn how to export and share your designs with others.",
                 steps =
-                    listOf(
-                        "Export to different formats",
-                        "Generate comprehensive reports",
-                        "Share designs with colleagues",
-                        "Collaborate on projects",
-                    ),
+                listOf(
+                    "Export to different formats",
+                    "Generate comprehensive reports",
+                    "Share designs with colleagues",
+                    "Collaborate on projects",
+                ),
                 relatedStepId = "collaboration",
             ),
         )
@@ -352,13 +352,13 @@ class OnboardingManager {
                 title = "Basic Cycloidal Mechanism",
                 description = "A simple cycloidal mechanism with default parameters.",
                 parameters =
-                    mapOf(
-                        "Piston Diameter" to "70.0",
-                        "Stroke" to "20.0",
-                        "Rod Length" to "40.0",
-                        "TDC Offset" to "40.0",
-                        "Cycle Ratio" to "2.0",
-                    ),
+                mapOf(
+                    "Piston Diameter" to "70.0",
+                    "Stroke" to "20.0",
+                    "Rod Length" to "40.0",
+                    "TDC Offset" to "40.0",
+                    "Cycle Ratio" to "2.0",
+                ),
                 relatedTutorialId = "basic_mechanism",
             ),
         )
@@ -370,13 +370,13 @@ class OnboardingManager {
                 title = "High-Speed Mechanism",
                 description = "A cycloidal mechanism optimized for high speed.",
                 parameters =
-                    mapOf(
-                        "Piston Diameter" to "60.0",
-                        "Stroke" to "15.0",
-                        "Rod Length" to "45.0",
-                        "TDC Offset" to "35.0",
-                        "Cycle Ratio" to "3.0",
-                    ),
+                mapOf(
+                    "Piston Diameter" to "60.0",
+                    "Stroke" to "15.0",
+                    "Rod Length" to "45.0",
+                    "TDC Offset" to "35.0",
+                    "Cycle Ratio" to "3.0",
+                ),
                 relatedTutorialId = "animation_controls",
             ),
         )
@@ -388,13 +388,13 @@ class OnboardingManager {
                 title = "High-Torque Mechanism",
                 description = "A cycloidal mechanism optimized for high torque.",
                 parameters =
-                    mapOf(
-                        "Piston Diameter" to "80.0",
-                        "Stroke" to "25.0",
-                        "Rod Length" to "35.0",
-                        "TDC Offset" to "45.0",
-                        "Cycle Ratio" to "1.5",
-                    ),
+                mapOf(
+                    "Piston Diameter" to "80.0",
+                    "Stroke" to "25.0",
+                    "Rod Length" to "35.0",
+                    "TDC Offset" to "45.0",
+                    "Cycle Ratio" to "1.5",
+                ),
                 relatedTutorialId = "plot_analysis",
             ),
         )
@@ -406,14 +406,14 @@ class OnboardingManager {
                 title = "Design Workflow Example",
                 description = "A project demonstrating the design workflow with responsive layouts.",
                 parameters =
-                    mapOf(
-                        "Piston Diameter" to "75.0",
-                        "Stroke" to "22.0",
-                        "Rod Length" to "42.0",
-                        "TDC Offset" to "38.0",
-                        "Cycle Ratio" to "2.2",
-                        "Layout Template" to "DESIGN_WORKFLOW",
-                    ),
+                mapOf(
+                    "Piston Diameter" to "75.0",
+                    "Stroke" to "22.0",
+                    "Rod Length" to "42.0",
+                    "TDC Offset" to "38.0",
+                    "Cycle Ratio" to "2.2",
+                    "Layout Template" to "DESIGN_WORKFLOW",
+                ),
                 relatedTutorialId = "responsive_layouts",
             ),
         )
@@ -425,14 +425,14 @@ class OnboardingManager {
                 title = "Analysis Workflow Example",
                 description = "A project demonstrating the analysis workflow with responsive layouts.",
                 parameters =
-                    mapOf(
-                        "Piston Diameter" to "72.0",
-                        "Stroke" to "21.0",
-                        "Rod Length" to "41.0",
-                        "TDC Offset" to "39.0",
-                        "Cycle Ratio" to "2.1",
-                        "Layout Template" to "ANALYSIS_WORKFLOW",
-                    ),
+                mapOf(
+                    "Piston Diameter" to "72.0",
+                    "Stroke" to "21.0",
+                    "Rod Length" to "41.0",
+                    "TDC Offset" to "39.0",
+                    "Cycle Ratio" to "2.1",
+                    "Layout Template" to "ANALYSIS_WORKFLOW",
+                ),
                 relatedTutorialId = "responsive_layouts",
             ),
         )
@@ -444,14 +444,14 @@ class OnboardingManager {
                 title = "Auto-Save Example",
                 description = "A project demonstrating the auto-save feature with recovery options.",
                 parameters =
-                    mapOf(
-                        "Piston Diameter" to "68.0",
-                        "Stroke" to "19.0",
-                        "Rod Length" to "39.0",
-                        "TDC Offset" to "41.0",
-                        "Cycle Ratio" to "1.9",
-                        "Auto-Save Interval" to "60",
-                    ),
+                mapOf(
+                    "Piston Diameter" to "68.0",
+                    "Stroke" to "19.0",
+                    "Rod Length" to "39.0",
+                    "TDC Offset" to "41.0",
+                    "Cycle Ratio" to "1.9",
+                    "Auto-Save Interval" to "60",
+                ),
                 relatedTutorialId = "auto_save",
             ),
         )
@@ -463,14 +463,14 @@ class OnboardingManager {
                 title = "Collaboration Example",
                 description = "A project demonstrating the collaboration features with export options.",
                 parameters =
-                    mapOf(
-                        "Piston Diameter" to "65.0",
-                        "Stroke" to "18.0",
-                        "Rod Length" to "38.0",
-                        "TDC Offset" to "42.0",
-                        "Cycle Ratio" to "1.8",
-                        "Export Format" to "PDF",
-                    ),
+                mapOf(
+                    "Piston Diameter" to "65.0",
+                    "Stroke" to "18.0",
+                    "Rod Length" to "38.0",
+                    "TDC Offset" to "42.0",
+                    "Cycle Ratio" to "1.8",
+                    "Export Format" to "PDF",
+                ),
                 relatedTutorialId = "export_share",
             ),
         )
@@ -881,12 +881,7 @@ class OnboardingManager {
  * @param description The description of the step
  * @param order The order of the step in the onboarding process
  */
-data class OnboardingStep(
-    val id: String,
-    val title: String,
-    val description: String,
-    val order: Int,
-)
+data class OnboardingStep(val id: String, val title: String, val description: String, val order: Int)
 
 /**
  * An onboarding tutorial.
@@ -967,9 +962,7 @@ sealed class OnboardingEvent : Event() {
      *
      * @param step The new step
      */
-    data class StepChanged(
-        val step: OnboardingStep,
-    ) : OnboardingEvent() {
+    data class StepChanged(val step: OnboardingStep) : OnboardingEvent() {
         override val type: String = "step_changed"
 
         override fun toJson(): String =
@@ -981,9 +974,7 @@ sealed class OnboardingEvent : Event() {
      *
      * @param tutorial The tutorial
      */
-    data class TutorialStarted(
-        val tutorial: OnboardingTutorial,
-    ) : OnboardingEvent() {
+    data class TutorialStarted(val tutorial: OnboardingTutorial) : OnboardingEvent() {
         override val type: String = "tutorial_started"
 
         override fun toJson(): String = "{\"type\":\"$type\",\"tutorial_id\":\"${tutorial.id}\",\"tutorial_title\":\"${tutorial.title}\"}"
@@ -994,9 +985,7 @@ sealed class OnboardingEvent : Event() {
      *
      * @param tutorial The tutorial
      */
-    data class TutorialCompleted(
-        val tutorial: OnboardingTutorial,
-    ) : OnboardingEvent() {
+    data class TutorialCompleted(val tutorial: OnboardingTutorial) : OnboardingEvent() {
         override val type: String = "tutorial_completed"
 
         override fun toJson(): String = "{\"type\":\"$type\",\"tutorial_id\":\"${tutorial.id}\",\"tutorial_title\":\"${tutorial.title}\"}"
@@ -1007,9 +996,7 @@ sealed class OnboardingEvent : Event() {
      *
      * @param project The sample project
      */
-    data class SampleProjectLoaded(
-        val project: SampleProject,
-    ) : OnboardingEvent() {
+    data class SampleProjectLoaded(val project: SampleProject) : OnboardingEvent() {
         override val type: String = "sample_project_loaded"
 
         override fun toJson(): String = "{\"type\":\"$type\",\"project_id\":\"${project.id}\",\"project_title\":\"${project.title}\"}"

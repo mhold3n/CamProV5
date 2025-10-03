@@ -7,12 +7,11 @@ contact ratio verification, and other manufacturability constraints.
 """
 
 import numpy as np
-from typing import Dict, List, Tuple, Any, Optional, NamedTuple
+from typing import Dict, List, Any, Optional, NamedTuple
 from dataclasses import dataclass
-import warnings
 
 try:
-    import casadi as ca
+    import casadi as ca  # noqa: F401
     CASADI_AVAILABLE = True
 except ImportError:
     CASADI_AVAILABLE = False
@@ -71,17 +70,17 @@ class DenseValidationReport:
     num_violations: int = 0
     
     # Pressure angle validation
-    pressure_angle_results: List[ValidationResult] = None
+    pressure_angle_results: Optional[List[ValidationResult]] = None
     pressure_angle_max: float = 0.0
     pressure_angle_violations: int = 0
     
     # Curvature validation
-    curvature_results: List[ValidationResult] = None
+    curvature_results: Optional[List[ValidationResult]] = None
     curvature_min: float = float('inf')
     curvature_violations: int = 0
     
     # Thickness validation
-    thickness_results: List[ValidationResult] = None
+    thickness_results: Optional[List[ValidationResult]] = None
     thickness_min: float = float('inf')
     thickness_violations: int = 0
     
@@ -233,12 +232,12 @@ class DenseValidator:
     def _validate_gear_geometry(self, theta_grid: np.ndarray, position: np.ndarray,
                               velocity: np.ndarray, acceleration: np.ndarray,
                               center_distance: float, report: DenseValidationReport, 
-                              motion_params: Dict[str, Any] = None):
+                              motion_params: Optional[Dict[str, Any]] = None):
         """Validate gear geometry constraints."""
         
         # Estimate gear radii from velocity profile
         v_max = np.max(np.abs(velocity))
-        v_normalized = velocity / (v_max + 1e-12)
+        velocity / (v_max + 1e-12)
         
         # Use robust gear design for radius estimation
         from campro.solvers.robust_gear_design import RobustGearDesign, GearMaterialProperties, GearDesignParameters

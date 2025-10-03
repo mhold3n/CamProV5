@@ -41,10 +41,7 @@ object SupportBundle {
         val outZip = outDir.resolve("support_${ts}_$sessionId.zip").toAbsolutePath()
 
         ZipOutputStream(BufferedOutputStream(FileOutputStream(outZip.toFile()))).use { zos ->
-            fun addDir(
-                dir: Path,
-                rootName: String,
-            ) {
+            fun addDir(dir: Path, rootName: String) {
                 Files.walk(dir).use { stream ->
                     stream.filter { Files.isRegularFile(it) }.forEach { p ->
                         val name = p.fileName.toString()

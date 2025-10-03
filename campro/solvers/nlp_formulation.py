@@ -6,7 +6,7 @@ suitable for solution with CasADi + IPOPT.
 """
 
 import numpy as np
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 
 try:
@@ -17,7 +17,7 @@ except ImportError:
 
 import logging
 from .discretization import CollocationGrid
-from .litvin_constraints import LitvinConstraintBuilder, LitvinParameters
+# from .litvin_constraints import LitvinConstraintBuilder, LitvinParameters  # DEPRECATED
 
 logger = logging.getLogger(__name__)
 
@@ -235,7 +235,7 @@ class MotionNLP:
     
     def __init__(self, grid: CollocationGrid, constraint_builder: ConstraintBuilder, 
                  regularization_weight: float = 1e-3, enable_litvin_constraints: bool = False,
-                 litvin_params: Optional[LitvinParameters] = None):
+                 litvin_params: Optional[Any] = None):  # LitvinParameters deprecated
         """Initialize the NLP formulation."""
         if not CASADI_AVAILABLE:
             raise ImportError("CasADi is required for NLP formulation")
@@ -245,11 +245,12 @@ class MotionNLP:
         self.regularization_weight = regularization_weight
         self.enable_litvin_constraints = enable_litvin_constraints
         
-        # Initialize Litvin constraint builder if enabled
+        # Initialize Litvin constraint builder if enabled (DEPRECATED)
         self.litvin_builder = None
         if enable_litvin_constraints:
-            litvin_params = litvin_params or LitvinParameters()
-            self.litvin_builder = LitvinConstraintBuilder(litvin_params, grid)
+            # litvin_params = litvin_params or LitvinParameters()  # DEPRECATED
+            # self.litvin_builder = LitvinConstraintBuilder(litvin_params, grid)  # DEPRECATED
+            pass  # Litvin constraints are deprecated
         
         # Build NLP components
         self._setup_variables()
@@ -286,7 +287,7 @@ class MotionNLP:
         D = ca.DM(self.grid.differentiation_matrix)
         D2 = ca.DM(self.grid.second_derivative_matrix)
         
-        velocity = D @ self.position_vars
+        D @ self.position_vars
         acceleration = D2 @ self.position_vars
         
         # Smoothness objective: minimize acceleration and jerk

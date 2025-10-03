@@ -12,10 +12,7 @@ import com.campro.v5.layout.LayoutManager
  * while wiring remains to be implemented.
  */
 @Composable
-fun WindowsController(
-    testingMode: Boolean,
-    layoutManager: LayoutManager,
-) {
+fun WindowsController(testingMode: Boolean, layoutManager: LayoutManager) {
     Column(Modifier.fillMaxSize()) {
         Text("WindowsController placeholder (multi-window not yet implemented)")
     }

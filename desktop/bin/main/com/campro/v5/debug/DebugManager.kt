@@ -35,5 +35,3 @@ object DebugManager {
     fun setPanelVisible(visible: Boolean) = updateSettings(settings.copy(panelVisible = visible))
     fun togglePanelVisible() = setPanelVisible(!settings.panelVisible)
 }
-
-

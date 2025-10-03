@@ -7,8 +7,7 @@ including the main window creation and event loop management.
 
 import sys
 import argparse
-from pathlib import Path
-from campro.utils.logging import info, error
+from campro.utils.logging import info
 
 # Flag to track if PyQt5 is available
 PYQT5_AVAILABLE = False

@@ -99,11 +99,11 @@ class FormatConverter {
                                 name = file.nameWithoutExtension,
                                 parameters = parameters,
                                 metadata =
-                                    ProjectMetadata(
-                                        createdAt = System.currentTimeMillis(),
-                                        modifiedAt = System.currentTimeMillis(),
-                                        description = "Imported from CSV",
-                                    ),
+                                ProjectMetadata(
+                                    createdAt = System.currentTimeMillis(),
+                                    modifiedAt = System.currentTimeMillis(),
+                                    description = "Imported from CSV",
+                                ),
                             )
 
                         ConversionResult.Success(project)
@@ -326,46 +326,42 @@ class FormatConverter {
      * @param format The format to import from, or null to auto-detect
      * @return The result of the import operation
      */
-    suspend fun importProject(
-        file: File,
-        format: String? = null,
-    ): ConversionResult<Project> =
-        withContext(Dispatchers.IO) {
-            try {
-                // Check if the file exists
-                if (!file.exists() || !file.isFile) {
-                    return@withContext ConversionResult.Error("File not found: ${file.absolutePath}")
-                }
-
-                // Determine format
-                val importFormat =
-                    if (format != null) {
-                        // Use specified format
-                        importFormats[format] ?: return@withContext ConversionResult.Error("Unsupported import format: $format")
-                    } else {
-                        // Auto-detect format from file extension
-                        val extension = file.extension.lowercase()
-                        importFormats.values.find { it.extensions.contains(extension) }
-                            ?: return@withContext ConversionResult.Error("Unsupported file extension: $extension")
-                    }
-
-                // Import project
-                val result = importFormat.importFn(file)
-
-                // Emit event
-                if (result is ConversionResult.Success) {
-                    _conversionEvents.value = ConversionEvent.ProjectImported(file.absolutePath, importFormat.format)
-                } else if (result is ConversionResult.Error) {
-                    _conversionEvents.value = ConversionEvent.ImportFailed(file.absolutePath, importFormat.format, result.message)
-                }
-
-                return@withContext result
-            } catch (e: Exception) {
-                val errorMessage = "Failed to import project: ${e.message}"
-                _conversionEvents.value = ConversionEvent.ImportFailed(file.absolutePath, format ?: "unknown", errorMessage)
-                return@withContext ConversionResult.Error(errorMessage)
+    suspend fun importProject(file: File, format: String? = null): ConversionResult<Project> = withContext(Dispatchers.IO) {
+        try {
+            // Check if the file exists
+            if (!file.exists() || !file.isFile) {
+                return@withContext ConversionResult.Error("File not found: ${file.absolutePath}")
             }
+
+            // Determine format
+            val importFormat =
+                if (format != null) {
+                    // Use specified format
+                    importFormats[format] ?: return@withContext ConversionResult.Error("Unsupported import format: $format")
+                } else {
+                    // Auto-detect format from file extension
+                    val extension = file.extension.lowercase()
+                    importFormats.values.find { it.extensions.contains(extension) }
+                        ?: return@withContext ConversionResult.Error("Unsupported file extension: $extension")
+                }
+
+            // Import project
+            val result = importFormat.importFn(file)
+
+            // Emit event
+            if (result is ConversionResult.Success) {
+                _conversionEvents.value = ConversionEvent.ProjectImported(file.absolutePath, importFormat.format)
+            } else if (result is ConversionResult.Error) {
+                _conversionEvents.value = ConversionEvent.ImportFailed(file.absolutePath, importFormat.format, result.message)
+            }
+
+            return@withContext result
+        } catch (e: Exception) {
+            val errorMessage = "Failed to import project: ${e.message}"
+            _conversionEvents.value = ConversionEvent.ImportFailed(file.absolutePath, format ?: "unknown", errorMessage)
+            return@withContext ConversionResult.Error(errorMessage)
         }
+    }
 
     /**
      * Export a project to a file.
@@ -375,42 +371,37 @@ class FormatConverter {
      * @param format The format to export to, or null to auto-detect
      * @return The result of the export operation
      */
-    suspend fun exportProject(
-        project: Project,
-        file: File,
-        format: String? = null,
-    ): ConversionResult<File> =
-        withContext(Dispatchers.IO) {
-            try {
-                // Determine format
-                val exportFormat =
-                    if (format != null) {
-                        // Use specified format
-                        exportFormats[format] ?: return@withContext ConversionResult.Error("Unsupported export format: $format")
-                    } else {
-                        // Auto-detect format from file extension
-                        val extension = file.extension.lowercase()
-                        exportFormats.values.find { it.extensions.contains(extension) }
-                            ?: return@withContext ConversionResult.Error("Unsupported file extension: $extension")
-                    }
-
-                // Export project
-                val result = exportFormat.exportFn(project, file)
-
-                // Emit event
-                if (result is ConversionResult.Success) {
-                    _conversionEvents.value = ConversionEvent.ProjectExported(file.absolutePath, exportFormat.format)
-                } else if (result is ConversionResult.Error) {
-                    _conversionEvents.value = ConversionEvent.ExportFailed(file.absolutePath, exportFormat.format, result.message)
+    suspend fun exportProject(project: Project, file: File, format: String? = null): ConversionResult<File> = withContext(Dispatchers.IO) {
+        try {
+            // Determine format
+            val exportFormat =
+                if (format != null) {
+                    // Use specified format
+                    exportFormats[format] ?: return@withContext ConversionResult.Error("Unsupported export format: $format")
+                } else {
+                    // Auto-detect format from file extension
+                    val extension = file.extension.lowercase()
+                    exportFormats.values.find { it.extensions.contains(extension) }
+                        ?: return@withContext ConversionResult.Error("Unsupported file extension: $extension")
                 }
 
-                return@withContext result
-            } catch (e: Exception) {
-                val errorMessage = "Failed to export project: ${e.message}"
-                _conversionEvents.value = ConversionEvent.ExportFailed(file.absolutePath, format ?: "unknown", errorMessage)
-                return@withContext ConversionResult.Error(errorMessage)
+            // Export project
+            val result = exportFormat.exportFn(project, file)
+
+            // Emit event
+            if (result is ConversionResult.Success) {
+                _conversionEvents.value = ConversionEvent.ProjectExported(file.absolutePath, exportFormat.format)
+            } else if (result is ConversionResult.Error) {
+                _conversionEvents.value = ConversionEvent.ExportFailed(file.absolutePath, exportFormat.format, result.message)
             }
+
+            return@withContext result
+        } catch (e: Exception) {
+            val errorMessage = "Failed to export project: ${e.message}"
+            _conversionEvents.value = ConversionEvent.ExportFailed(file.absolutePath, format ?: "unknown", errorMessage)
+            return@withContext ConversionResult.Error(errorMessage)
         }
+    }
 
     /**
      * Perform batch conversion of multiple files.
@@ -426,48 +417,47 @@ class FormatConverter {
         outputDir: File,
         inputFormat: String? = null,
         outputFormat: String,
-    ): List<BatchConversionResult> =
-        withContext(Dispatchers.IO) {
-            // Check if output format is supported
-            val exporter =
-                exportFormats[outputFormat]
-                    ?: return@withContext listOf(
-                        BatchConversionResult(null, null, ConversionResult.Error("Unsupported output format: $outputFormat")),
-                    )
+    ): List<BatchConversionResult> = withContext(Dispatchers.IO) {
+        // Check if output format is supported
+        val exporter =
+            exportFormats[outputFormat]
+                ?: return@withContext listOf(
+                    BatchConversionResult(null, null, ConversionResult.Error("Unsupported output format: $outputFormat")),
+                )
 
-            // Create output directory if it doesn't exist
-            outputDir.mkdirs()
+        // Create output directory if it doesn't exist
+        outputDir.mkdirs()
 
-            // Process each input file
-            val results = mutableListOf<BatchConversionResult>()
+        // Process each input file
+        val results = mutableListOf<BatchConversionResult>()
 
-            for (inputFile in inputFiles) {
-                try {
-                    // Import project
-                    val importResult = importProject(inputFile, inputFormat)
+        for (inputFile in inputFiles) {
+            try {
+                // Import project
+                val importResult = importProject(inputFile, inputFormat)
 
-                    if (importResult is ConversionResult.Success) {
-                        // Create output file
-                        val outputFile = File(outputDir, "${inputFile.nameWithoutExtension}.${exporter.extensions.first()}")
+                if (importResult is ConversionResult.Success) {
+                    // Create output file
+                    val outputFile = File(outputDir, "${inputFile.nameWithoutExtension}.${exporter.extensions.first()}")
 
-                        // Export project
-                        val exportResult = exportProject(importResult.data, outputFile, outputFormat)
+                    // Export project
+                    val exportResult = exportProject(importResult.data, outputFile, outputFormat)
 
-                        results.add(BatchConversionResult(inputFile, outputFile, exportResult))
-                    } else {
-                        results.add(BatchConversionResult(inputFile, null, importResult))
-                    }
-                } catch (e: Exception) {
-                    results.add(BatchConversionResult(inputFile, null, ConversionResult.Error("Failed to convert file: ${e.message}")))
+                    results.add(BatchConversionResult(inputFile, outputFile, exportResult))
+                } else {
+                    results.add(BatchConversionResult(inputFile, null, importResult))
                 }
+            } catch (e: Exception) {
+                results.add(BatchConversionResult(inputFile, null, ConversionResult.Error("Failed to convert file: ${e.message}")))
             }
-
-            // Emit event
-            _conversionEvents.value =
-                ConversionEvent.BatchConversionCompleted(results.size, results.count { it.result is ConversionResult.Success })
-
-            return@withContext results
         }
+
+        // Emit event
+        _conversionEvents.value =
+            ConversionEvent.BatchConversionCompleted(results.size, results.count { it.result is ConversionResult.Success })
+
+        return@withContext results
+    }
 
     companion object {
         // Singleton instance
@@ -530,18 +520,14 @@ sealed class ConversionResult<out T> {
      *
      * @param data The converted data
      */
-    data class Success<T>(
-        val data: T,
-    ) : ConversionResult<T>()
+    data class Success<T>(val data: T) : ConversionResult<T>()
 
     /**
      * A failed conversion.
      *
      * @param message The error message
      */
-    data class Error(
-        val message: String,
-    ) : ConversionResult<Nothing>()
+    data class Error(val message: String) : ConversionResult<Nothing>()
 }
 
 /**
@@ -551,11 +537,7 @@ sealed class ConversionResult<out T> {
  * @param outputFile The output file, or null if conversion failed
  * @param result The result of the conversion
  */
-data class BatchConversionResult(
-    val inputFile: File?,
-    val outputFile: File?,
-    val result: ConversionResult<*>,
-)
+data class BatchConversionResult(val inputFile: File?, val outputFile: File?, val result: ConversionResult<*>)
 
 /**
  * Conversion events emitted by the FormatConverter.
@@ -567,10 +549,7 @@ sealed class ConversionEvent {
      * @param filePath The path to the imported file
      * @param format The format of the imported file
      */
-    data class ProjectImported(
-        val filePath: String,
-        val format: String,
-    ) : ConversionEvent()
+    data class ProjectImported(val filePath: String, val format: String) : ConversionEvent()
 
     /**
      * Event emitted when a project is exported.
@@ -578,10 +557,7 @@ sealed class ConversionEvent {
      * @param filePath The path to the exported file
      * @param format The format of the exported file
      */
-    data class ProjectExported(
-        val filePath: String,
-        val format: String,
-    ) : ConversionEvent()
+    data class ProjectExported(val filePath: String, val format: String) : ConversionEvent()
 
     /**
      * Event emitted when a project import fails.
@@ -590,11 +566,7 @@ sealed class ConversionEvent {
      * @param format The format of the file
      * @param message The error message
      */
-    data class ImportFailed(
-        val filePath: String,
-        val format: String,
-        val message: String,
-    ) : ConversionEvent()
+    data class ImportFailed(val filePath: String, val format: String, val message: String) : ConversionEvent()
 
     /**
      * Event emitted when a project export fails.
@@ -603,11 +575,7 @@ sealed class ConversionEvent {
      * @param format The format of the file
      * @param message The error message
      */
-    data class ExportFailed(
-        val filePath: String,
-        val format: String,
-        val message: String,
-    ) : ConversionEvent()
+    data class ExportFailed(val filePath: String, val format: String, val message: String) : ConversionEvent()
 
     /**
      * Event emitted when a batch conversion is completed.
@@ -615,10 +583,7 @@ sealed class ConversionEvent {
      * @param totalFiles The total number of files processed
      * @param successfulFiles The number of files successfully converted
      */
-    data class BatchConversionCompleted(
-        val totalFiles: Int,
-        val successfulFiles: Int,
-    ) : ConversionEvent()
+    data class BatchConversionCompleted(val totalFiles: Int, val successfulFiles: Int) : ConversionEvent()
 }
 
 /**

@@ -62,16 +62,16 @@ fun ResizablePanel(
         layoutCoordinator?.registerPanel(
             id = panelId,
             initialState =
-                PanelState(
-                    x = panelX,
-                    y = panelY,
-                    width = panelWidth,
-                    height = panelHeight,
-                    minWidth = minWidth,
-                    minHeight = minHeight,
-                    maxWidth = maxWidth,
-                    maxHeight = maxHeight,
-                ),
+            PanelState(
+                x = panelX,
+                y = panelY,
+                width = panelWidth,
+                height = panelHeight,
+                minWidth = minWidth,
+                minHeight = minHeight,
+                maxWidth = maxWidth,
+                maxHeight = maxHeight,
+            ),
         )
     }
 
@@ -93,29 +93,29 @@ fun ResizablePanel(
 
     Box(
         modifier =
-            modifier
-                .size(panelWidth, panelHeight)
-                .hoverable(interactionSource),
+        modifier
+            .size(panelWidth, panelHeight)
+            .hoverable(interactionSource),
     ) {
         // Main panel content
         Card(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .onSizeChanged { size ->
-                        // Notify listeners only; avoid overriding state to prevent resize feedback loops
-                        val w = with(density) { size.width.toDp() }
-                        val h = with(density) { size.height.toDp() }
-                        onSizeChanged?.invoke(w, h)
-                    },
+            Modifier
+                .fillMaxSize()
+                .onSizeChanged { size ->
+                    // Notify listeners only; avoid overriding state to prevent resize feedback loops
+                    val w = with(density) { size.width.toDp() }
+                    val h = with(density) { size.height.toDp() }
+                    onSizeChanged?.invoke(w, h)
+                },
             elevation =
-                CardDefaults.cardElevation(
-                    defaultElevation = if (isResizing) 8.dp else 4.dp,
-                ),
+            CardDefaults.cardElevation(
+                defaultElevation = if (isResizing) 8.dp else 4.dp,
+            ),
             colors =
-                CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),

@@ -65,19 +65,18 @@ class ParameterizedSolverComparisonTest {
          * Generate extreme parameter combinations for stress testing.
          */
         @JvmStatic
-        fun extremeParameterCombinations(): Stream<Arguments> =
-            listOf(
-                // Very small stroke, fine sampling
-                Arguments.of(0.1, 0.5, RampProfile.Cycloidal, 0.5, 0.0, 0.0),
-                // Large stroke, coarse sampling
-                Arguments.of(100.0, 10.0, RampProfile.S5, 0.3, 90.0, 90.0),
-                // Asymmetric motion
-                Arguments.of(10.0, 2.0, RampProfile.S7, 0.1, 5.0, 60.0),
-                // Extreme asymmetry
-                Arguments.of(10.0, 2.0, RampProfile.Cycloidal, 0.9, 60.0, 5.0),
-                // Very large dwells
-                Arguments.of(5.0, 5.0, RampProfile.S5, 0.5, 120.0, 120.0),
-            ).stream()
+        fun extremeParameterCombinations(): Stream<Arguments> = listOf(
+            // Very small stroke, fine sampling
+            Arguments.of(0.1, 0.5, RampProfile.Cycloidal, 0.5, 0.0, 0.0),
+            // Large stroke, coarse sampling
+            Arguments.of(100.0, 10.0, RampProfile.S5, 0.3, 90.0, 90.0),
+            // Asymmetric motion
+            Arguments.of(10.0, 2.0, RampProfile.S7, 0.1, 5.0, 60.0),
+            // Extreme asymmetry
+            Arguments.of(10.0, 2.0, RampProfile.Cycloidal, 0.9, 60.0, 5.0),
+            // Very large dwells
+            Arguments.of(5.0, 5.0, RampProfile.S5, 0.5, 120.0, 120.0),
+        ).stream()
     }
 
     @ParameterizedTest(name = "Piecewise solver consistency: stroke={0}mm, step={1}deg, profile={2}, upFraction={3}, dwells=({4},{5})")

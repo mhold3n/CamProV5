@@ -8,13 +8,14 @@ using the Rust FEA engine, including stress, vibration, and fatigue analysis.
 import logging
 import json
 import tempfile
-from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List, Optional
 import numpy as np
 
 from .rust_engine_wrapper import RustEngineWrapper
+from campro.constants import DEFAULT_YOUNGS_MODULUS, DEFAULT_POISSON_RATIO, DEFAULT_DENSITY
+from campro.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class FEAAnalyzer:
@@ -70,6 +71,14 @@ class FEAAnalyzer:
             
         Raises:
             ValueError: If input data is invalid
+            
+        Note:
+            FUTURE ENHANCEMENT: This method will be extended to support RPM sweep analysis
+            for comprehensive testing across multiple resonant frequencies. The new method
+            analyze_assembly_rpm_sweep() will be added to test at multiple RPM values
+            (e.g., 500, 1000, 1500, ..., 10000 RPM) to identify critical operating speeds
+            and resonant frequencies. This is not currently a priority but will provide
+            much more realistic and comprehensive FEA results.
         """
         self.logger.info("Starting comprehensive assembly analysis")
         
@@ -78,7 +87,7 @@ class FEAAnalyzer:
             self._validate_input_data(gear_profiles, tooth_profiles, motion_law, params)
             
             # Create model file
-            model_file = self._create_model_file(gear_profiles, tooth_profiles, motion_law, params)
+            self._create_model_file(gear_profiles, tooth_profiles, motion_law, params)
             
             # Run stress analysis
             stress_analysis = self.run_stress_analysis(gear_profiles, tooth_profiles, params)
@@ -86,8 +95,8 @@ class FEAAnalyzer:
             # Run vibration analysis
             vibration_analysis = self.run_vibration_analysis(gear_profiles, motion_law, params)
             
-            # Run fatigue analysis
-            fatigue_analysis = self.run_fatigue_analysis(gear_profiles, tooth_profiles, params)
+            # Run fatigue analysis with stress data
+            fatigue_analysis = self.run_fatigue_analysis(gear_profiles, tooth_profiles, params, stress_analysis)
             
             # Compile analysis summary
             analysis_summary = self._compile_analysis_summary(
@@ -206,7 +215,8 @@ class FEAAnalyzer:
     
     def run_fatigue_analysis(self, gear_profiles: Dict[str, np.ndarray], 
                             tooth_profiles: Dict[str, np.ndarray],
-                            params: Dict[str, Any]) -> Dict[str, Any]:
+                            params: Dict[str, Any],
+                            stress_analysis: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Run fatigue analysis on gear profiles.
         
@@ -238,6 +248,12 @@ class FEAAnalyzer:
                 'safety_factor': params.get('safety_factor', 2.0),
                 'load_cycles': params.get('load_cycles', 1000000)
             }
+            
+            # Add stress data if available
+            if stress_analysis:
+                analysis_params['max_stress'] = stress_analysis.get('max_stress', 0.0)
+                analysis_params['von_mises_stress'] = stress_analysis.get('von_mises_stress', 0.0)
+                analysis_params['safety_factor'] = stress_analysis.get('safety_factor', 2.0)
             
             # Run analysis through Rust engine
             result = self.rust_engine.run_fatigue_analysis(model_file, analysis_params)
@@ -291,8 +307,12 @@ class FEAAnalyzer:
             if key not in gear_profiles:
                 raise ValueError(f"Missing required gear profile: {key}")
             
+            # Convert scalar values to numpy arrays if needed
             if not isinstance(gear_profiles[key], np.ndarray):
-                raise ValueError(f"Gear profile {key} must be a numpy array")
+                if isinstance(gear_profiles[key], (int, float)):
+                    gear_profiles[key] = np.array([gear_profiles[key]])
+                else:
+                    raise ValueError(f"Gear profile {key} must be a numpy array or scalar value")
             
             if gear_profiles[key].size == 0:
                 raise ValueError(f"Gear profile {key} cannot be empty")
@@ -425,9 +445,9 @@ class FEAAnalyzer:
                 'tooth_profiles': {k: v.tolist() if hasattr(v, 'tolist') else v for k, v in tooth_profiles.items()}
             },
             'material': {
-                'youngs_modulus': params.get('youngs_modulus', 200000.0),
-                'poisson_ratio': params.get('poisson_ratio', 0.3),
-                'density': params.get('density', 7850.0)
+                'youngs_modulus': params.get('youngs_modulus', DEFAULT_YOUNGS_MODULUS),
+                'poisson_ratio': params.get('poisson_ratio', DEFAULT_POISSON_RATIO),
+                'density': params.get('density', DEFAULT_DENSITY)
             },
             'loads': {
                 'contact_force': params.get('contact_force', 1000.0),
@@ -459,9 +479,9 @@ class FEAAnalyzer:
                 'gear_profiles': {k: v.tolist() if hasattr(v, 'tolist') else v for k, v in gear_profiles.items()}
             },
             'material': {
-                'youngs_modulus': params.get('youngs_modulus', 200000.0),
-                'poisson_ratio': params.get('poisson_ratio', 0.3),
-                'density': params.get('density', 7850.0)
+                'youngs_modulus': params.get('youngs_modulus', DEFAULT_YOUNGS_MODULUS),
+                'poisson_ratio': params.get('poisson_ratio', DEFAULT_POISSON_RATIO),
+                'density': params.get('density', DEFAULT_DENSITY)
             },
             'boundary_conditions': {
                 'fixed_nodes': params.get('fixed_nodes', [1, 2, 3]),
@@ -500,9 +520,9 @@ class FEAAnalyzer:
                 'tooth_profiles': {k: v.tolist() if hasattr(v, 'tolist') else v for k, v in tooth_profiles.items()}
             },
             'material': {
-                'youngs_modulus': params.get('youngs_modulus', 200000.0),
-                'poisson_ratio': params.get('poisson_ratio', 0.3),
-                'density': params.get('density', 7850.0),
+                'youngs_modulus': params.get('youngs_modulus', DEFAULT_YOUNGS_MODULUS),
+                'poisson_ratio': params.get('poisson_ratio', DEFAULT_POISSON_RATIO),
+                'density': params.get('density', DEFAULT_DENSITY),
                 'fatigue_limit': params.get('fatigue_limit', 300.0),
                 'endurance_limit': params.get('endurance_limit', 250.0)
             },

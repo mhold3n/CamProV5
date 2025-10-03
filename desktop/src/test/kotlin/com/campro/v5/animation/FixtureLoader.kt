@@ -3,18 +3,9 @@ package com.campro.v5.animation
 import java.nio.file.Files
 import java.nio.file.Paths
 
-data class FixtureMotionSample(
-    val thetaDeg: Double,
-    val xMm: Double,
-    val vMmPerOmega: Double,
-    val aMmPerOmega2: Double,
-)
+data class FixtureMotionSample(val thetaDeg: Double, val xMm: Double, val vMmPerOmega: Double, val aMmPerOmega2: Double)
 
-data class FixtureMotionSamples(
-    val stepDeg: Double,
-    val samples: List<FixtureMotionSample>,
-    val generator: GeneratorMeta? = null,
-)
+data class FixtureMotionSamples(val stepDeg: Double, val samples: List<FixtureMotionSample>, val generator: GeneratorMeta? = null)
 
 data class GeneratorMeta(
     val version: String? = null,

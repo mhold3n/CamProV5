@@ -16,32 +16,31 @@ class TransmissionSignConventionTest {
     /**
      * Creates standard test parameters for comparison
      */
-    private fun testParams(profile: RampProfile = RampProfile.S5) =
-        LitvinUserParams(
-            samplingStepDeg = 1.0,
-            rampProfile = profile,
-            dwellTdcDeg = 20.0,
-            dwellBdcDeg = 20.0,
-            rampBeforeTdcDeg = 10.0,
-            rampAfterTdcDeg = 10.0,
-            rampBeforeBdcDeg = 10.0,
-            rampAfterBdcDeg = 10.0,
-            strokeLengthMm = 100.0,
-            rodLength = 100.0,
-            interferenceBuffer = 0.5,
-            journalRadius = 5.0,
-            journalPhaseBetaDeg = 0.0,
-            sliderAxisDeg = 0.0,
-            planetCount = 2,
-            carrierOffsetDeg = 180.0,
-            ringThicknessVisual = 6.0,
-            rpm = 3000.0,
-            camR0 = 40.0,
-            camKPerUnit = 1.0,
-            centerDistanceBias = 50.0,
-            centerDistanceScale = 1.0,
-            arcResidualTolMm = 0.01,
-        )
+    private fun testParams(profile: RampProfile = RampProfile.S5) = LitvinUserParams(
+        samplingStepDeg = 1.0,
+        rampProfile = profile,
+        dwellTdcDeg = 20.0,
+        dwellBdcDeg = 20.0,
+        rampBeforeTdcDeg = 10.0,
+        rampAfterTdcDeg = 10.0,
+        rampBeforeBdcDeg = 10.0,
+        rampAfterBdcDeg = 10.0,
+        strokeLengthMm = 100.0,
+        rodLength = 100.0,
+        interferenceBuffer = 0.5,
+        journalRadius = 5.0,
+        journalPhaseBetaDeg = 0.0,
+        sliderAxisDeg = 0.0,
+        planetCount = 2,
+        carrierOffsetDeg = 180.0,
+        ringThicknessVisual = 6.0,
+        rpm = 3000.0,
+        camR0 = 40.0,
+        camKPerUnit = 1.0,
+        centerDistanceBias = 50.0,
+        centerDistanceScale = 1.0,
+        arcResidualTolMm = 0.01,
+    )
 
     /**
      * Test that the basic invariant i(θ) > 0 holds for all profile types.

@@ -8,11 +8,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.campro.v5.models.OptimizationParameters
-import com.campro.v5.models.OptimizationResult
-import com.campro.v5.ui.SimpleLayoutManager as LayoutManager
-import com.campro.v5.ui.TileConfig
-import com.campro.v5.ui.TileType
-import com.campro.v5.ui.TileSize
 
 /**
  * Modern tile-based layout for CamProV5
@@ -58,22 +53,19 @@ fun ModernTileLayout(
 }
 
 @Composable
-private fun AppHeader(
-    testingMode: Boolean,
-    animationStarted: Boolean,
-) {
+private fun AppHeader(testingMode: Boolean, animationStarted: Boolean) {
     Card(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+        Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
             modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
         ) {
@@ -111,21 +103,17 @@ private fun AppHeader(
 }
 
 @Composable
-private fun StatusChip(
-    label: String,
-    value: String,
-    isActive: Boolean,
-) {
+private fun StatusChip(label: String, value: String, isActive: Boolean) {
     Card(
         colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    if (isActive) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant
-                    },
-            ),
+        CardDefaults.cardColors(
+            containerColor =
+            if (isActive) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            },
+        ),
         modifier = Modifier.padding(4.dp),
     ) {
         Row(
@@ -142,11 +130,11 @@ private fun StatusChip(
                 text = value,
                 style = MaterialTheme.typography.bodySmall,
                 color =
-                    if (isActive) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+                if (isActive) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             )
         }
     }
@@ -156,15 +144,13 @@ private fun StatusChip(
  * Create simple tiles for the new workflow.
  */
 @Composable
-private fun createSimpleTiles(): List<TileConfig> {
-    return listOf(
-        TileConfig(
-            id = "unified-optimization",
-            title = "Unified Optimization",
-            icon = Icons.Default.Settings,
-            type = TileType.OUTPUT,
-            defaultSize = TileSize.LARGE,
-            content = { UnifiedOptimizationTile() }
-        )
-    )
-}
+private fun createSimpleTiles(): List<TileConfig> = listOf(
+    TileConfig(
+        id = "unified-optimization",
+        title = "Unified Optimization",
+        icon = Icons.Default.Settings,
+        type = TileType.OUTPUT,
+        defaultSize = TileSize.LARGE,
+        content = { UnifiedOptimizationTile() },
+    ),
+)

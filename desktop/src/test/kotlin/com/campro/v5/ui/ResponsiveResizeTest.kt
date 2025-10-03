@@ -228,36 +228,30 @@ class ResponsiveResizeTest {
     }
 
     // Helper functions that mirror the actual implementation
-    private fun calculateGridColumns(windowWidth: Int): Int =
-        when {
-            windowWidth < 600 -> 1 // Very small windows
-            windowWidth < 900 -> 2 // Small windows
-            windowWidth < 1200 -> 3 // Medium windows
-            windowWidth < 1600 -> 4 // Large windows
-            windowWidth < 2000 -> 5 // Very large windows
-            else -> 6 // Ultra-wide windows
-        }
+    private fun calculateGridColumns(windowWidth: Int): Int = when {
+        windowWidth < 600 -> 1 // Very small windows
+        windowWidth < 900 -> 2 // Small windows
+        windowWidth < 1200 -> 3 // Medium windows
+        windowWidth < 1600 -> 4 // Large windows
+        windowWidth < 2000 -> 5 // Very large windows
+        else -> 6 // Ultra-wide windows
+    }
 
-    private fun calculateTileSpacing(windowWidth: Int): androidx.compose.ui.unit.Dp =
-        when {
-            windowWidth < 800 -> 4.dp
-            windowWidth < 1200 -> 6.dp
-            windowWidth < 1600 -> 8.dp
-            else -> 12.dp
-        }
+    private fun calculateTileSpacing(windowWidth: Int): androidx.compose.ui.unit.Dp = when {
+        windowWidth < 800 -> 4.dp
+        windowWidth < 1200 -> 6.dp
+        windowWidth < 1600 -> 8.dp
+        else -> 12.dp
+    }
 
-    private fun calculateContentPadding(windowWidth: Int): androidx.compose.ui.unit.Dp =
-        when {
-            windowWidth < 800 -> 8.dp
-            windowWidth < 1200 -> 12.dp
-            windowWidth < 1600 -> 16.dp
-            else -> 20.dp
-        }
+    private fun calculateContentPadding(windowWidth: Int): androidx.compose.ui.unit.Dp = when {
+        windowWidth < 800 -> 8.dp
+        windowWidth < 1200 -> 12.dp
+        windowWidth < 1600 -> 16.dp
+        else -> 20.dp
+    }
 
-    private fun calculateTileScaleFactor(
-        tileSize: IntSize,
-        baseSize: Float,
-    ): Float {
+    private fun calculateTileScaleFactor(tileSize: IntSize, baseSize: Float): Float {
         val currentSize = minOf(tileSize.width, tileSize.height).toFloat()
         return (currentSize / baseSize).coerceIn(0.5f, 2.0f)
     }

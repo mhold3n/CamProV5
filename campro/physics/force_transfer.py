@@ -6,10 +6,11 @@ and provides them as a modular component for the unified optimization pipeline.
 """
 
 import numpy as np
-from typing import Dict, List, Tuple, Any, Optional
-import logging
+from typing import Dict, List, Any
+from campro.constants import DEFAULT_YOUNGS_MODULUS, DEFAULT_POISSON_RATIO
+from campro.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ForceTransferAnalyzer:
@@ -22,7 +23,7 @@ class ForceTransferAnalyzer:
     
     def __init__(self):
         """Initialize the force transfer analyzer."""
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
     
     def calculate_piston_forces(self, displacement: np.ndarray, velocity: np.ndarray, 
                               acceleration: np.ndarray, params: Dict[str, Any]) -> np.ndarray:
@@ -43,19 +44,33 @@ class ForceTransferAnalyzer:
         # Cylinder pressure force (combustion pressure)
         cylinder_pressure = params.get("cylinderPressure", 2.0e5)  # Pa
         piston_area = params.get("pistonArea", 0.01)  # m²
-        pressure_force = cylinder_pressure * piston_area  # N
+        pressure_force = np.full_like(displacement, cylinder_pressure * piston_area)  # N
         
         # Inertial forces (F = ma)
         piston_mass = params.get("pistonMass", 5.0)  # kg
         # Convert acceleration from mm/s² to m/s²
         acceleration_ms2 = acceleration * 1e-3  # mm/s² to m/s²
-        inertial_force = piston_mass * acceleration_ms2  # N
+        # Ensure acceleration has the same length as pressure_force
+        if len(acceleration_ms2) != len(pressure_force):
+            # Interpolate acceleration to match pressure_force length
+            acceleration_interp = np.interp(np.linspace(0, 1, len(pressure_force)), 
+                                          np.linspace(0, 1, len(acceleration_ms2)), acceleration_ms2)
+        else:
+            acceleration_interp = acceleration_ms2
+        inertial_force = piston_mass * acceleration_interp  # N
         
         # Friction forces (velocity-dependent)
         friction_coefficient = params.get("frictionCoefficient", 0.05)
         # Friction opposes motion and increases with velocity magnitude
         velocity_ms = velocity * 1e-3  # mm/s to m/s
-        friction_force = friction_coefficient * pressure_force * np.sign(velocity_ms) * (1 + np.abs(velocity_ms) / 10.0)
+        # Ensure velocity_ms has the same length as pressure_force
+        if len(velocity_ms) != len(pressure_force):
+            # Interpolate velocity to match pressure_force length
+            velocity_interp = np.interp(np.linspace(0, 1, len(pressure_force)), 
+                                      np.linspace(0, 1, len(velocity_ms)), velocity_ms)
+        else:
+            velocity_interp = velocity_ms
+        friction_force = friction_coefficient * pressure_force * np.sign(velocity_interp) * (1 + np.abs(velocity_interp) / 10.0)
         
         # Net piston force
         net_force = pressure_force + inertial_force + friction_force
@@ -93,8 +108,8 @@ class ForceTransferAnalyzer:
             piston_forces = np.interp(gear_profile_theta, motion_law_theta, piston_forces)
         
         # Hertzian contact model parameters
-        youngs_modulus = params.get("feaYoungsModulus", 200e9)  # Pa
-        poissons_ratio = params.get("feaPoissonsRatio", 0.3)
+        youngs_modulus = params.get("feaYoungsModulus", DEFAULT_YOUNGS_MODULUS)  # Pa
+        poissons_ratio = params.get("feaPoissonsRatio", DEFAULT_POISSON_RATIO)
         
         # Effective modulus for Hertzian contact
         E_star = youngs_modulus / (2 * (1 - poissons_ratio**2))
@@ -152,7 +167,7 @@ class ForceTransferAnalyzer:
             Mechanical advantage array
         """
         r_sun = gear_profiles["r_sun"]
-        r_planet = gear_profiles["r_planet"]
+        gear_profiles["r_planet"]
         r_ring_inner = gear_profiles["r_ring_inner"]
         
         # Interpolate piston forces to match gear profile resolution (360 points)
@@ -169,7 +184,7 @@ class ForceTransferAnalyzer:
         r_effective_piston = params.get("pistonLeverArm", 0.1)  # m
         
         # Calculate torques from contact forces
-        tau_sun = contact_forces["sun_planet"] * r_effective_sun  # N⋅m
+        contact_forces["sun_planet"] * r_effective_sun  # N⋅m
         tau_ring = contact_forces["planet_ring"] * r_effective_ring  # N⋅m
         
         # Mechanical advantage = output torque / input force / effective radius
@@ -261,7 +276,7 @@ class ForceTransferAnalyzer:
         # Simplified Hertzian contact loss model
         # Losses proportional to contact force^1.5 and contact area
         contact_force = contact_forces["total_contact"]
-        youngs_modulus = params.get("feaYoungsModulus", 200e9)
+        params.get("feaYoungsModulus", DEFAULT_YOUNGS_MODULUS)
         
         # Hertzian contact loss coefficient (simplified)
         loss_coefficient = 1e-6  # W/N^1.5
@@ -290,6 +305,9 @@ class ForceTransferAnalyzer:
         contact_force = contact_forces["total_contact"]
         
         # Assume sliding velocity proportional to gear rotation
+        # TODO: FUTURE ENHANCEMENT - This single RPM calculation will be part of RPM sweep
+        # analysis where friction losses are calculated across multiple operating speeds
+        # to identify optimal efficiency points and speed-dependent loss characteristics.
         rpm = params.get("rpm", 3000.0)
         sliding_velocity = rpm * 0.1  # Simplified sliding velocity (m/s)
         
@@ -316,7 +334,7 @@ class ForceTransferAnalyzer:
         """
         # Simplified deformation loss model
         contact_force = contact_forces["total_contact"]
-        youngs_modulus = params.get("feaYoungsModulus", 200e9)
+        params.get("feaYoungsModulus", DEFAULT_YOUNGS_MODULUS)
         
         # Deformation loss coefficient (simplified)
         deformation_coefficient = 1e-8  # W/N^2
@@ -339,11 +357,19 @@ class ForceTransferAnalyzer:
             Windage losses array
         """
         # Simplified windage loss model
+        # TODO: FUTURE ENHANCEMENT - This single RPM windage calculation will be part of RPM sweep
+        # analysis where windage losses are calculated across multiple operating speeds to
+        # identify speed-dependent aerodynamic losses and optimal operating ranges.
         r_ring = gear_profiles["r_ring_inner"]
         rpm = params.get("rpm", 3000.0)
         
         # Windage losses proportional to gear size and speed
         windage_coefficient = 1e-9  # W/(mm^2 × rpm^2)
+        
+        # Convert to numpy array if scalar
+        if np.isscalar(r_ring):
+            r_ring = np.array([r_ring])
+        
         windage_losses = windage_coefficient * (r_ring ** 2) * (rpm ** 2)
         
         return windage_losses
@@ -443,8 +469,8 @@ class ForceTransferAnalyzer:
         
         # Hertzian contact stress calculation
         # σ_h = (F * E_star / (π * R_eff))^0.5
-        youngs_modulus = params.get("feaYoungsModulus", 200e9)
-        poissons_ratio = params.get("feaPoissonsRatio", 0.3)
+        youngs_modulus = params.get("feaYoungsModulus", DEFAULT_YOUNGS_MODULUS)
+        poissons_ratio = params.get("feaPoissonsRatio", DEFAULT_POISSON_RATIO)
         E_star = youngs_modulus / (2 * (1 - poissons_ratio**2))
         
         # Effective radius of curvature

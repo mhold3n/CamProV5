@@ -10,7 +10,6 @@ import json
 import time
 import argparse
 import importlib
-import subprocess
 from pathlib import Path
 from .agent import AgentController
 from .bridge import KotlinUIBridge
@@ -318,7 +317,7 @@ def start_agent_session(scenario_name=None, duration_minutes=30, config_path=Non
                     import sys
                     # Create the application instance if it doesn't exist
                     if QApplication.instance() is None:
-                        app = QApplication(sys.argv)
+                        QApplication(sys.argv)
                         print_message("Created QApplication instance for GUI")
 
                 # Create the main window with testing mode enabled

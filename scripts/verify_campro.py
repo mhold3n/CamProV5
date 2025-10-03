@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import sys, platform
+import sys
+import platform
 print("Python:", sys.version)
 print("Implementation:", platform.python_implementation())
 print("Executable:", sys.executable)

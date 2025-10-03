@@ -4,14 +4,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import com.campro.v5.debug.DebugOutlinedButton
-import com.campro.v5.debug.DebugButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.campro.v5.config.FeatureFlags
+import com.campro.v5.debug.DebugButton
+import com.campro.v5.debug.DebugOutlinedButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,10 +23,10 @@ fun FeatureFlagsPanel() {
 
     Column(
         modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
+        Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
     ) {
         Text(
             text = "Feature Flags",
@@ -56,9 +56,9 @@ fun FeatureFlagsPanel() {
         groupedFlags.forEach { (category, flags) ->
             Card(
                 modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
             ) {
                 Column(
@@ -77,9 +77,9 @@ fun FeatureFlagsPanel() {
 
                         Row(
                             modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -121,9 +121,9 @@ fun FeatureFlagsPanel() {
         // Action buttons
         Row(
             modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             DebugOutlinedButton(
@@ -153,9 +153,9 @@ fun FeatureFlagsPanel() {
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors =
-                CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                ),
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),

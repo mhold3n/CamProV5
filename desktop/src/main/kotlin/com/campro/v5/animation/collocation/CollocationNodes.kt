@@ -120,10 +120,7 @@ object CollocationNodes {
      * @param x Evaluation point
      * @return Pair of (P_n(x), P_n'(x))
      */
-    private fun evaluateLegendreDerivative(
-        n: Int,
-        x: Double,
-    ): Pair<Double, Double> {
+    private fun evaluateLegendreDerivative(n: Int, x: Double): Pair<Double, Double> {
         if (n == 0) return Pair(1.0, 0.0)
         if (n == 1) return Pair(x, 1.0)
 

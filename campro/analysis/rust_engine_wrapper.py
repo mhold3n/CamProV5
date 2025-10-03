@@ -5,14 +5,14 @@ This module provides a Python interface to the Rust FEA engine through JNI,
 enabling stress, vibration, and fatigue analysis.
 """
 
-import logging
 import json
 import tempfile
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import numpy as np
+from campro.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class RustEngineWrapper:
@@ -25,7 +25,7 @@ class RustEngineWrapper:
     
     def __init__(self):
         """Initialize the Rust engine wrapper."""
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
         self._engine_available = False
         self._version = "1.0.0"
         
@@ -248,7 +248,7 @@ class RustEngineWrapper:
         """
         # Load model data
         with open(model_file, 'r') as f:
-            model_data = json.load(f)
+            json.load(f)
         
         # Simulate stress analysis
         max_stress = 150.0 + np.random.normal(0, 10.0)  # MPa
@@ -279,7 +279,7 @@ class RustEngineWrapper:
         """
         # Load model data
         with open(model_file, 'r') as f:
-            model_data = json.load(f)
+            json.load(f)
         
         # Simulate vibration analysis
         num_modes = parameters.get('num_modes', 10)
@@ -299,30 +299,84 @@ class RustEngineWrapper:
     
     def _simulate_fatigue_analysis(self, model_file: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Simulate fatigue analysis for testing purposes.
+        Simulate fatigue analysis using realistic physics-based calculations.
         
         Args:
             model_file: Path to the model file
             parameters: Analysis parameters
             
         Returns:
-            Simulated fatigue analysis results
+            Realistic fatigue analysis results
         """
         # Load model data
         with open(model_file, 'r') as f:
             model_data = json.load(f)
         
-        # Simulate fatigue analysis
-        fatigue_life = 1000000 + np.random.normal(0, 100000)  # cycles
-        safety_margin = 2.0 + np.random.normal(0, 0.2)
+        # Extract stress data from parameters (passed from stress analysis)
+        max_stress = parameters.get('max_stress', 0.0)
+        if max_stress == 0.0:
+            # Fallback: try to extract from model data
+            if 'stress_analysis' in model_data:
+                stress_data = model_data['stress_analysis']
+                max_stress = stress_data.get('max_stress', 0.0)
+        
+        # Material properties
+        endurance_limit = parameters.get('endurance_limit', 250.0)  # MPa
+        # ultimate_strength = parameters.get('ultimate_strength', 600.0)  # MPa  # TODO: Use in future implementation
+        # load_cycles = parameters.get('load_cycles', 1000000)  # TODO: Use in future implementation
+        
+        # Calculate fatigue life using modified Goodman equation
+        # N = (endurance_limit / stress_amplitude)^b
+        # where b is the fatigue strength exponent (typically 3-6 for steel)
+        if max_stress > 0:
+            # For engine components, use the maximum stress as the stress amplitude
+            # (not divided by 2) since we're dealing with peak loading conditions
+            stress_amplitude = max_stress
+            
+            # Fatigue strength exponent (b = 3 for steel gears)
+            fatigue_exponent = 3.0
+            
+            # Calculate fatigue life using S-N curve
+            # N = (endurance_limit / stress_amplitude)^b * 1e6
+            if stress_amplitude > endurance_limit:
+                # High stress - low cycle fatigue
+                fatigue_life = (endurance_limit / stress_amplitude) ** fatigue_exponent * 1e6
+            else:
+                # Low stress - high cycle fatigue
+                fatigue_life = (endurance_limit / stress_amplitude) ** fatigue_exponent * 1e6
+            
+            # Apply safety factor
+            safety_factor = parameters.get('safety_factor', 2.0)
+            fatigue_life = fatigue_life / safety_factor
+            
+            # Cap fatigue life at reasonable values for engine components
+            # Engine components typically have fatigue lives between 10^4 and 10^6 cycles
+            # But allow higher values for low stress conditions
+            fatigue_life = min(fatigue_life, 1e7)  # Cap at 10 million cycles
+            fatigue_life = max(fatigue_life, 1e3)  # Floor at 1,000 cycles
+            
+            # Calculate damage accumulation (Miner's rule)
+            # Damage = n/N where n = actual cycles, N = fatigue life
+            actual_cycles = parameters.get('stress_cycles', 1000)
+            damage_accumulation = actual_cycles / fatigue_life
+            
+            # Safety margin (how much life is left)
+            safety_margin = 1.0 / damage_accumulation if damage_accumulation > 0 else float('inf')
+            
+        else:
+            # No stress data available
+            fatigue_life = 1e6  # Default value
+            damage_accumulation = 0.0
+            safety_margin = float('inf')
         
         return {
             'status': 'ok',
             'fatigue_life': fatigue_life,
-            'damage_accumulation': 0.1 + np.random.normal(0, 0.02),
+            'damage_accumulation': damage_accumulation,
             'safety_margin': safety_margin,
-            'stress_cycles': 1000,
-            'endurance_limit': 250.0
+            'stress_cycles': parameters.get('stress_cycles', 1000),
+            'endurance_limit': endurance_limit,
+            'max_stress_used': max_stress
         }
     
     def _simulate_mesh_generation(self, model_file: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -338,7 +392,7 @@ class RustEngineWrapper:
         """
         # Load model data
         with open(model_file, 'r') as f:
-            model_data = json.load(f)
+            json.load(f)
         
         # Simulate mesh generation
         num_elements = 1000 + np.random.randint(0, 500)

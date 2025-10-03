@@ -21,7 +21,6 @@ import com.campro.v5.visualization.FEAAnalysisVisualization
 // import com.campro.v5.ui.AdvancedFeaturesPanel // Temporarily excluded
 import com.campro.v5.performance.PerformanceOptimizer
 import com.campro.v5.error.ErrorHandler
-import com.campro.v5.ux.UserExperienceEnhancer
 import com.campro.v5.accessibility.AccessibilityEnhancer
 import com.campro.v5.accessibility.AccessibilitySettingsPanel
 import com.campro.v5.debug.DebugManager
@@ -35,7 +34,7 @@ import org.slf4j.LoggerFactory
 
 /**
  * Unified optimization tile for the CamProV5 application.
- * 
+ *
  * This tile provides a complete interface for running the unified optimization
  * pipeline, including parameter input, progress tracking, and result display.
  */
@@ -43,26 +42,26 @@ import org.slf4j.LoggerFactory
 fun UnifiedOptimizationTile(
     bridge: UnifiedOptimizationBridge = UnifiedOptimizationBridge(),
     onResultsReceived: (OptimizationResult) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val logger = LoggerFactory.getLogger("UnifiedOptimizationTile")
     val scope = rememberCoroutineScope()
-    
+
     // State management
     var parameters by remember { mutableStateOf(OptimizationParameters.createDefault()) }
     var outputDir by remember { mutableStateOf(Paths.get("./output")) }
     var currentResult by remember { mutableStateOf<OptimizationResult?>(null) }
-    
+
     // Performance and UX state
     val errorHandler = remember { ErrorHandler() }
     val performanceOptimizer = remember { PerformanceOptimizer }
     var showAccessibilitySettings by remember { mutableStateOf(false) }
     var showDebugPanel by remember { mutableStateOf(DebugManager.settings.panelVisible) }
-    
+
     // Create state manager
     val stateManager = remember { OptimizationStateManager(bridge) }
     val optimizationState by stateManager.optimizationState.collectAsState()
-    
+
     // Handle results and errors
     LaunchedEffect(optimizationState) {
         when (val state = optimizationState) {
@@ -71,7 +70,7 @@ fun UnifiedOptimizationTile(
                 currentResult = result
                 onResultsReceived(result)
                 logger.info("Optimization results received: ${result.status}")
-                
+
                 // Track performance
                 performanceOptimizer.updateMetrics()
             }
@@ -82,69 +81,72 @@ fun UnifiedOptimizationTile(
                     context = "Optimization",
                     recoveryAction = ErrorHandler.RecoveryAction(
                         label = "Retry",
-                        action = { 
+                        action = {
                             scope.launch {
                                 stateManager.runOptimization(parameters, outputDir)
                             }
                         },
-                        canRetry = true
+                        canRetry = true,
                     ),
-                    technicalDetails = state.error.stackTraceToString()
+                    technicalDetails = state.error.stackTraceToString(),
                 )
             }
             else -> {}
         }
     }
-    
+
     Card(
         modifier = modifier.fillMaxSize(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Header with accessibility & debug settings
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "Unified Optimization",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
-                
+
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     DebugIconButton(
                         buttonId = "toggle-debug-panel",
-                        onClick = { showDebugPanel = !showDebugPanel; DebugManager.setPanelVisible(showDebugPanel) }
+                        onClick = {
+                            showDebugPanel = !showDebugPanel
+                            DebugManager.setPanelVisible(showDebugPanel)
+                        },
                     ) {
                         Icon(
                             imageVector = Icons.Default.BugReport,
-                            contentDescription = "Debug Panel"
+                            contentDescription = "Debug Panel",
                         )
                     }
                     DebugIconButton(
                         buttonId = "toggle-accessibility-panel",
-                        onClick = { showAccessibilitySettings = !showAccessibilitySettings }
+                        onClick = { showAccessibilitySettings = !showAccessibilitySettings },
                     ) {
                         Icon(
                             imageVector = Icons.Default.Accessibility,
-                            contentDescription = "Accessibility Settings"
+                            contentDescription = "Accessibility Settings",
                         )
                     }
                 }
             }
-            
+
             // Debug panel
             if (showDebugPanel) {
                 DebugPanel(
                     onSettingsChanged = { DebugManager.updateSettings(it) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
 
@@ -152,47 +154,47 @@ fun UnifiedOptimizationTile(
             if (showAccessibilitySettings) {
                 AccessibilitySettingsPanel(
                     onSettingsChanged = { AccessibilityEnhancer.updateSettings(it) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
-            
+
             // Main content area with proper space allocation
             Box(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             ) {
                 when (optimizationState) {
                     is OptimizationState.Idle, is OptimizationState.Running, is OptimizationState.Failed -> {
                         // Show parameter input when not completed
                         Column(
                             modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             // Parameter input section
                             OptimizationParameterForm(
                                 parameters = parameters,
                                 onParametersChanged = { parameters = it },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             )
-                            
+
                             // Error display
                             errorHandler.currentError?.let { error ->
                                 Text(
                                     text = "Error Display (Temporarily Disabled): ${error.message}",
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth(),
                                 )
                             }
-                            
+
                             // Loading state
                             if (optimizationState is OptimizationState.Running) {
                                 LinearProgressIndicator(
                                     progress = (optimizationState as OptimizationState.Running).progress.toFloat(),
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth(),
                                 )
                             }
-                            
+
                             // Progress and status
                             OptimizationStatus(
-                                optimizationState = optimizationState
+                                optimizationState = optimizationState,
                             )
                         }
                     }
@@ -201,7 +203,7 @@ fun UnifiedOptimizationTile(
                         val result = (optimizationState as OptimizationState.Completed).result
                         OptimizationResultsVisualization(
                             result = result,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
                 }
@@ -220,80 +222,79 @@ fun UnifiedOptimizationTile(
                 },
                 onResetState = {
                     stateManager.resetState()
-                }
+                },
             )
         }
     }
 }
-
 
 @Composable
 private fun OptimizationControls(
     optimizationState: OptimizationState,
     onStartOptimization: () -> Unit,
     onCancelOptimization: () -> Unit,
-    onResetState: () -> Unit
+    onResetState: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         when (optimizationState) {
             is OptimizationState.Idle -> {
                 DebugButton(
                     buttonId = "start-optimization",
                     onClick = onStartOptimization,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Start optimization"
+                        contentDescription = "Start optimization",
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Start Optimization")
                 }
             }
-            
+
             is OptimizationState.Running -> {
                 DebugButton(
                     buttonId = "cancel-optimization",
                     onClick = onCancelOptimization,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
+                        containerColor = MaterialTheme.colorScheme.error,
+                    ),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Stop,
-                        contentDescription = "Cancel optimization"
+                        contentDescription = "Cancel optimization",
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Cancel")
                 }
             }
-            
+
             is OptimizationState.Completed, is OptimizationState.Failed -> {
                 DebugButton(
                     buttonId = "run-again",
                     onClick = onStartOptimization,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = "Run again"
+                        contentDescription = "Run again",
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Run Again")
                 }
-                
+
                 DebugOutlinedButton(
                     buttonId = "reset-state",
                     onClick = onResetState,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Clear,
-                        contentDescription = "Reset"
+                        contentDescription = "Reset",
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Reset")
@@ -304,9 +305,7 @@ private fun OptimizationControls(
 }
 
 @Composable
-private fun OptimizationStatus(
-    optimizationState: OptimizationState
-) {
+private fun OptimizationStatus(optimizationState: OptimizationState) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -315,16 +314,16 @@ private fun OptimizationStatus(
                 is OptimizationState.Running -> MaterialTheme.colorScheme.primaryContainer
                 is OptimizationState.Completed -> MaterialTheme.colorScheme.tertiaryContainer
                 is OptimizationState.Failed -> MaterialTheme.colorScheme.errorContainer
-            }
-        )
+            },
+        ),
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(
                     imageVector = when (optimizationState) {
@@ -339,9 +338,9 @@ private fun OptimizationStatus(
                         is OptimizationState.Running -> MaterialTheme.colorScheme.primary
                         is OptimizationState.Completed -> MaterialTheme.colorScheme.tertiary
                         is OptimizationState.Failed -> MaterialTheme.colorScheme.error
-                    }
+                    },
                 )
-                
+
                 Text(
                     text = when (optimizationState) {
                         is OptimizationState.Idle -> "Ready to optimize"
@@ -355,24 +354,24 @@ private fun OptimizationStatus(
                         is OptimizationState.Running -> MaterialTheme.colorScheme.onPrimaryContainer
                         is OptimizationState.Completed -> MaterialTheme.colorScheme.onTertiaryContainer
                         is OptimizationState.Failed -> MaterialTheme.colorScheme.onErrorContainer
-                    }
+                    },
                 )
             }
-            
+
             // Progress bar for running state
             if (optimizationState is OptimizationState.Running) {
                 LinearProgressIndicator(
                     progress = (optimizationState as OptimizationState.Running).progress.toFloat(),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
-            
+
             // Error message for failed state
             if (optimizationState is OptimizationState.Failed) {
                 Text(
                     text = (optimizationState as OptimizationState.Failed).error.message ?: "Unknown error occurred",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer
+                    color = MaterialTheme.colorScheme.onErrorContainer,
                 )
             }
         }
@@ -380,114 +379,111 @@ private fun OptimizationStatus(
 }
 
 @Composable
-private fun OptimizationResultsVisualization(
-    result: OptimizationResult,
-    modifier: Modifier = Modifier
-) {
+private fun OptimizationResultsVisualization(result: OptimizationResult, modifier: Modifier = Modifier) {
     var selectedTab by remember { mutableStateOf(0) }
-    
+
     val tabs = listOf(
         "Motion Law",
-        "Gear Profiles", 
+        "Gear Profiles",
         "Efficiency",
         "FEA Analysis",
-        "Advanced"
+        "Advanced",
     )
-    
+
     Column(
         modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         // Results header - fixed height
         Card(
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
             ),
-            modifier = Modifier.height(60.dp)
+            modifier = Modifier.height(60.dp),
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Icon(
                         imageVector = if (result.isSuccess()) Icons.Default.CheckCircle else Icons.Default.Error,
                         contentDescription = null,
-                        tint = if (result.isSuccess()) Color(0xFF4CAF50) else Color(0xFFF44336)
+                        tint = if (result.isSuccess()) Color(0xFF4CAF50) else Color(0xFFF44336),
                     )
                     Text(
                         text = "Optimization Results",
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
                     )
                 }
-                
+
                 Text(
                     text = "Execution time: ${String.format("%.2f", result.executionTime)}s",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
             }
         }
-        
+
         // Tab row - fixed height to prevent squishing
         TabRow(
             selectedTabIndex = selectedTab,
-            modifier = Modifier.height(48.dp)
+            modifier = Modifier.height(48.dp),
         ) {
             tabs.forEachIndexed { index, tab ->
                 Tab(
                     selected = selectedTab == index,
                     onClick = { selectedTab = index },
                     modifier = Modifier.height(48.dp),
-                    text = { 
+                    text = {
                         Text(
                             text = tab,
-                            style = MaterialTheme.typography.bodyMedium
-                        ) 
-                    }
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    },
                 )
             }
         }
-        
+
         // Tab content - takes remaining space
         Card(
             modifier = Modifier.weight(1f),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         ) {
             Box(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             ) {
                 when (selectedTab) {
                     0 -> MotionLawVisualization(
                         motionLaw = result.motionLaw,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
                     )
                     1 -> GearProfileVisualization(
                         gearProfiles = result.optimalProfiles,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
                     )
                     2 -> EfficiencyAnalysisVisualization(
                         gearProfiles = result.optimalProfiles,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
                     )
                     3 -> FEAAnalysisVisualization(
                         feaAnalysis = result.feaAnalysis,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
                     )
                     4 -> Box(
                         modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = "Advanced Features Panel (Temporarily Disabled)",
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyLarge,
                         )
                     }
                 }

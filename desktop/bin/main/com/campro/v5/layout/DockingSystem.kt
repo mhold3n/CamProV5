@@ -97,10 +97,7 @@ class DockingSystem {
      * @param panelId The ID of the panel
      * @param isVisible Whether the panel should be visible
      */
-    fun setPanelVisibility(
-        panelId: String,
-        isVisible: Boolean,
-    ) {
+    fun setPanelVisibility(panelId: String, isVisible: Boolean) {
         _panelStates[panelId]?.let { state ->
             _panelStates[panelId] = state.copy(isVisible = isVisible)
         }
@@ -112,10 +109,7 @@ class DockingSystem {
      * @param panelId The ID of the panel
      * @param isCollapsed Whether the panel should be collapsed
      */
-    fun setPanelCollapsed(
-        panelId: String,
-        isCollapsed: Boolean,
-    ) {
+    fun setPanelCollapsed(panelId: String, isCollapsed: Boolean) {
         _panelStates[panelId]?.let { state ->
             _panelStates[panelId] = state.copy(isCollapsed = isCollapsed)
         }
@@ -127,10 +121,7 @@ class DockingSystem {
      * @param panelId The ID of the panel
      * @param position The new position of the panel
      */
-    fun setPanelPosition(
-        panelId: String,
-        position: PanelPosition,
-    ) {
+    fun setPanelPosition(panelId: String, position: PanelPosition) {
         _panelStates[panelId]?.let { state ->
             _panelStates[panelId] = state.copy(position = position)
         }
@@ -142,10 +133,7 @@ class DockingSystem {
      * @param panelId The ID of the panel
      * @param size The new size of the panel
      */
-    fun setPanelSize(
-        panelId: String,
-        size: PanelSize,
-    ) {
+    fun setPanelSize(panelId: String, size: PanelSize) {
         _panelStates[panelId]?.let { state ->
             _panelStates[panelId] = state.copy(size = size)
         }
@@ -172,10 +160,7 @@ class DockingSystem {
      * @param panelId The ID of the panel
      * @param initialPosition The initial position of the drag
      */
-    fun startDragging(
-        panelId: String,
-        initialPosition: Offset,
-    ) {
+    fun startDragging(panelId: String, initialPosition: Offset) {
         _dragState.value =
             DragState(
                 panelId = panelId,
@@ -240,26 +225,25 @@ class DockingSystem {
      * @param file The file to save to
      * @return True if the save was successful, false otherwise
      */
-    fun saveWorkspace(file: File): Boolean =
-        try {
-            // Create a workspace configuration
-            val config =
-                WorkspaceConfig(
-                    layout = _layout.value,
-                    panelStates = _panelStates.toMap(),
-                )
+    fun saveWorkspace(file: File): Boolean = try {
+        // Create a workspace configuration
+        val config =
+            WorkspaceConfig(
+                layout = _layout.value,
+                panelStates = _panelStates.toMap(),
+            )
 
-            // Convert to JSON
-            val gson = Gson()
-            val json = gson.toJson(config)
+        // Convert to JSON
+        val gson = Gson()
+        val json = gson.toJson(config)
 
-            // Write to file
-            file.writeText(json)
+        // Write to file
+        file.writeText(json)
 
-            true
-        } catch (e: Exception) {
-            false
-        }
+        true
+    } catch (e: Exception) {
+        false
+    }
 
     /**
      * Load a workspace configuration from a file.
@@ -267,29 +251,28 @@ class DockingSystem {
      * @param file The file to load from
      * @return True if the load was successful, false otherwise
      */
-    fun loadWorkspace(file: File): Boolean =
-        try {
-            // Read JSON from file
-            val json = file.readText()
+    fun loadWorkspace(file: File): Boolean = try {
+        // Read JSON from file
+        val json = file.readText()
 
-            // Convert from JSON
-            val gson = Gson()
-            val config = gson.fromJson<WorkspaceConfig>(json, WorkspaceConfig::class.java)
+        // Convert from JSON
+        val gson = Gson()
+        val config = gson.fromJson<WorkspaceConfig>(json, WorkspaceConfig::class.java)
 
-            // Apply configuration
-            _layout.value = config.layout
+        // Apply configuration
+        _layout.value = config.layout
 
-            // Apply panel states for existing panels only
-            config.panelStates.forEach { (panelId, state) ->
-                if (_panels.value.any { it.id == panelId }) {
-                    _panelStates[panelId] = state
-                }
+        // Apply panel states for existing panels only
+        config.panelStates.forEach { (panelId, state) ->
+            if (_panels.value.any { it.id == panelId }) {
+                _panelStates[panelId] = state
             }
-
-            true
-        } catch (e: Exception) {
-            false
         }
+
+        true
+    } catch (e: Exception) {
+        false
+    }
 
     /**
      * Reset the workspace to the default configuration.
@@ -356,10 +339,7 @@ sealed class PanelPosition {
      * @param x The x-coordinate
      * @param y The y-coordinate
      */
-    data class Absolute(
-        val x: Float,
-        val y: Float,
-    ) : PanelPosition()
+    data class Absolute(val x: Float, val y: Float) : PanelPosition()
 
     /**
      * A position in a grid layout.
@@ -367,19 +347,14 @@ sealed class PanelPosition {
      * @param row The row index
      * @param column The column index
      */
-    data class Grid(
-        val row: Int,
-        val column: Int,
-    ) : PanelPosition()
+    data class Grid(val row: Int, val column: Int) : PanelPosition()
 
     /**
      * A position in a dock layout.
      *
      * @param dock The dock location
      */
-    data class Dock(
-        val dock: DockLocation,
-    ) : PanelPosition()
+    data class Dock(val dock: DockLocation) : PanelPosition()
 
     /**
      * A position relative to another panel.
@@ -387,10 +362,7 @@ sealed class PanelPosition {
      * @param relativeTo The ID of the panel to position relative to
      * @param location The location relative to the other panel
      */
-    data class Relative(
-        val relativeTo: String,
-        val location: RelativeLocation,
-    ) : PanelPosition()
+    data class Relative(val relativeTo: String, val location: RelativeLocation) : PanelPosition()
 }
 
 /**
@@ -421,13 +393,7 @@ data class PanelSize(
  * @param size The size of the panel
  * @param zIndex The z-index of the panel
  */
-data class PanelState(
-    val isVisible: Boolean,
-    val isCollapsed: Boolean,
-    val position: PanelPosition,
-    val size: PanelSize,
-    val zIndex: Int,
-)
+data class PanelState(val isVisible: Boolean, val isCollapsed: Boolean, val position: PanelPosition, val size: PanelSize, val zIndex: Int)
 
 /**
  * The state of a drag operation.
@@ -437,12 +403,7 @@ data class PanelState(
  * @param currentPosition The current position of the drag
  * @param isDragging Whether the drag is in progress
  */
-data class DragState(
-    val panelId: String,
-    val initialPosition: Offset,
-    val currentPosition: Offset,
-    val isDragging: Boolean,
-)
+data class DragState(val panelId: String, val initialPosition: Offset, val currentPosition: Offset, val isDragging: Boolean)
 
 /**
  * The layout of the docking system.
@@ -492,10 +453,7 @@ enum class RelativeLocation {
  * @param layout The layout of the docking system
  * @param panelStates The states of the panels
  */
-data class WorkspaceConfig(
-    val layout: DockingLayout,
-    val panelStates: Map<String, PanelState>,
-)
+data class WorkspaceConfig(val layout: DockingLayout, val panelStates: Map<String, PanelState>)
 
 /**
  * Composable function to remember a DockingSystem instance.
@@ -513,11 +471,7 @@ fun rememberDockingSystem(): DockingSystem = remember { DockingSystem.getInstanc
  * @param modifier The modifier for the panel
  */
 @Composable
-fun DockablePanel(
-    panel: DockablePanel,
-    dockingSystem: DockingSystem = rememberDockingSystem(),
-    modifier: Modifier = Modifier,
-) {
+fun DockablePanel(panel: DockablePanel, dockingSystem: DockingSystem = rememberDockingSystem(), modifier: Modifier = Modifier) {
     val panelState = dockingSystem.panelStates[panel.id]
 
     if (panelState == null || !panelState.isVisible) {
@@ -528,36 +482,36 @@ fun DockablePanel(
 
     Card(
         modifier =
-            modifier
-                .shadow(4.dp)
-                .then(
-                    when (panelState.position) {
-                        is PanelPosition.Absolute -> {
-                            Modifier.offset(
-                                x = panelState.position.x.dp,
-                                y = panelState.position.y.dp,
-                            )
-                        }
-                        else -> Modifier
-                    },
-                ).width(if (isCollapsed) 200.dp else panelState.size.width.dp)
-                .height(if (isCollapsed) 40.dp else panelState.size.height.dp)
-                .pointerInput(panel.id) {
-                    detectDragGestures(
-                        onDragStart = { offset ->
-                            dockingSystem.startDragging(panel.id, offset)
-                        },
-                        onDrag = { _, dragAmount ->
-                            dockingSystem.updateDragging(dragAmount)
-                        },
-                        onDragEnd = {
-                            dockingSystem.stopDragging()
-                        },
-                        onDragCancel = {
-                            dockingSystem.stopDragging()
-                        },
-                    )
+        modifier
+            .shadow(4.dp)
+            .then(
+                when (panelState.position) {
+                    is PanelPosition.Absolute -> {
+                        Modifier.offset(
+                            x = panelState.position.x.dp,
+                            y = panelState.position.y.dp,
+                        )
+                    }
+                    else -> Modifier
                 },
+            ).width(if (isCollapsed) 200.dp else panelState.size.width.dp)
+            .height(if (isCollapsed) 40.dp else panelState.size.height.dp)
+            .pointerInput(panel.id) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        dockingSystem.startDragging(panel.id, offset)
+                    },
+                    onDrag = { _, dragAmount ->
+                        dockingSystem.updateDragging(dragAmount)
+                    },
+                    onDragEnd = {
+                        dockingSystem.stopDragging()
+                    },
+                    onDragCancel = {
+                        dockingSystem.stopDragging()
+                    },
+                )
+            },
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -565,10 +519,10 @@ fun DockablePanel(
             // Panel header
             Row(
                 modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .padding(8.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -622,9 +576,9 @@ fun DockablePanel(
             if (!isCollapsed) {
                 Box(
                     modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(8.dp),
+                    Modifier
+                        .fillMaxSize()
+                        .padding(8.dp),
                 ) {
                     panel.content()
                 }
@@ -640,15 +594,12 @@ fun DockablePanel(
  * @param modifier The modifier for the docking area
  */
 @Composable
-fun DockingArea(
-    dockingSystem: DockingSystem = rememberDockingSystem(),
-    modifier: Modifier = Modifier,
-) {
+fun DockingArea(dockingSystem: DockingSystem = rememberDockingSystem(), modifier: Modifier = Modifier) {
     Box(
         modifier =
-            modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+        modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
     ) {
         when (dockingSystem.layout) {
             is DockingLayout.Grid -> {

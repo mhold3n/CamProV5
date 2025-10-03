@@ -19,10 +19,7 @@ import com.campro.v5.data.litvin.MotionLawSamples
  * from the MotionLawEngine samples.
  */
 @Composable
-fun PreviewsPanel(
-    engine: MotionLawEngine,
-    modifier: Modifier = Modifier,
-) {
+fun PreviewsPanel(engine: MotionLawEngine, modifier: Modifier = Modifier) {
     // Get the current size of the container for responsive scaling
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val containerWidth = constraints.maxWidth.toFloat()
@@ -43,9 +40,9 @@ fun PreviewsPanel(
             Text(
                 "Motion Law Profiles",
                 style =
-                    MaterialTheme.typography.titleSmall.copy(
-                        fontSize = (MaterialTheme.typography.titleSmall.fontSize.value * scaleFactor.toFloat()).sp,
-                    ),
+                MaterialTheme.typography.titleSmall.copy(
+                    fontSize = (MaterialTheme.typography.titleSmall.fontSize.value * scaleFactor.toFloat()).sp,
+                ),
                 modifier = Modifier.padding(bottom = (8 * scaleFactor.toFloat()).dp),
             )
 
@@ -53,9 +50,9 @@ fun PreviewsPanel(
                 Text(
                     "No motion law samples available. Set parameters and generate animation.",
                     style =
-                        MaterialTheme.typography.bodySmall.copy(
-                            fontSize = (MaterialTheme.typography.bodySmall.fontSize.value * scaleFactor.toFloat()).sp,
-                        ),
+                    MaterialTheme.typography.bodySmall.copy(
+                        fontSize = (MaterialTheme.typography.bodySmall.fontSize.value * scaleFactor.toFloat()).sp,
+                    ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
@@ -72,10 +69,7 @@ fun PreviewsPanel(
 }
 
 @Composable
-private fun SimpleMotionPlot(
-    motionSamples: MotionLawSamples,
-    modifier: Modifier = Modifier,
-) {
+private fun SimpleMotionPlot(motionSamples: MotionLawSamples, modifier: Modifier = Modifier) {
     val samples = motionSamples.samples
     if (samples.isEmpty()) return
 

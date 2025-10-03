@@ -13,10 +13,7 @@ import androidx.compose.ui.unit.dp
  * It exposes toggles for core debug capabilities and updates DebugManager.
  */
 @Composable
-fun DebugPanel(
-    onSettingsChanged: (DebugManager.DebugSettings) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+fun DebugPanel(onSettingsChanged: (DebugManager.DebugSettings) -> Unit, modifier: Modifier = Modifier) {
     var settings by remember { mutableStateOf(DebugManager.settings) }
 
     Card(
@@ -106,12 +103,7 @@ fun DebugPanel(
 }
 
 @Composable
-private fun LabeledSwitch(
-    title: String,
-    subtitle: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-) {
+private fun LabeledSwitch(title: String, subtitle: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -132,5 +124,3 @@ private fun LabeledSwitch(
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
-
-

@@ -96,10 +96,7 @@ class NumericalStabilityTest {
         "90, 90", // Large dwells
         "120, 120", // Very large dwells
     )
-    fun `piecewise solver handles various dwell combinations`(
-        tdcDwell: Double,
-        bdcDwell: Double,
-    ) {
+    fun `piecewise solver handles various dwell combinations`(tdcDwell: Double, bdcDwell: Double) {
         val params =
             LitvinUserParams(
                 samplingStepDeg = 2.0,

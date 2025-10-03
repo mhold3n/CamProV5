@@ -1,0 +1,29 @@
+// Top-level build file for future Android module
+// This is a stub for future Android packaging
+
+buildscript {
+    ext {
+        kotlin_version = '1.9.21'  // Match desktop version
+        compose_version = '1.5.4'  // Match desktop version
+        compose_compiler_version = '1.5.4'
+    }
+    
+    repositories {
+        google()
+        mavenCentral()
+    }
+    
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// Note: This stub will be replaced with actual Android module when needed

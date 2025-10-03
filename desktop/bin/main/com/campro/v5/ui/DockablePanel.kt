@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import com.campro.v5.debug.DebugIconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +21,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.campro.v5.debug.DebugIconButton
 import kotlinx.coroutines.launch
 
 /**
@@ -89,33 +89,33 @@ fun DockablePanel(
 
     Box(
         modifier =
-            modifier
-                .size(
-                    width = with(density) { panel.size.first },
-                    height = with(density) { panel.size.second },
-                ).offset(
-                    x = if (isDragging) with(density) { dragOffset.x.toDp() } else panel.position.x,
-                    y = if (isDragging) with(density) { dragOffset.y.toDp() } else panel.position.y,
-                ).zIndex(if (isDragging) 10f else panel.zIndex)
-                .alpha(alpha),
+        modifier
+            .size(
+                width = with(density) { panel.size.first },
+                height = with(density) { panel.size.second },
+            ).offset(
+                x = if (isDragging) with(density) { dragOffset.x.toDp() } else panel.position.x,
+                y = if (isDragging) with(density) { dragOffset.y.toDp() } else panel.position.y,
+            ).zIndex(if (isDragging) 10f else panel.zIndex)
+            .alpha(alpha),
     ) {
         // Main panel card
         Card(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .shadow(elevation, RoundedCornerShape(8.dp)),
+            Modifier
+                .fillMaxSize()
+                .shadow(elevation, RoundedCornerShape(8.dp)),
             elevation = CardDefaults.cardElevation(defaultElevation = elevation),
             colors =
-                CardDefaults.cardColors(
-                    containerColor =
-                        when (panel.state) {
-                            PanelDockState.FLOATING -> MaterialTheme.colorScheme.surfaceVariant
-                            PanelDockState.DOCKED -> MaterialTheme.colorScheme.surface
-                            PanelDockState.TABBED -> MaterialTheme.colorScheme.secondaryContainer
-                            PanelDockState.MINIMIZED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
-                        },
-                ),
+            CardDefaults.cardColors(
+                containerColor =
+                when (panel.state) {
+                    PanelDockState.FLOATING -> MaterialTheme.colorScheme.surfaceVariant
+                    PanelDockState.DOCKED -> MaterialTheme.colorScheme.surface
+                    PanelDockState.TABBED -> MaterialTheme.colorScheme.secondaryContainer
+                    PanelDockState.MINIMIZED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                },
+            ),
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Title bar with controls
@@ -169,9 +169,9 @@ fun DockablePanel(
                 if (!panel.isMinimized) {
                     Box(
                         modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .padding(8.dp),
+                        Modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
                     ) {
                         content()
                     }
@@ -211,33 +211,33 @@ private fun DockablePanelTitleBar(
 
     Surface(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(40.dp),
+        Modifier
+            .fillMaxWidth()
+            .height(40.dp),
         color = MaterialTheme.colorScheme.primaryContainer,
         tonalElevation = 2.dp,
     ) {
         Row(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp)
-                    .pointerInput(Unit) {
-                        if (enableDocking) {
-                            detectDragGestures(
-                                onDragStart = { offset ->
-                                    dragStartPosition = offset
-                                    onDragStart(offset)
-                                },
-                                onDrag = { _, dragAmount ->
-                                    onDrag(dragAmount)
-                                },
-                                onDragEnd = {
-                                    onDragEnd()
-                                },
-                            )
-                        }
-                    },
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 8.dp)
+                .pointerInput(Unit) {
+                    if (enableDocking) {
+                        detectDragGestures(
+                            onDragStart = { offset ->
+                                dragStartPosition = offset
+                                onDragStart(offset)
+                            },
+                            onDrag = { _, dragAmount ->
+                                onDrag(dragAmount)
+                            },
+                            onDragEnd = {
+                                onDragEnd()
+                            },
+                        )
+                    }
+                },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -289,12 +289,12 @@ private fun DockablePanelTitleBar(
                     DebugIconButton(
                         buttonId = "dock-minimize-" + panelId,
                         onClick = onMinimize,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.ExpandLess,
                             contentDescription = "Minimize",
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(14.dp),
                         )
                     }
                 }
@@ -318,12 +318,12 @@ private fun DockablePanelTitleBar(
                 DebugIconButton(
                     buttonId = "dock-close-" + panelId,
                     onClick = onClose,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close Panel",
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(14.dp),
                     )
                 }
             }
@@ -363,21 +363,21 @@ private fun DockingIndicators(
             if (zone != DockZone.NONE) {
                 Box(
                     modifier =
-                        Modifier
-                            .offset(
-                                x = with(density) { rect.left.toDp() },
-                                y = with(density) { rect.top.toDp() },
-                            ).size(
-                                width = with(density) { rect.width.toDp() },
-                                height = with(density) { rect.height.toDp() },
-                            ).background(
-                                color = indicatorColor.copy(alpha = indicatorAlpha),
-                                shape = RoundedCornerShape(4.dp),
-                            ).border(
-                                width = if (isHovered) 2.dp else 1.dp,
-                                color = indicatorColor,
-                                shape = RoundedCornerShape(4.dp),
-                            ).alpha(indicatorAlpha),
+                    Modifier
+                        .offset(
+                            x = with(density) { rect.left.toDp() },
+                            y = with(density) { rect.top.toDp() },
+                        ).size(
+                            width = with(density) { rect.width.toDp() },
+                            height = with(density) { rect.height.toDp() },
+                        ).background(
+                            color = indicatorColor.copy(alpha = indicatorAlpha),
+                            shape = RoundedCornerShape(4.dp),
+                        ).border(
+                            width = if (isHovered) 2.dp else 1.dp,
+                            color = indicatorColor,
+                            shape = RoundedCornerShape(4.dp),
+                        ).alpha(indicatorAlpha),
                 ) {
                     // Zone label
                     Box(
@@ -415,10 +415,10 @@ fun FloatingPanel(
         // For now, we'll render it as an overlay
         Box(
             modifier =
-                Modifier
-                    .offset(panel.position.x, panel.position.y)
-                    .size(panel.size.first, panel.size.second)
-                    .zIndex(20f),
+            Modifier
+                .offset(panel.position.x, panel.position.y)
+                .size(panel.size.first, panel.size.second)
+                .zIndex(20f),
         ) {
             DockablePanel(
                 panelId = panelId,

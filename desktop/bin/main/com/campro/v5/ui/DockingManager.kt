@@ -126,10 +126,7 @@ class DockingManager {
     /**
      * Start dragging a panel
      */
-    fun startDrag(
-        panelId: String,
-        startPosition: Offset,
-    ) {
+    fun startDrag(panelId: String, startPosition: Offset) {
         val panel = _panels.value[panelId] ?: return
 
         _dragState.value =
@@ -192,10 +189,7 @@ class DockingManager {
     /**
      * Dock a panel to a specific zone
      */
-    private fun dockPanel(
-        panelId: String,
-        zone: DockZone,
-    ) {
+    private fun dockPanel(panelId: String, zone: DockZone) {
         val panel = _panels.value[panelId] ?: return
 
         val dockedPosition = calculateDockedPosition(zone)
@@ -210,16 +204,13 @@ class DockingManager {
                     size = dockedSize,
                     tabGroupId = null,
                 )
-        )
+            )
     }
 
     /**
      * Make a panel floating
      */
-    fun makeFloating(
-        panelId: String,
-        position: Offset,
-    ) {
+    fun makeFloating(panelId: String, position: Offset) {
         val panel = _panels.value[panelId] ?: return
 
         _panels.value = _panels.value + (
@@ -230,7 +221,7 @@ class DockingManager {
                     position = DpOffset(position.x.dp, position.y.dp),
                     tabGroupId = null,
                 )
-        )
+            )
     }
 
     /**
@@ -245,7 +236,7 @@ class DockingManager {
                     state = PanelDockState.MINIMIZED,
                     isMinimized = true,
                 )
-        )
+            )
     }
 
     /**
@@ -260,17 +251,13 @@ class DockingManager {
                     state = if (panel.dockZone != DockZone.NONE) PanelDockState.DOCKED else PanelDockState.FLOATING,
                     isMinimized = false,
                 )
-        )
+            )
     }
 
     /**
      * Create a tab group with multiple panels
      */
-    fun createTabGroup(
-        panelIds: List<String>,
-        position: DpOffset,
-        size: Pair<Dp, Dp>,
-    ): String {
+    fun createTabGroup(panelIds: List<String>, position: DpOffset, size: Pair<Dp, Dp>): String {
         val groupId = "tab_group_${System.currentTimeMillis()}"
 
         val tabGroup =
@@ -297,7 +284,7 @@ class DockingManager {
                             position = position,
                             size = size,
                         )
-                )
+                    )
             }
         }
 
@@ -307,10 +294,7 @@ class DockingManager {
     /**
      * Add a panel to an existing tab group
      */
-    fun addToTabGroup(
-        panelId: String,
-        tabGroupId: String,
-    ) {
+    fun addToTabGroup(panelId: String, tabGroupId: String) {
         val panel = _panels.value[panelId] ?: return
         val tabGroup = _tabGroups.value[tabGroupId] ?: return
 
@@ -329,7 +313,7 @@ class DockingManager {
                     position = tabGroup.position,
                     size = tabGroup.size,
                 )
-        )
+            )
     }
 
     /**
@@ -362,16 +346,13 @@ class DockingManager {
                     state = PanelDockState.FLOATING,
                     tabGroupId = null,
                 )
-        )
+            )
     }
 
     /**
      * Set the active panel in a tab group
      */
-    fun setActiveTabPanel(
-        tabGroupId: String,
-        panelId: String,
-    ) {
+    fun setActiveTabPanel(tabGroupId: String, panelId: String) {
         val tabGroup = _tabGroups.value[tabGroupId] ?: return
 
         if (panelId in tabGroup.panelIds) {
@@ -380,7 +361,7 @@ class DockingManager {
                     tabGroup.copy(
                         activePanel = panelId,
                     )
-            )
+                )
         }
     }
 
@@ -395,10 +376,7 @@ class DockingManager {
     /**
      * Update panel position
      */
-    private fun updatePanelPosition(
-        panelId: String,
-        position: Offset,
-    ) {
+    private fun updatePanelPosition(panelId: String, position: Offset) {
         val panel = _panels.value[panelId] ?: return
 
         _panels.value = _panels.value + (
@@ -406,7 +384,7 @@ class DockingManager {
                 panel.copy(
                     position = DpOffset(position.x.dp, position.y.dp),
                 )
-        )
+            )
     }
 
     /**
@@ -427,24 +405,22 @@ class DockingManager {
     /**
      * Calculate docked position for a zone
      */
-    private fun calculateDockedPosition(zone: DockZone): DpOffset =
-        when (zone) {
-            DockZone.LEFT -> DpOffset(0.dp, 0.dp)
-            DockZone.RIGHT -> DpOffset((containerBounds.width * 0.7f).dp, 0.dp)
-            DockZone.TOP -> DpOffset(0.dp, 0.dp)
-            DockZone.BOTTOM -> DpOffset(0.dp, (containerBounds.height * 0.7f).dp)
-            else -> DpOffset.Zero
-        }
+    private fun calculateDockedPosition(zone: DockZone): DpOffset = when (zone) {
+        DockZone.LEFT -> DpOffset(0.dp, 0.dp)
+        DockZone.RIGHT -> DpOffset((containerBounds.width * 0.7f).dp, 0.dp)
+        DockZone.TOP -> DpOffset(0.dp, 0.dp)
+        DockZone.BOTTOM -> DpOffset(0.dp, (containerBounds.height * 0.7f).dp)
+        else -> DpOffset.Zero
+    }
 
     /**
      * Calculate docked size for a zone
      */
-    private fun calculateDockedSize(zone: DockZone): Pair<Dp, Dp> =
-        when (zone) {
-            DockZone.LEFT, DockZone.RIGHT -> (containerBounds.width * 0.3f).dp to containerBounds.height.dp
-            DockZone.TOP, DockZone.BOTTOM -> containerBounds.width.dp to (containerBounds.height * 0.3f).dp
-            else -> 400.dp to 300.dp
-        }
+    private fun calculateDockedSize(zone: DockZone): Pair<Dp, Dp> = when (zone) {
+        DockZone.LEFT, DockZone.RIGHT -> (containerBounds.width * 0.3f).dp to containerBounds.height.dp
+        DockZone.TOP, DockZone.BOTTOM -> containerBounds.width.dp to (containerBounds.height * 0.3f).dp
+        else -> 400.dp to 300.dp
+    }
 
     /**
      * Update dock zones based on container bounds
@@ -465,10 +441,7 @@ class DockingManager {
     /**
      * Handle tab group docking logic
      */
-    private fun handleTabGroupDocking(
-        panelId: String,
-        position: Offset,
-    ) {
+    private fun handleTabGroupDocking(panelId: String, position: Offset) {
         // Find nearby panels to create a tab group with
         val nearbyPanels = findNearbyPanels(position, 100f)
 
@@ -484,21 +457,17 @@ class DockingManager {
     /**
      * Find panels near a given position
      */
-    private fun findNearbyPanels(
-        position: Offset,
-        radius: Float,
-    ): List<String> =
-        _panels.value.values
-            .filter { panel ->
-                val panelCenter =
-                    Offset(
-                        panel.position.x.value + panel.size.first.value / 2,
-                        panel.position.y.value + panel.size.second.value / 2,
-                    )
+    private fun findNearbyPanels(position: Offset, radius: Float): List<String> = _panels.value.values
+        .filter { panel ->
+            val panelCenter =
+                Offset(
+                    panel.position.x.value + panel.size.first.value / 2,
+                    panel.position.y.value + panel.size.second.value / 2,
+                )
 
-                val distance = (position - panelCenter).getDistance()
-                distance <= radius && panel.state == PanelDockState.FLOATING
-            }.map { it.id }
+            val distance = (position - panelCenter).getDistance()
+            distance <= radius && panel.state == PanelDockState.FLOATING
+        }.map { it.id }
 }
 
 /**

@@ -62,72 +62,67 @@ class ComparisonManager {
         project2: ProjectData,
         comparisonType: String = "full",
         options: ComparisonOptions = ComparisonOptions(),
-    ): ComparisonResult =
-        withContext(Dispatchers.IO) {
-            try {
-                _isComparing.value = true
+    ): ComparisonResult = withContext(Dispatchers.IO) {
+        try {
+            _isComparing.value = true
 
-                val comparison =
-                    Comparison(
-                        id = generateComparisonId(),
-                        project1 = project1,
-                        project2 = project2,
-                        type = comparisonType,
-                        timestamp = Date(),
-                        options = options,
-                    )
+            val comparison =
+                Comparison(
+                    id = generateComparisonId(),
+                    project1 = project1,
+                    project2 = project2,
+                    type = comparisonType,
+                    timestamp = Date(),
+                    options = options,
+                )
 
-                emitEvent(ComparisonEvent.ComparisonStarted(comparison.id, comparisonType))
+            emitEvent(ComparisonEvent.ComparisonStarted(comparison.id, comparisonType))
 
-                val result =
-                    when (comparisonType.lowercase()) {
-                        "parameters" -> compareParameters(project1, project2, options)
-                        "results" -> compareResults(project1, project2, options)
-                        "performance" -> comparePerformance(project1, project2, options)
-                        "visual" -> compareVisual(project1, project2, options)
-                        "full" -> compareFullProjects(project1, project2, options)
-                        else -> ComparisonResult.Error("Unsupported comparison type: $comparisonType")
-                    }
-
-                when (result) {
-                    is ComparisonResult.Success -> {
-                        val completedComparison =
-                            comparison.copy(
-                                result = result.comparisonData,
-                                status = ComparisonStatus.COMPLETED,
-                            )
-                        addComparison(completedComparison)
-                        emitEvent(ComparisonEvent.ComparisonCompleted(comparison.id))
-                    }
-                    is ComparisonResult.Error -> {
-                        val failedComparison =
-                            comparison.copy(
-                                status = ComparisonStatus.FAILED,
-                                error = result.message,
-                            )
-                        addComparison(failedComparison)
-                        emitEvent(ComparisonEvent.ComparisonFailed(comparison.id, result.message))
-                    }
+            val result =
+                when (comparisonType.lowercase()) {
+                    "parameters" -> compareParameters(project1, project2, options)
+                    "results" -> compareResults(project1, project2, options)
+                    "performance" -> comparePerformance(project1, project2, options)
+                    "visual" -> compareVisual(project1, project2, options)
+                    "full" -> compareFullProjects(project1, project2, options)
+                    else -> ComparisonResult.Error("Unsupported comparison type: $comparisonType")
                 }
 
-                result
-            } catch (e: Exception) {
-                val errorMessage = "Comparison failed: ${e.message}"
-                emitEvent(ComparisonEvent.ComparisonFailed("", errorMessage))
-                ComparisonResult.Error(errorMessage)
-            } finally {
-                _isComparing.value = false
+            when (result) {
+                is ComparisonResult.Success -> {
+                    val completedComparison =
+                        comparison.copy(
+                            result = result.comparisonData,
+                            status = ComparisonStatus.COMPLETED,
+                        )
+                    addComparison(completedComparison)
+                    emitEvent(ComparisonEvent.ComparisonCompleted(comparison.id))
+                }
+                is ComparisonResult.Error -> {
+                    val failedComparison =
+                        comparison.copy(
+                            status = ComparisonStatus.FAILED,
+                            error = result.message,
+                        )
+                    addComparison(failedComparison)
+                    emitEvent(ComparisonEvent.ComparisonFailed(comparison.id, result.message))
+                }
             }
+
+            result
+        } catch (e: Exception) {
+            val errorMessage = "Comparison failed: ${e.message}"
+            emitEvent(ComparisonEvent.ComparisonFailed("", errorMessage))
+            ComparisonResult.Error(errorMessage)
+        } finally {
+            _isComparing.value = false
         }
+    }
 
     /**
      * Compare project parameters.
      */
-    private suspend fun compareParameters(
-        project1: ProjectData,
-        project2: ProjectData,
-        options: ComparisonOptions,
-    ): ComparisonResult =
+    private suspend fun compareParameters(project1: ProjectData, project2: ProjectData, options: ComparisonOptions): ComparisonResult =
         withContext(Dispatchers.IO) {
             val differences = mutableListOf<ParameterDifference>()
             val allKeys = (project1.parameters.keys + project2.parameters.keys).toSet()
@@ -177,11 +172,11 @@ class ComparisonManager {
                 ComparisonData(
                     parameterDifferences = differences,
                     summary =
-                        ComparisonSummary(
-                            totalDifferences = differences.size,
-                            significantDifferences = differences.count { it.significance == Significance.HIGH },
-                            similarityScore = calculateSimilarityScore(differences, allKeys.size),
-                        ),
+                    ComparisonSummary(
+                        totalDifferences = differences.size,
+                        significantDifferences = differences.count { it.significance == Significance.HIGH },
+                        similarityScore = calculateSimilarityScore(differences, allKeys.size),
+                    ),
                 )
 
             ComparisonResult.Success(comparisonData)
@@ -190,11 +185,7 @@ class ComparisonManager {
     /**
      * Compare simulation results.
      */
-    private suspend fun compareResults(
-        project1: ProjectData,
-        project2: ProjectData,
-        options: ComparisonOptions,
-    ): ComparisonResult =
+    private suspend fun compareResults(project1: ProjectData, project2: ProjectData, options: ComparisonOptions): ComparisonResult =
         withContext(Dispatchers.IO) {
             val results1 = project1.simulationResults
             val results2 = project2.simulationResults
@@ -222,13 +213,13 @@ class ComparisonManager {
                             absoluteDifference = difference,
                             percentageChange = percentChange,
                             significance =
-                                if (percentChange >= 10.0) {
-                                    Significance.HIGH
-                                } else if (percentChange > 5.0) {
-                                    Significance.MEDIUM
-                                } else {
-                                    Significance.LOW
-                                },
+                            if (percentChange >= 10.0) {
+                                Significance.HIGH
+                            } else if (percentChange > 5.0) {
+                                Significance.MEDIUM
+                            } else {
+                                Significance.LOW
+                            },
                         ),
                     )
                 }
@@ -238,11 +229,11 @@ class ComparisonManager {
                 ComparisonData(
                     metricDifferences = metricDifferences,
                     summary =
-                        ComparisonSummary(
-                            totalDifferences = metricDifferences.size,
-                            significantDifferences = metricDifferences.count { it.significance == Significance.HIGH },
-                            similarityScore = calculateMetricSimilarity(metricDifferences),
-                        ),
+                    ComparisonSummary(
+                        totalDifferences = metricDifferences.size,
+                        significantDifferences = metricDifferences.count { it.significance == Significance.HIGH },
+                        similarityScore = calculateMetricSimilarity(metricDifferences),
+                    ),
                 )
 
             ComparisonResult.Success(comparisonData)
@@ -251,21 +242,17 @@ class ComparisonManager {
     /**
      * Compare performance metrics.
      */
-    private suspend fun comparePerformance(
-        project1: ProjectData,
-        project2: ProjectData,
-        options: ComparisonOptions,
-    ): ComparisonResult =
+    private suspend fun comparePerformance(project1: ProjectData, project2: ProjectData, options: ComparisonOptions): ComparisonResult =
         withContext(Dispatchers.IO) {
             // Placeholder implementation
             val comparisonData =
                 ComparisonData(
                     summary =
-                        ComparisonSummary(
-                            totalDifferences = 0,
-                            significantDifferences = 0,
-                            similarityScore = 100.0,
-                        ),
+                    ComparisonSummary(
+                        totalDifferences = 0,
+                        significantDifferences = 0,
+                        similarityScore = 100.0,
+                    ),
                 )
 
             ComparisonResult.Success(comparisonData)
@@ -274,21 +261,17 @@ class ComparisonManager {
     /**
      * Visual comparison of designs.
      */
-    private suspend fun compareVisual(
-        project1: ProjectData,
-        project2: ProjectData,
-        options: ComparisonOptions,
-    ): ComparisonResult =
+    private suspend fun compareVisual(project1: ProjectData, project2: ProjectData, options: ComparisonOptions): ComparisonResult =
         withContext(Dispatchers.IO) {
             // Placeholder implementation
             val comparisonData =
                 ComparisonData(
                     summary =
-                        ComparisonSummary(
-                            totalDifferences = 0,
-                            significantDifferences = 0,
-                            similarityScore = 100.0,
-                        ),
+                    ComparisonSummary(
+                        totalDifferences = 0,
+                        significantDifferences = 0,
+                        similarityScore = 100.0,
+                    ),
                 )
 
             ComparisonResult.Success(comparisonData)
@@ -297,11 +280,7 @@ class ComparisonManager {
     /**
      * Full project comparison.
      */
-    private suspend fun compareFullProjects(
-        project1: ProjectData,
-        project2: ProjectData,
-        options: ComparisonOptions,
-    ): ComparisonResult =
+    private suspend fun compareFullProjects(project1: ProjectData, project2: ProjectData, options: ComparisonOptions): ComparisonResult =
         withContext(Dispatchers.IO) {
             val parameterResult = compareParameters(project1, project2, options)
             val resultResult = compareResults(project1, project2, options)
@@ -313,19 +292,19 @@ class ComparisonManager {
                             parameterDifferences = parameterResult.comparisonData.parameterDifferences,
                             metricDifferences = resultResult.comparisonData.metricDifferences,
                             summary =
-                                ComparisonSummary(
-                                    totalDifferences =
-                                        parameterResult.comparisonData.summary.totalDifferences +
-                                            resultResult.comparisonData.summary.totalDifferences,
-                                    significantDifferences =
-                                        parameterResult.comparisonData.summary.significantDifferences +
-                                            resultResult.comparisonData.summary.significantDifferences,
-                                    similarityScore =
-                                        (
-                                            parameterResult.comparisonData.summary.similarityScore +
-                                                resultResult.comparisonData.summary.similarityScore
-                                        ) / 2.0,
-                                ),
+                            ComparisonSummary(
+                                totalDifferences =
+                                parameterResult.comparisonData.summary.totalDifferences +
+                                    resultResult.comparisonData.summary.totalDifferences,
+                                significantDifferences =
+                                parameterResult.comparisonData.summary.significantDifferences +
+                                    resultResult.comparisonData.summary.significantDifferences,
+                                similarityScore =
+                                (
+                                    parameterResult.comparisonData.summary.similarityScore +
+                                        resultResult.comparisonData.summary.similarityScore
+                                    ) / 2.0,
+                            ),
                         )
                     ComparisonResult.Success(combinedData)
                 }
@@ -348,50 +327,40 @@ class ComparisonManager {
     /**
      * Delete a comparison.
      */
-    suspend fun deleteComparison(id: String): Boolean =
-        withContext(Dispatchers.IO) {
-            val comparisons = _activeComparisons.value.toMutableList()
-            val removed = comparisons.removeIf { it.id == id }
-            if (removed) {
-                _activeComparisons.value = comparisons
-                saveComparisonHistory()
-                emitEvent(ComparisonEvent.ComparisonDeleted(id))
-            }
-            removed
+    suspend fun deleteComparison(id: String): Boolean = withContext(Dispatchers.IO) {
+        val comparisons = _activeComparisons.value.toMutableList()
+        val removed = comparisons.removeIf { it.id == id }
+        if (removed) {
+            _activeComparisons.value = comparisons
+            saveComparisonHistory()
+            emitEvent(ComparisonEvent.ComparisonDeleted(id))
         }
+        removed
+    }
 
     /**
      * Export comparison results.
      */
-    suspend fun exportComparison(
-        comparisonId: String,
-        format: String,
-        filePath: String,
-    ): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                val comparison = getComparison(comparisonId) ?: return@withContext false
+    suspend fun exportComparison(comparisonId: String, format: String, filePath: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val comparison = getComparison(comparisonId) ?: return@withContext false
 
-                when (format.lowercase()) {
-                    "json" -> exportToJson(comparison, filePath)
-                    "html" -> exportToHtml(comparison, filePath)
-                    "csv" -> exportToCsv(comparison, filePath)
-                    else -> return@withContext false
-                }
-
-                emitEvent(ComparisonEvent.ComparisonExported(comparisonId, format))
-                true
-            } catch (e: Exception) {
-                false
+            when (format.lowercase()) {
+                "json" -> exportToJson(comparison, filePath)
+                "html" -> exportToHtml(comparison, filePath)
+                "csv" -> exportToCsv(comparison, filePath)
+                else -> return@withContext false
             }
+
+            emitEvent(ComparisonEvent.ComparisonExported(comparisonId, format))
+            true
+        } catch (e: Exception) {
+            false
         }
+    }
 
     // Helper methods
-    private fun calculateSignificance(
-        parameter: String,
-        value1: String?,
-        value2: String?,
-    ): Significance {
+    private fun calculateSignificance(parameter: String, value1: String?, value2: String?): Significance {
         // Simplified significance calculation
         return when {
             value1 == null || value2 == null -> Significance.HIGH
@@ -407,10 +376,7 @@ class ComparisonManager {
         }
     }
 
-    private fun calculateSimilarityScore(
-        differences: List<ParameterDifference>,
-        totalParameters: Int,
-    ): Double {
+    private fun calculateSimilarityScore(differences: List<ParameterDifference>, totalParameters: Int): Double {
         if (totalParameters == 0) return 100.0
         val unchangedParameters = totalParameters - differences.size
         return (unchangedParameters.toDouble() / totalParameters) * 100.0
@@ -473,19 +439,13 @@ class ComparisonManager {
     }
 
     // Export methods
-    private suspend fun exportToJson(
-        comparison: Comparison,
-        filePath: String,
-    ) {
+    private suspend fun exportToJson(comparison: Comparison, filePath: String) {
         val file = java.io.File(filePath)
         file.parentFile?.mkdirs()
         file.writeText(gson.toJson(comparison))
     }
 
-    private suspend fun exportToHtml(
-        comparison: Comparison,
-        filePath: String,
-    ) {
+    private suspend fun exportToHtml(comparison: Comparison, filePath: String) {
         val file = java.io.File(filePath)
         file.parentFile?.mkdirs()
 
@@ -510,10 +470,7 @@ class ComparisonManager {
         file.writeText(html)
     }
 
-    private suspend fun exportToCsv(
-        comparison: Comparison,
-        filePath: String,
-    ) {
+    private suspend fun exportToCsv(comparison: Comparison, filePath: String) {
         val file = java.io.File(filePath)
         file.parentFile?.mkdirs()
 
@@ -537,23 +494,16 @@ class ComparisonManager {
         @Volatile
         private var INSTANCE: ComparisonManager? = null
 
-        fun getInstance(): ComparisonManager =
-            INSTANCE ?: synchronized(this) {
-                INSTANCE ?: ComparisonManager().also { INSTANCE = it }
-            }
+        fun getInstance(): ComparisonManager = INSTANCE ?: synchronized(this) {
+            INSTANCE ?: ComparisonManager().also { INSTANCE = it }
+        }
     }
 }
 
 // Data classes and enums
-data class ComparisonType(
-    val name: String,
-    val description: String,
-)
+data class ComparisonType(val name: String, val description: String)
 
-data class ComparisonOptions(
-    val includeVisuals: Boolean = true,
-    val threshold: Double = 0.01,
-)
+data class ComparisonOptions(val includeVisuals: Boolean = true, val threshold: Double = 0.01)
 
 data class Comparison(
     val id: String,
@@ -573,11 +523,7 @@ data class ComparisonData(
     val summary: ComparisonSummary,
 )
 
-data class ComparisonSummary(
-    val totalDifferences: Int,
-    val significantDifferences: Int,
-    val similarityScore: Double,
-)
+data class ComparisonSummary(val totalDifferences: Int, val significantDifferences: Int, val similarityScore: Double)
 
 data class ParameterDifference(
     val parameter: String,
@@ -603,36 +549,19 @@ enum class DifferenceType { ADDED, REMOVED, MODIFIED }
 enum class Significance { LOW, MEDIUM, HIGH }
 
 sealed class ComparisonResult {
-    data class Success(
-        val comparisonData: ComparisonData,
-    ) : ComparisonResult()
+    data class Success(val comparisonData: ComparisonData) : ComparisonResult()
 
-    data class Error(
-        val message: String,
-    ) : ComparisonResult()
+    data class Error(val message: String) : ComparisonResult()
 }
 
 sealed class ComparisonEvent {
-    data class ComparisonStarted(
-        val id: String,
-        val type: String,
-    ) : ComparisonEvent()
+    data class ComparisonStarted(val id: String, val type: String) : ComparisonEvent()
 
-    data class ComparisonCompleted(
-        val id: String,
-    ) : ComparisonEvent()
+    data class ComparisonCompleted(val id: String) : ComparisonEvent()
 
-    data class ComparisonFailed(
-        val id: String,
-        val error: String,
-    ) : ComparisonEvent()
+    data class ComparisonFailed(val id: String, val error: String) : ComparisonEvent()
 
-    data class ComparisonDeleted(
-        val id: String,
-    ) : ComparisonEvent()
+    data class ComparisonDeleted(val id: String) : ComparisonEvent()
 
-    data class ComparisonExported(
-        val id: String,
-        val format: String,
-    ) : ComparisonEvent()
+    data class ComparisonExported(val id: String, val format: String) : ComparisonEvent()
 }

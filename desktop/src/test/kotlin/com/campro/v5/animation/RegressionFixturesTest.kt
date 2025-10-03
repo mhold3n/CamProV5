@@ -101,17 +101,14 @@ class RegressionFixturesTest {
             return xs.sumOf { (it - m) * (it - m) } / xs.size
         }
 
-        fun covariance(
-            xs: List<Double>,
-            ys: List<Double>,
-        ): Double {
+        fun covariance(xs: List<Double>, ys: List<Double>): Double {
             val mx = mean(xs)
             val my = mean(ys)
             return xs.indices.sumOf {
                 (
                     xs[it] -
                         mx
-                ) *
+                    ) *
                     (ys[it] - my)
             } /
                 xs.size
@@ -143,10 +140,7 @@ class RegressionFixturesTest {
         // Also require high shape correlation on displacement after alignment
         val alignedSxSeq = sxSeq.map { a * it + b }
 
-        fun corr(
-            x: List<Double>,
-            y: List<Double>,
-        ): Double {
+        fun corr(x: List<Double>, y: List<Double>): Double {
             val mx = x.average()
             val my = y.average()
             val num = x.indices.sumOf { (x[it] - mx) * (y[it] - my) }
@@ -156,10 +150,7 @@ class RegressionFixturesTest {
         val r = corr(fxSeq, alignedSxSeq)
 
         // Normalized RMSE for displacement after alignment
-        fun rmse(
-            x: List<Double>,
-            y: List<Double>,
-        ): Double {
+        fun rmse(x: List<Double>, y: List<Double>): Double {
             val n = x.size
             if (n == 0) return 0.0
             val sse = x.indices.sumOf { (x[it] - y[it]) * (x[it] - y[it]) }

@@ -16,14 +16,7 @@ import com.campro.v5.layout.LayoutManager
 /**
  * Data class to represent the state of a floating panel
  */
-data class FloatingPanelState(
-    val id: String,
-    val x: Dp,
-    val y: Dp,
-    val width: Dp,
-    val height: Dp,
-    val zIndex: Float,
-)
+data class FloatingPanelState(val id: String, val x: Dp, val y: Dp, val width: Dp, val height: Dp, val zIndex: Float)
 
 /**
  * Simplified resizable layout that replaces the complex ResizablePanelStandardLayout
@@ -74,13 +67,13 @@ fun SimpleResizableLayout(
                 modifier = Modifier.weight(0.6f), // Initial weight ratio (60%)
                 // Add vertical resize directions (TOP, BOTTOM, TOP_RIGHT, BOTTOM_RIGHT)
                 enabledDirections =
-                    setOf(
-                        ResizeDirection.RIGHT,
-                        ResizeDirection.BOTTOM,
-                        ResizeDirection.TOP,
-                        ResizeDirection.BOTTOM_RIGHT,
-                        ResizeDirection.TOP_RIGHT,
-                    ),
+                setOf(
+                    ResizeDirection.RIGHT,
+                    ResizeDirection.BOTTOM,
+                    ResizeDirection.TOP,
+                    ResizeDirection.BOTTOM_RIGHT,
+                    ResizeDirection.TOP_RIGHT,
+                ),
             ) {
                 // Show placeholder or empty state when no animation data
                 if (!animationStarted) {
@@ -101,13 +94,13 @@ fun SimpleResizableLayout(
                 modifier = Modifier.weight(0.4f), // Initial weight ratio (40%)
                 // Add vertical resize directions (TOP, BOTTOM, TOP_LEFT, BOTTOM_LEFT)
                 enabledDirections =
-                    setOf(
-                        ResizeDirection.LEFT,
-                        ResizeDirection.BOTTOM,
-                        ResizeDirection.TOP,
-                        ResizeDirection.BOTTOM_LEFT,
-                        ResizeDirection.TOP_LEFT,
-                    ),
+                setOf(
+                    ResizeDirection.LEFT,
+                    ResizeDirection.BOTTOM,
+                    ResizeDirection.TOP,
+                    ResizeDirection.BOTTOM_LEFT,
+                    ResizeDirection.TOP_LEFT,
+                ),
             ) {
                 // Show placeholder or empty state when no plot data
                 if (!animationStarted) {
@@ -118,8 +111,8 @@ fun SimpleResizableLayout(
                 } else {
                     PreviewsPanel(
                         engine =
-                            com.campro.v5.animation.MotionLawEngine
-                                .getInstance(),
+                        com.campro.v5.animation.MotionLawEngine
+                            .getInstance(),
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -217,10 +210,7 @@ fun FloatingPanelsLayout(
     }
 
     // Function to update panel state
-    fun updatePanelState(
-        id: String,
-        updater: (FloatingPanelState) -> FloatingPanelState,
-    ) {
+    fun updatePanelState(id: String, updater: (FloatingPanelState) -> FloatingPanelState) {
         panelStates[id]?.let { currentState ->
             panelStates[id] = updater(currentState)
         }
@@ -504,10 +494,7 @@ fun SingleColumnSimpleLayout(
  * Tabbed content for single column layout
  */
 @Composable
-fun TabbedContent(
-    parameters: Map<String, String>,
-    testingMode: Boolean,
-) {
+fun TabbedContent(parameters: Map<String, String>, testingMode: Boolean) {
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Plots", "Data")
 
@@ -543,11 +530,7 @@ fun TabbedContent(
  * Compact widget layout for very small screens
  */
 @Composable
-fun CompactSimpleLayout(
-    testingMode: Boolean,
-    allParameters: Map<String, String>,
-    spacing: Dp = 4.dp,
-) {
+fun CompactSimpleLayout(testingMode: Boolean, allParameters: Map<String, String>, spacing: Dp = 4.dp) {
     Column(
         modifier = Modifier.fillMaxSize().padding(spacing),
         verticalArrangement = Arrangement.spacedBy(spacing),

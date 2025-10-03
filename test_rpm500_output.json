@@ -1,0 +1,6 @@
+{
+  "status": "failed",
+  "error": "'RealSolver' object is not callable",
+  "execution_time": 0.0,
+  "stage": "pipeline_execution"
+}

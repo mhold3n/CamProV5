@@ -37,7 +37,7 @@ fun main(args: Array<String>) {
         handleCliMode(args)
         return
     }
-    
+
     val testingMode = args.contains("--testing-mode")
     val enableAgent = args.contains("--enable-agent")
 
@@ -135,7 +135,7 @@ fun main(args: Array<String>) {
                 argMap["show-parameters"] == "true" ||
                     (visibleSet.isNotEmpty() && "parameters" in visibleSet) ||
                     visibleSet.isEmpty()
-            ),
+                ),
             "animation" to (argMap["show-animation"] == "true" || "animation" in visibleSet),
             "plots" to (argMap["show-plots"] == "true" || "plots" in visibleSet),
             "data" to (argMap["show-data"] == "true" || "data" in visibleSet),
@@ -233,11 +233,7 @@ fun main(args: Array<String>) {
 
 @Composable
 @Preview
-fun CamProV5App(
-    testingMode: Boolean = false,
-    enableAgent: Boolean = false,
-    layoutManager: LayoutManager = rememberLayoutManager(),
-) {
+fun CamProV5App(testingMode: Boolean = false, enableAgent: Boolean = false, layoutManager: LayoutManager = rememberLayoutManager()) {
     MaterialTheme {
         var animationStarted by remember { mutableStateOf(false) }
         var allParameters by remember { mutableStateOf(mapOf<String, String>()) }
@@ -455,9 +451,9 @@ private fun StandardLayout(
         // Parameter Input Form with dynamic sizing
         Box(
             modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .weight(0.3f),
+            Modifier
+                .fillMaxWidth()
+                .weight(0.3f),
         ) {
             ParameterInputForm(
                 testingMode = testingMode,
@@ -639,11 +635,7 @@ private fun StandardWidgetLayout(
 }
 
 // Validate input parameters
-fun validateInput(
-    baseCircleRadius: String,
-    rollingCircleRadius: String,
-    tracingPointDistance: String,
-): String? {
+fun validateInput(baseCircleRadius: String, rollingCircleRadius: String, tracingPointDistance: String): String? {
     try {
         val baseRadius = baseCircleRadius.toDouble()
         if (baseRadius <= 0) {
@@ -819,22 +811,22 @@ private fun handleCliMode(args: Array<String>) {
         // Parse command line arguments
         val inputIndex = args.indexOf("--input")
         val outputIndex = args.indexOf("--output")
-        
+
         if (inputIndex == -1 || outputIndex == -1 || inputIndex + 1 >= args.size || outputIndex + 1 >= args.size) {
             System.err.println("Usage: --input <input.json> --output <output.json>")
             System.exit(1)
         }
-        
+
         val inputFile = args[inputIndex + 1]
         val outputFile = args[outputIndex + 1]
-        
+
         // Read input JSON
         val inputJson = java.io.File(inputFile).readText()
         val gson = Gson()
-        
+
         // Parse input parameters (assuming it's a map of parameters)
         val inputParams = gson.fromJson(inputJson, Map::class.java) as Map<String, Any>
-        
+
         // Convert to LitvinUserParams
         val litvinParams = com.campro.v5.data.litvin.LitvinUserParams(
             samplingStepDeg = (inputParams["samplingStepDeg"] as? Number)?.toDouble() ?: 1.0,
@@ -860,18 +852,17 @@ private fun handleCliMode(args: Array<String>) {
                 "Cycloidal" -> com.campro.v5.data.litvin.RampProfile.Cycloidal
                 "S5" -> com.campro.v5.data.litvin.RampProfile.S5
                 else -> com.campro.v5.data.litvin.RampProfile.S5
-            }
+            },
         )
-        
+
         // Generate motion law using MotionLawGenerator
         val motionSamples = com.campro.v5.animation.MotionLawGenerator.generateMotion(litvinParams)
-        
+
         // Convert to JSON and write output
         val outputJson = gson.toJson(motionSamples)
         java.io.File(outputFile).writeText(outputJson)
-        
+
         println("Motion law generated successfully: ${motionSamples.samples.size} samples")
-        
     } catch (e: Exception) {
         System.err.println("Error in CLI mode: ${e.message}")
         e.printStackTrace()

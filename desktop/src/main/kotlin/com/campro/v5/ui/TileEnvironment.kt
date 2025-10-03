@@ -11,8 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import com.campro.v5.debug.DebugFab
-import com.campro.v5.debug.DebugIconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +24,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.campro.v5.debug.DebugFab
+import com.campro.v5.debug.DebugIconButton
 
 /**
  * Modern tile-based environment for CamProV5
@@ -57,9 +57,7 @@ enum class TileType {
     CONTROL, // Playback controls, settings
 }
 
-enum class TileSize(
-    val span: Int,
-) {
+enum class TileSize(val span: Int) {
     SMALL(1), // 1x1 grid cell
     MEDIUM(2), // 2x2 grid cells
     LARGE(3), // 3x3 grid cells
@@ -139,10 +137,10 @@ fun TileEnvironment(
 
     Box(
         modifier =
-            modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
-                .onSizeChanged { windowSize = it },
+        modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .onSizeChanged { windowSize = it },
     ) {
         // Grid background
         LazyVerticalGrid(
@@ -183,9 +181,9 @@ fun TileEnvironment(
             buttonId = "tiles-manage",
             onClick = { /* TODO: Open tile management dialog */ },
             modifier =
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp),
+            Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
         ) {
             Icon(Icons.Default.GridView, contentDescription = "Manage Tiles")
         }
@@ -193,12 +191,7 @@ fun TileEnvironment(
 }
 
 @Composable
-private fun Tile(
-    state: TileState,
-    onStateChanged: (TileState) -> Unit,
-    onDragEnd: (GridItemSpan) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun Tile(state: TileState, onStateChanged: (TileState) -> Unit, onDragEnd: (GridItemSpan) -> Unit, modifier: Modifier = Modifier) {
     val density = LocalDensity.current
     var tileSize by remember { mutableStateOf(IntSize(0, 0)) }
     var isDragging by remember { mutableStateOf(false) }
@@ -216,31 +209,31 @@ private fun Tile(
 
     Card(
         modifier =
-            modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .onSizeChanged { tileSize = it }
-                .shadow(animatedElevation.dp, RoundedCornerShape(12.dp))
-                .clip(RoundedCornerShape(12.dp))
-                .border(
-                    width = if (isDragging) 2.dp else 1.dp,
-                    color = if (isDragging) MaterialTheme.colorScheme.primary else Color.Transparent,
-                    shape = RoundedCornerShape(12.dp),
-                ).pointerInput(state.config.id) {
-                    detectDragGestures(
-                        onDragStart = {
-                            isDragging = true
-                            onStateChanged(state.copy(isDragging = true))
-                        },
-                        onDragEnd = {
-                            isDragging = false
-                            onStateChanged(state.copy(isDragging = false))
-                            // TODO: Calculate new grid position based on drag
-                        },
-                    ) { _, _ ->
-                        // Handle drag movement
-                    }
-                },
+        modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .onSizeChanged { tileSize = it }
+            .shadow(animatedElevation.dp, RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(12.dp))
+            .border(
+                width = if (isDragging) 2.dp else 1.dp,
+                color = if (isDragging) MaterialTheme.colorScheme.primary else Color.Transparent,
+                shape = RoundedCornerShape(12.dp),
+            ).pointerInput(state.config.id) {
+                detectDragGestures(
+                    onDragStart = {
+                        isDragging = true
+                        onStateChanged(state.copy(isDragging = true))
+                    },
+                    onDragEnd = {
+                        isDragging = false
+                        onStateChanged(state.copy(isDragging = false))
+                        // TODO: Calculate new grid position based on drag
+                    },
+                ) { _, _ ->
+                    // Handle drag movement
+                }
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = animatedElevation.dp),
     ) {
         Column(
@@ -263,12 +256,12 @@ private fun Tile(
             if (!state.isMinimized) {
                 Box(
                     modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(
-                                horizontal = (tileSize.width * 0.02f).coerceAtLeast(8f).dp,
-                                vertical = (tileSize.height * 0.02f).coerceAtLeast(8f).dp,
-                            ),
+                    Modifier
+                        .fillMaxSize()
+                        .padding(
+                            horizontal = (tileSize.width * 0.02f).coerceAtLeast(8f).dp,
+                            vertical = (tileSize.height * 0.02f).coerceAtLeast(8f).dp,
+                        ),
                 ) {
                     // Provide responsive content scaling context
                     ResponsiveContent(
@@ -284,11 +277,7 @@ private fun Tile(
 }
 
 @Composable
-private fun ResponsiveContent(
-    tileSize: IntSize,
-    density: androidx.compose.ui.unit.Density,
-    content: @Composable () -> Unit,
-) {
+private fun ResponsiveContent(tileSize: IntSize, density: androidx.compose.ui.unit.Density, content: @Composable () -> Unit) {
     // Calculate responsive scaling factor based on tile size
     val scaleFactor =
         remember(tileSize) {
@@ -302,25 +291,19 @@ private fun ResponsiveContent(
 }
 
 @Composable
-private fun TileHeader(
-    config: TileConfig,
-    isMinimized: Boolean,
-    isMaximized: Boolean,
-    onMinimize: () -> Unit,
-    onMaximize: () -> Unit,
-) {
+private fun TileHeader(config: TileConfig, isMinimized: Boolean, isMaximized: Boolean, onMinimize: () -> Unit, onMaximize: () -> Unit) {
     Row(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(
-                    when (config.type) {
-                        TileType.INPUT -> MaterialTheme.colorScheme.primaryContainer
-                        TileType.OUTPUT -> MaterialTheme.colorScheme.secondaryContainer
-                        TileType.GRAPHICS -> MaterialTheme.colorScheme.tertiaryContainer
-                        TileType.CONTROL -> MaterialTheme.colorScheme.surfaceVariant
-                    },
-                ).padding(12.dp),
+        Modifier
+            .fillMaxWidth()
+            .background(
+                when (config.type) {
+                    TileType.INPUT -> MaterialTheme.colorScheme.primaryContainer
+                    TileType.OUTPUT -> MaterialTheme.colorScheme.secondaryContainer
+                    TileType.GRAPHICS -> MaterialTheme.colorScheme.tertiaryContainer
+                    TileType.CONTROL -> MaterialTheme.colorScheme.surfaceVariant
+                },
+            ).padding(12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -372,11 +355,7 @@ private fun TileHeader(
     }
 }
 
-private fun autoLayoutTiles(
-    tiles: List<TileConfig>,
-    gridColumns: Int,
-    currentStates: Map<String, TileState>,
-): Map<String, TileState> {
+private fun autoLayoutTiles(tiles: List<TileConfig>, gridColumns: Int, currentStates: Map<String, TileState>): Map<String, TileState> {
     val newStates = currentStates.toMutableMap()
     val grid = Array(gridColumns) { BooleanArray(gridColumns) { false } }
 
@@ -417,11 +396,7 @@ private fun autoLayoutTiles(
     return newStates
 }
 
-private fun findAvailablePosition(
-    grid: Array<BooleanArray>,
-    size: Int,
-    gridColumns: Int,
-): Pair<Int, Int>? {
+private fun findAvailablePosition(grid: Array<BooleanArray>, size: Int, gridColumns: Int): Pair<Int, Int>? {
     for (i in 0..gridColumns - size) {
         for (j in 0..gridColumns - size) {
             var available = true

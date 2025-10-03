@@ -10,11 +10,7 @@ import kotlinx.coroutines.delay
  * @param condition The condition to check
  * @return True if the condition was met, false if max attempts were reached
  */
-suspend fun waitForCondition(
-    maxAttempts: Int = 10,
-    delayMs: Long = 100,
-    condition: () -> Boolean,
-): Boolean {
+suspend fun waitForCondition(maxAttempts: Int = 10, delayMs: Long = 100, condition: () -> Boolean): Boolean {
     repeat(maxAttempts) { attempt ->
         if (condition()) {
             return true

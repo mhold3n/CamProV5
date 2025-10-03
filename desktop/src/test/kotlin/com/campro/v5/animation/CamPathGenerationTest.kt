@@ -23,13 +23,7 @@ class CamPathGenerationTest {
         val fallStart = tdcAngle + halfTDC
         val fallEnd = (360.0 - halfBDC).coerceAtLeast(fallStart + 1e-4)
 
-        fun shmDisp(
-            theta: Double,
-            startDeg: Double,
-            endDeg: Double,
-            s0: Double,
-            s1: Double,
-        ): Double {
+        fun shmDisp(theta: Double, startDeg: Double, endDeg: Double, s0: Double, s1: Double): Double {
             val range = (endDeg - startDeg).coerceAtLeast(1e-6)
             val p = ((theta - startDeg) / range).coerceIn(0.0, 1.0)
             return s0 + (s1 - s0) * (1.0 - cos(PI * p)) / 2.0

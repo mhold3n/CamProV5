@@ -169,9 +169,9 @@ fun ParameterInputForm(
 
             Column(
                 modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(),
+                Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
                 // Use fillMaxHeight instead of heightIn
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
@@ -391,10 +391,7 @@ data class Parameter(
 /**
  * Validate a single parameter input.
  */
-fun validateInput(
-    parameter: Parameter,
-    value: String,
-): String? {
+fun validateInput(parameter: Parameter, value: String): String? {
     return try {
         when (parameter.type) {
             "float" -> {
@@ -419,10 +416,7 @@ fun validateInput(
 /**
  * Validate all parameter inputs.
  */
-fun validateAllInputs(
-    parameters: List<Parameter>,
-    values: Map<String, String>,
-): List<String> {
+fun validateAllInputs(parameters: List<Parameter>, values: Map<String, String>): List<String> {
     val errors = mutableListOf<String>()
 
     parameters.forEach { parameter ->

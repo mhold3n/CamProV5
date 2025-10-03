@@ -16,24 +16,14 @@ object MotionLawAssertions {
         val neighborhood: Int = 1,
     )
 
-    fun assertNoNaNInf(
-        x: DoubleArray,
-        v: DoubleArray,
-        a: DoubleArray,
-    ) {
+    fun assertNoNaNInf(x: DoubleArray, v: DoubleArray, a: DoubleArray) {
         fun finite(arr: DoubleArray) = arr.all { it.isFinite() }
         assertTrue(finite(x), "x contains NaN/Inf")
         assertTrue(finite(v), "v contains NaN/Inf")
         assertTrue(finite(a), "a contains NaN/Inf")
     }
 
-    fun assertWrapContinuityExtrapolated360(
-        thetaDeg: DoubleArray,
-        x: DoubleArray,
-        v: DoubleArray,
-        a: DoubleArray,
-        tol: Tolerances,
-    ) {
+    fun assertWrapContinuityExtrapolated360(thetaDeg: DoubleArray, x: DoubleArray, v: DoubleArray, a: DoubleArray, tol: Tolerances) {
         val n = thetaDeg.size
         require(n >= 2) { "Need at least 2 samples" }
 
@@ -60,13 +50,7 @@ object MotionLawAssertions {
         assertEquals(a[0], a360, ta, "Wrap accel mismatch (extrapolated a)")
     }
 
-    fun assertWrapContinuityExtrapolated180(
-        thetaDeg: DoubleArray,
-        x: DoubleArray,
-        v: DoubleArray,
-        a: DoubleArray,
-        tol: Tolerances,
-    ) {
+    fun assertWrapContinuityExtrapolated180(thetaDeg: DoubleArray, x: DoubleArray, v: DoubleArray, a: DoubleArray, tol: Tolerances) {
         val n = thetaDeg.size
         require(n >= 2) { "Need at least 2 samples" }
 
@@ -93,10 +77,7 @@ object MotionLawAssertions {
         assertEquals(a[0], a180, ta, "Wrap accel mismatch (extrapolated a) - 180° periodicity")
     }
 
-    fun assertSamplingIntegrity(
-        thetaDeg: DoubleArray,
-        stepDeg: Double,
-    ) {
+    fun assertSamplingIntegrity(thetaDeg: DoubleArray, stepDeg: Double) {
         require(thetaDeg.isNotEmpty())
         var last = -1.0
         for (t in thetaDeg) {

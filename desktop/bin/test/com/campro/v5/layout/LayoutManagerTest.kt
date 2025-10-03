@@ -69,142 +69,138 @@ class LayoutManagerTest {
      * Test that window size changes emit events.
      */
     @Test
-    fun testWindowSizeChangeEmitsEvent() =
-        runBlocking {
-            // Set up a collector for layout events
-            val events = EventSystem.events("layout")
+    fun testWindowSizeChangeEmitsEvent() = runBlocking {
+        // Set up a collector for layout events
+        val events = EventSystem.events("layout")
 
-            // Update window size
-            layoutManager.updateWindowSize(1000.dp, 800.dp)
+        // Update window size
+        layoutManager.updateWindowSize(1000.dp, 800.dp)
 
-            // Collect the event with a longer timeout
-            val receivedEvent =
-                withTimeout(3000) {
-                    events.first()
-                }
+        // Collect the event with a longer timeout
+        val receivedEvent =
+            withTimeout(3000) {
+                events.first()
+            }
 
-            // Verify the event
-            assertTrue(receivedEvent is LayoutEvent, "Received event should be a LayoutEvent")
-            assertEquals("window_size_changed", (receivedEvent as LayoutEvent).action, "Action should be window_size_changed")
-            assertEquals(1000.0f, receivedEvent.params["width"], "Width should match")
-            assertEquals(800.0f, receivedEvent.params["height"], "Height should match")
+        // Verify the event
+        assertTrue(receivedEvent is LayoutEvent, "Received event should be a LayoutEvent")
+        assertEquals("window_size_changed", (receivedEvent as LayoutEvent).action, "Action should be window_size_changed")
+        assertEquals(1000.0f, receivedEvent.params["width"], "Width should match")
+        assertEquals(800.0f, receivedEvent.params["height"], "Height should match")
 
-            println("[DEBUG_LOG] Window size change event test complete")
-        }
+        println("[DEBUG_LOG] Window size change event test complete")
+    }
 
     /**
      * Test that density factor changes emit events.
      */
     @Test
-    fun testDensityFactorChangeEmitsEvent() =
-        runBlocking {
-            // Set up a collector for layout events
-            val events = EventSystem.events("layout")
+    fun testDensityFactorChangeEmitsEvent() = runBlocking {
+        // Set up a collector for layout events
+        val events = EventSystem.events("layout")
 
-            // Update density factor
-            layoutManager.updateDensityFactor(1.5f)
+        // Update density factor
+        layoutManager.updateDensityFactor(1.5f)
 
-            // Collect the event with a longer timeout
-            val receivedEvent =
-                withTimeout(3000) {
-                    events.first()
-                }
+        // Collect the event with a longer timeout
+        val receivedEvent =
+            withTimeout(3000) {
+                events.first()
+            }
 
-            // Verify the event
-            assertTrue(receivedEvent is LayoutEvent, "Received event should be a LayoutEvent")
-            assertEquals("density_changed", (receivedEvent as LayoutEvent).action, "Action should be density_changed")
-            assertEquals(1.5f, receivedEvent.params["factor"], "Factor should match")
+        // Verify the event
+        assertTrue(receivedEvent is LayoutEvent, "Received event should be a LayoutEvent")
+        assertEquals("density_changed", (receivedEvent as LayoutEvent).action, "Action should be density_changed")
+        assertEquals(1.5f, receivedEvent.params["factor"], "Factor should match")
 
-            println("[DEBUG_LOG] Density factor change event test complete")
-        }
+        println("[DEBUG_LOG] Density factor change event test complete")
+    }
 
     /**
      * Test that template changes emit events.
      */
     @Test
-    fun testTemplateChangeEmitsEvent() =
-        runBlocking {
-            // Set up a collector for layout events
-            val events = EventSystem.events("layout")
+    fun testTemplateChangeEmitsEvent() = runBlocking {
+        // Set up a collector for layout events
+        val events = EventSystem.events("layout")
 
-            // Set template
-            layoutManager.setTemplate(LayoutManager.LayoutTemplate.ANALYSIS_WORKFLOW)
+        // Set template
+        layoutManager.setTemplate(LayoutManager.LayoutTemplate.ANALYSIS_WORKFLOW)
 
-            // Collect the event with a longer timeout
-            val receivedEvent =
-                withTimeout(3000) {
-                    events.first()
-                }
+        // Collect the event with a longer timeout
+        val receivedEvent =
+            withTimeout(3000) {
+                events.first()
+            }
 
-            // Verify the event
-            assertTrue(receivedEvent is LayoutEvent, "Received event should be a LayoutEvent")
-            assertEquals("template_changed", (receivedEvent as LayoutEvent).action, "Action should be template_changed")
-            assertEquals("ANALYSIS_WORKFLOW", receivedEvent.params["template"], "Template should match")
+        // Verify the event
+        assertTrue(receivedEvent is LayoutEvent, "Received event should be a LayoutEvent")
+        assertEquals("template_changed", (receivedEvent as LayoutEvent).action, "Action should be template_changed")
+        assertEquals("ANALYSIS_WORKFLOW", receivedEvent.params["template"], "Template should match")
 
-            println("[DEBUG_LOG] Template change event test complete")
-        }
+        println("[DEBUG_LOG] Template change event test complete")
+    }
 
     /**
      * Test that window size changes can trigger template changes.
      */
     @Test
-    fun testWindowSizeChangesCanTriggerTemplateChanges() =
-        runBlocking {
-            // Set up a collector for layout events
-            val events = mutableListOf<LayoutEvent>()
+    fun testWindowSizeChangesCanTriggerTemplateChanges() = runBlocking {
+        // Set up a collector for layout events
+        val events = mutableListOf<LayoutEvent>()
 
-            // Set up event collection
-            val job =
-                launch {
-                    EventSystem.events("layout").collect { event ->
-                        if (event is LayoutEvent) {
-                            events.add(event)
-                        }
+        // Set up event collection
+        val job =
+            launch {
+                EventSystem.events("layout").collect { event ->
+                    if (event is LayoutEvent) {
+                        events.add(event)
                     }
                 }
-
-            // Set initial window size to medium
-            layoutManager.updateWindowSize(1200.dp, 900.dp)
-
-            // Wait for the initial window size event
-            waitForConditionOrFail(
-                maxAttempts = 20,
-                delayMs = 100,
-                message = "Did not receive initial window size changed event",
-            ) {
-                events.any { it is LayoutEvent && it.action == "window_size_changed" }
             }
 
-            // Clear events for the next test
-            events.clear()
+        // Set initial window size to medium
+        layoutManager.updateWindowSize(1200.dp, 900.dp)
 
-            // Update window size to small (should trigger template change to COMPACT)
-            layoutManager.updateWindowSize(700.dp, 500.dp)
-
-            // Wait for both events to be received with retries
-            waitForConditionOrFail(
-                maxAttempts = 20,
-                delayMs = 100,
-                message = "Did not receive both window_size_changed and template_changed events",
-            ) {
-                events.any { it is LayoutEvent && it.action == "window_size_changed" } &&
-                    events.any { it is LayoutEvent && it.action == "template_changed" }
-            }
-
-            // Get the events
-            val windowSizeEvent = events.find { it.action == "window_size_changed" }
-            val templateEvent = events.find { it.action == "template_changed" }
-
-            // Cancel the event collection job
-            job.cancel()
-
-            // Verify events
-            assertNotNull(windowSizeEvent, "Window size event should be emitted")
-            assertNotNull(templateEvent, "Template event should be emitted")
-            assertEquals("COMPACT", templateEvent?.params?.get("template"), "Template should be COMPACT")
-
-            println("[DEBUG_LOG] Window size triggering template change test complete")
+        // Wait for the initial window size event
+        waitForConditionOrFail(
+            maxAttempts = 20,
+            delayMs = 100,
+            message = "Did not receive initial window size changed event",
+        ) {
+            events.any { it is LayoutEvent && it.action == "window_size_changed" }
         }
+
+        // Clear events for the next test
+        events.clear()
+
+        // Update window size to small (should trigger template change to COMPACT)
+        layoutManager.updateWindowSize(700.dp, 500.dp)
+
+        // Wait for both events to be received with retries
+        waitForConditionOrFail(
+            maxAttempts = 20,
+            delayMs = 100,
+            message = "Did not receive both window_size_changed and template_changed events",
+        ) {
+            events.any { it is LayoutEvent && it.action == "window_size_changed" } &&
+                events.any { it is LayoutEvent && it.action == "template_changed" }
+        }
+
+        // Get the events
+        val windowSizeEvent = events.find { it.action == "window_size_changed" }
+        val templateEvent = events.find { it.action == "template_changed" }
+
+        // Cancel the event collection job
+        job.cancel()
+
+        // Verify events
+        assertNotNull(windowSizeEvent, "Window size event should be emitted")
+        assertNotNull(templateEvent, "Template event should be emitted")
+        assertEquals("COMPACT", templateEvent?.params?.get("template"), "Template should be COMPACT")
+
+        println("[DEBUG_LOG] Window size triggering template change test complete")
+    }
 
     /**
      * Test helper methods for different templates.

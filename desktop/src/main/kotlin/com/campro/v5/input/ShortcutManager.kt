@@ -108,10 +108,10 @@ class ShortcutManager {
                 name = "Redo",
                 description = "Redo the last undone action",
                 keyStrokes =
-                    listOf(
-                        KeyStroke(Key.Y, ctrl = true),
-                        KeyStroke(Key.Z, ctrl = true, shift = true),
-                    ),
+                listOf(
+                    KeyStroke(Key.Y, ctrl = true),
+                    KeyStroke(Key.Z, ctrl = true, shift = true),
+                ),
                 category = "Edit",
             ),
         )
@@ -153,10 +153,10 @@ class ShortcutManager {
                 name = "Zoom In",
                 description = "Zoom in on the current view",
                 keyStrokes =
-                    listOf(
-                        KeyStroke(Key.Plus, ctrl = true),
-                        KeyStroke(Key.Equals, ctrl = true),
-                    ),
+                listOf(
+                    KeyStroke(Key.Plus, ctrl = true),
+                    KeyStroke(Key.Equals, ctrl = true),
+                ),
                 category = "View",
             ),
         )
@@ -412,10 +412,7 @@ class ShortcutManager {
      * @param keyStrokes The new key strokes
      * @return True if the shortcut was customized, false if it wasn't found
      */
-    fun customizeShortcut(
-        shortcutId: String,
-        keyStrokes: List<KeyStroke>,
-    ): Boolean {
+    fun customizeShortcut(shortcutId: String, keyStrokes: List<KeyStroke>): Boolean {
         val shortcut = shortcuts[shortcutId] ?: return false
 
         // Create a new shortcut with the updated key strokes
@@ -532,13 +529,7 @@ class ShortcutManager {
  * @param keyStrokes The key strokes that trigger the shortcut
  * @param category The category of the shortcut
  */
-data class Shortcut(
-    val id: String,
-    val name: String,
-    val description: String,
-    val keyStrokes: List<KeyStroke>,
-    val category: String,
-)
+data class Shortcut(val id: String, val name: String, val description: String, val keyStrokes: List<KeyStroke>, val category: String)
 
 /**
  * A key stroke.
@@ -594,36 +585,28 @@ sealed class ShortcutEvent {
      *
      * @param shortcut The registered shortcut
      */
-    data class ShortcutRegistered(
-        val shortcut: Shortcut,
-    ) : ShortcutEvent()
+    data class ShortcutRegistered(val shortcut: Shortcut) : ShortcutEvent()
 
     /**
      * Event emitted when a shortcut is unregistered.
      *
      * @param shortcutId The ID of the unregistered shortcut
      */
-    data class ShortcutUnregistered(
-        val shortcutId: String,
-    ) : ShortcutEvent()
+    data class ShortcutUnregistered(val shortcutId: String) : ShortcutEvent()
 
     /**
      * Event emitted when a shortcut is customized.
      *
      * @param shortcut The customized shortcut
      */
-    data class ShortcutCustomized(
-        val shortcut: Shortcut,
-    ) : ShortcutEvent()
+    data class ShortcutCustomized(val shortcut: Shortcut) : ShortcutEvent()
 
     /**
      * Event emitted when a shortcut is triggered.
      *
      * @param shortcut The triggered shortcut
      */
-    data class ShortcutTriggered(
-        val shortcut: Shortcut,
-    ) : ShortcutEvent()
+    data class ShortcutTriggered(val shortcut: Shortcut) : ShortcutEvent()
 
     /**
      * Event emitted when all shortcuts are reset.

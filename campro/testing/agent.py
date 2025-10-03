@@ -8,6 +8,10 @@ import json
 import time
 import threading
 from datetime import datetime
+from campro.logging import get_logger
+
+# Set up logging
+logger = get_logger(__name__)
 
 class AgentController:
     """
@@ -52,7 +56,7 @@ class AgentController:
             try:
                 self.load_config(default_config_path)
             except Exception as e:
-                print(f"Failed to load default configuration: {e}")
+                logger.info(f"Failed to load default configuration: {e}")
                 
     def load_config(self, config_path):
         """
@@ -72,9 +76,9 @@ class AgentController:
                 self.suggestion_threshold = agent_config.get('suggestion_threshold', self.suggestion_threshold)
                 self.learning_mode = agent_config.get('learning_mode', self.learning_mode)
                 
-            print(f"Loaded configuration from {config_path}")
+            logger.info(f"Loaded configuration from {config_path}")
         except Exception as e:
-            print(f"Error loading configuration: {e}")
+            logger.info(f"Error loading configuration: {e}")
             raise
         
     def connect_to_ui(self, main_window):
@@ -107,20 +111,20 @@ class AgentController:
                 components_to_monitor = self.config['ui'].get('components_to_monitor', [])
                 component_mapping = self.config['ui'].get('component_mapping', {})
             
-            print(f"Connecting to enhanced UI components: {components_to_monitor}")
+            logger.info(f"Connecting to enhanced UI components: {components_to_monitor}")
             
             # Look for the ResponsiveLayout first
             responsive_layout = None
             if hasattr(self.ui, 'ResponsiveLayout'):
                 responsive_layout = getattr(self.ui, 'ResponsiveLayout')
-                print("Found ResponsiveLayout via direct attribute")
+                logger.info("Found ResponsiveLayout via direct attribute")
             elif hasattr(self.ui, 'centralWidget') and hasattr(self.ui.centralWidget(), 'ResponsiveLayout'):
                 # Try to find ResponsiveLayout in central widget
                 responsive_layout = getattr(self.ui.centralWidget(), 'ResponsiveLayout')
-                print("Found ResponsiveLayout in central widget")
+                logger.info("Found ResponsiveLayout in central widget")
             elif 'ResponsiveLayout' in components_to_monitor:
                 # Try to find ResponsiveLayout through component hierarchy
-                print("Searching for ResponsiveLayout in component hierarchy")
+                logger.info("Searching for ResponsiveLayout in component hierarchy")
                 responsive_layout = self._find_component_by_name('ResponsiveLayout')
                 
                 # If still not found, try to find by class name
@@ -131,25 +135,25 @@ class AgentController:
                         for widget in self.ui.findChildren(QWidget):
                             if hasattr(widget, 'objectName') and ('layout' in widget.objectName().lower() or 'responsive' in widget.objectName().lower()):
                                 responsive_layout = widget
-                                print(f"Found potential ResponsiveLayout: {widget.objectName()}")
+                                logger.info(f"Found potential ResponsiveLayout: {widget.objectName()}")
                                 break
                     except ImportError:
-                        print("PyQt5 not available, cannot use findChildren")
+                        logger.info("PyQt5 not available, cannot use findChildren")
             
             if responsive_layout:
                 self.ui_components['ResponsiveLayout'] = responsive_layout
-                print("Connected to ResponsiveLayout")
+                logger.info("Connected to ResponsiveLayout")
                 
                 # Find ResizableContainers within the layout
                 containers = self._find_resizable_containers(responsive_layout)
                 
                 for container_name, container in containers.items():
                     self.ui_components[container_name] = container
-                    print(f"Found container: {container_name}")
+                    logger.info(f"Found container: {container_name}")
                     self._setup_event_listeners(container_name, container)
             
             # Try to map old component names to new structure using the component mapping
-            print(f"Applying component mapping: {component_mapping}")
+            logger.info(f"Applying component mapping: {component_mapping}")
             for old_name, new_path in component_mapping.items():
                 try:
                     # First try to find by path
@@ -158,23 +162,23 @@ class AgentController:
                     # If not found by path, try direct attribute access on main window
                     if component is None and hasattr(self.ui, old_name):
                         component = getattr(self.ui, old_name)
-                        print(f"Found {old_name} via direct attribute access")
+                        logger.info(f"Found {old_name} via direct attribute access")
                     
                     # If still not found, try to find by name
                     if component is None:
                         component = self._find_component_by_name(old_name)
                         if component:
-                            print(f"Found {old_name} via component name search")
+                            logger.info(f"Found {old_name} via component name search")
                     
                     # If component found, add it to the components dictionary
                     if component:
                         self.ui_components[old_name] = component
-                        print(f"Mapped {old_name} to component")
+                        logger.info(f"Mapped {old_name} to component")
                         self._setup_event_listeners(old_name, component)
                     else:
-                        print(f"Could not find component for {old_name}")
+                        logger.info(f"Could not find component for {old_name}")
                 except Exception as e:
-                    print(f"Could not map {old_name}: {e}")
+                    logger.info(f"Could not map {old_name}: {e}")
             
             # If we still don't have the main components, try to find them directly in the UI
             # This is a fallback for when the mapping doesn't work
@@ -186,23 +190,23 @@ class AgentController:
                         if hasattr(self.ui, component_name):
                             component = getattr(self.ui, component_name)
                             self.ui_components[component_name] = component
-                            print(f"Found {component_name} via direct attribute access (fallback)")
+                            logger.info(f"Found {component_name} via direct attribute access (fallback)")
                             self._setup_event_listeners(component_name, component)
                         else:
                             # Try to find by name
                             component = self._find_component_by_name(component_name)
                             if component:
                                 self.ui_components[component_name] = component
-                                print(f"Found {component_name} via component name search (fallback)")
+                                logger.info(f"Found {component_name} via component name search (fallback)")
                                 self._setup_event_listeners(component_name, component)
                     except Exception as e:
-                        print(f"Could not find {component_name} in fallback search: {e}")
+                        logger.info(f"Could not find {component_name} in fallback search: {e}")
             
-            print(f"Connected to {len(self.ui_components)} enhanced UI components")
+            logger.info(f"Connected to {len(self.ui_components)} enhanced UI components")
             return len(self.ui_components)
             
         except Exception as e:
-            print(f"Error discovering enhanced UI components: {e}")
+            logger.info(f"Error discovering enhanced UI components: {e}")
             return 0
     
     def _discover_standard_ui_components(self):
@@ -212,7 +216,7 @@ class AgentController:
         if self.config and 'ui' in self.config and 'components_to_monitor' in self.config['ui']:
             components_to_monitor = self.config['ui']['components_to_monitor']
         
-        print(f"Connecting to UI components: {components_to_monitor}")
+        logger.info(f"Connecting to UI components: {components_to_monitor}")
         
         # Find and store references to UI components
         for component_name in components_to_monitor:
@@ -222,16 +226,16 @@ class AgentController:
                 if hasattr(self.ui, component_name):
                     component = getattr(self.ui, component_name)
                     self.ui_components[component_name] = component
-                    print(f"Found UI component: {component_name}")
+                    logger.info(f"Found UI component: {component_name}")
                     
                     # Set up event listeners for the component
                     self._setup_event_listeners(component_name, component)
                 else:
-                    print(f"UI component not found: {component_name}")
+                    logger.info(f"UI component not found: {component_name}")
             except Exception as e:
-                print(f"Error connecting to UI component {component_name}: {e}")
+                logger.info(f"Error connecting to UI component {component_name}: {e}")
         
-        print(f"Connected to {len(self.ui_components)} UI components")
+        logger.info(f"Connected to {len(self.ui_components)} UI components")
         return len(self.ui_components)
     
     def _find_component_by_name(self, name):
@@ -282,7 +286,7 @@ class AgentController:
         
         # Check if responsive_layout is None
         if responsive_layout is None:
-            print("ResponsiveLayout is None, cannot find containers")
+            logger.info("ResponsiveLayout is None, cannot find containers")
             return containers
             
         # Look for ResizableContainer widgets within the layout
@@ -290,7 +294,7 @@ class AgentController:
         if hasattr(responsive_layout, "getContainers"):
             container_dict = responsive_layout.getContainers()
             if container_dict:
-                print(f"Found {len(container_dict)} containers using getContainers()")
+                logger.info(f"Found {len(container_dict)} containers using getContainers()")
                 return container_dict
                 
         # If no direct method, search through children
@@ -306,7 +310,7 @@ class AgentController:
                         title = child.getTitle()
                         
                     containers[title] = child
-                    print(f"Found container: {title}")
+                    logger.info(f"Found container: {title}")
                     
         # Also check the layout items if it's a layout
         if hasattr(responsive_layout, "layout") and responsive_layout.layout() is not None:
@@ -324,21 +328,21 @@ class AgentController:
                             title = widget.getTitle()
                             
                         containers[title] = widget
-                        print(f"Found container in layout: {title}")
+                        logger.info(f"Found container in layout: {title}")
                         
-        print(f"Found {len(containers)} containers in ResponsiveLayout")
+        logger.info(f"Found {len(containers)} containers in ResponsiveLayout")
         return containers
     
     def _find_component_by_path(self, path):
         """Find a component by its path (e.g., 'Parameters.ResizableContainer')"""
         # Split the path into components
         if not path or not isinstance(path, str):
-            print(f"Invalid path: {path}")
+            logger.info(f"Invalid path: {path}")
             return None
             
         components = path.split('.')
         if not components:
-            print(f"Empty path: {path}")
+            logger.info(f"Empty path: {path}")
             return None
             
         # Start with the main window
@@ -347,14 +351,14 @@ class AgentController:
         # Navigate through each component in the path
         for component in components:
             if current is None:
-                print(f"Path navigation failed at {component} in {path}")
+                logger.info(f"Path navigation failed at {component} in {path}")
                 return None
                 
             # Try to find the component by name
             if hasattr(current, component):
                 # Direct attribute access
                 current = getattr(current, component)
-                print(f"Found component {component} via direct attribute")
+                logger.info(f"Found component {component} via direct attribute")
             else:
                 # Try to find it in children
                 found = False
@@ -365,7 +369,7 @@ class AgentController:
                         if hasattr(child, "objectName") and child.objectName() == component:
                             current = child
                             found = True
-                            print(f"Found component {component} in children")
+                            logger.info(f"Found component {component} in children")
                             break
                 
                 # Check if it has a layout with widgets
@@ -376,7 +380,7 @@ class AgentController:
                         if item.widget() and hasattr(item.widget(), "objectName") and item.widget().objectName() == component:
                             current = item.widget()
                             found = True
-                            print(f"Found component {component} in layout")
+                            logger.info(f"Found component {component} in layout")
                             break
                 
                 # If still not found, try a more flexible approach with partial matching
@@ -389,7 +393,7 @@ class AgentController:
                         if child:
                             current = child
                             found = True
-                            print(f"Found component {component} using findChild")
+                            logger.info(f"Found component {component} using findChild")
                     else:
                         # Manual search in children
                         if hasattr(current, "children") and callable(current.children):
@@ -397,11 +401,11 @@ class AgentController:
                                 if hasattr(child, "objectName") and component.lower() in child.objectName().lower():
                                     current = child
                                     found = True
-                                    print(f"Found component {component} using partial name match")
+                                    logger.info(f"Found component {component} using partial name match")
                                     break
                 
                 if not found:
-                    print(f"Component {component} not found in {path}")
+                    logger.info(f"Component {component} not found in {path}")
                     return None
         
         return current
@@ -414,7 +418,7 @@ class AgentController:
             component_name (str): The name of the component
             component: The UI component object
         """
-        print(f"Setting up event listeners for {component_name}")
+        logger.info(f"Setting up event listeners for {component_name}")
         
         # This is a generic approach and might need to be adapted based on the actual UI framework
         # For example, for a Qt-based UI, we might use signals and slots
@@ -426,36 +430,36 @@ class AgentController:
                 component.valueChanged.connect(
                     lambda value, param: self._on_parameter_changed(param, value)
                 )
-                print(f"Connected to valueChanged event for {component_name}")
+                logger.info(f"Connected to valueChanged event for {component_name}")
                 
             if hasattr(component, "formSubmitted"):
                 component.formSubmitted.connect(self._on_form_submitted)
-                print(f"Connected to formSubmitted event for {component_name}")
+                logger.info(f"Connected to formSubmitted event for {component_name}")
                 
         elif component_name == "CycloidalAnimationWidget":
             # Set up event listeners for animation widget
             # For example, listen for animation start/stop, parameter changes, etc.
             if hasattr(component, "animationStarted"):
                 component.animationStarted.connect(self._on_animation_started)
-                print(f"Connected to animationStarted event for {component_name}")
+                logger.info(f"Connected to animationStarted event for {component_name}")
                 
             if hasattr(component, "animationStopped"):
                 component.animationStopped.connect(self._on_animation_stopped)
-                print(f"Connected to animationStopped event for {component_name}")
+                logger.info(f"Connected to animationStopped event for {component_name}")
                 
         elif component_name == "PlotCarouselWidget":
             # Set up event listeners for plot carousel
             # For example, listen for plot selection, zoom, etc.
             if hasattr(component, "plotSelected"):
                 component.plotSelected.connect(self._on_plot_selected)
-                print(f"Connected to plotSelected event for {component_name}")
+                logger.info(f"Connected to plotSelected event for {component_name}")
                 
         elif component_name == "DataDisplayPanel":
             # Set up event listeners for data display panel
             # For example, listen for data selection, filtering, etc.
             if hasattr(component, "dataSelected"):
                 component.dataSelected.connect(self._on_data_selected)
-                print(f"Connected to dataSelected event for {component_name}")
+                logger.info(f"Connected to dataSelected event for {component_name}")
                 
         # Add more component-specific event listeners as needed
         
@@ -512,7 +516,7 @@ class AgentController:
         }
         
         self.observations.append(observation)
-        print(f"Recorded observation: {event_type} at {timestamp}")
+        logger.info(f"Recorded observation: {event_type} at {timestamp}")
         
         # Analyze the observation and potentially make a suggestion
         self._analyze_observation(observation)
@@ -570,7 +574,7 @@ class AgentController:
             confidence (float): The confidence level of the suggestion (0.0 to 1.0)
         """
         if confidence < self.suggestion_threshold:
-            print(f"Suggestion suppressed (confidence {confidence} < threshold {self.suggestion_threshold}): {message}")
+            logger.info(f"Suggestion suppressed (confidence {confidence} < threshold {self.suggestion_threshold}): {message}")
             return
             
         timestamp = datetime.now().isoformat()
@@ -584,18 +588,18 @@ class AgentController:
         }
         
         self.suggestions.append(suggestion)
-        print(f"Made suggestion: {message} (confidence: {confidence})")
+        logger.info(f"Made suggestion: {message} (confidence: {confidence})")
         
         # In a real implementation, this would display the suggestion in the UI
         # For now, we just print it
-        print(f"SUGGESTION: {message}")
+        logger.info(f"SUGGESTION: {message}")
         
     def start_observation_timer(self):
         """
         Start the observation timer to periodically observe the UI state.
         """
         if self.observation_timer:
-            print("Observation timer already running")
+            logger.info("Observation timer already running")
             return
             
         interval = 1.0 / self.observation_frequency if self.observation_frequency > 0 else 1.0
@@ -609,14 +613,14 @@ class AgentController:
         self.observation_timer.daemon = True
         self.observation_timer.start()
         
-        print(f"Started observation timer with frequency {self.observation_frequency} Hz")
+        logger.info(f"Started observation timer with frequency {self.observation_frequency} Hz")
         
     def stop_observation_timer(self):
         """
         Stop the observation timer.
         """
         self.observation_timer = None
-        print("Stopped observation timer")
+        logger.info("Stopped observation timer")
         
     def _observe_ui_state(self):
         """
@@ -637,7 +641,7 @@ class AgentController:
                 component_state = self._capture_component_state(component_name, component)
                 ui_state[component_name] = component_state
             except Exception as e:
-                print(f"Error capturing state of {component_name}: {e}")
+                logger.info(f"Error capturing state of {component_name}: {e}")
                 
         # Record the observation
         self._record_observation("ui_state", ui_state)
@@ -657,7 +661,7 @@ class AgentController:
             # First check if the component has a getState method (for our mock UI)
             if hasattr(component, "getState") and callable(component.getState):
                 state = component.getState()
-                print(f"Captured state for {component_name} using getState()")
+                logger.info(f"Captured state for {component_name} using getState()")
                 return state
                 
             # If no getState method, try to extract state based on component type
@@ -717,7 +721,7 @@ class AgentController:
                                 
                         component_state["values"] = field_values
                     except Exception as e:
-                        print(f"Error finding input fields: {e}")
+                        logger.info(f"Error finding input fields: {e}")
                         component_state["values"] = {}
                 
                 # Check if the form is valid
@@ -806,7 +810,7 @@ class AgentController:
             return component_state
             
         except Exception as e:
-            print(f"Error capturing state for {component_name}: {e}")
+            logger.info(f"Error capturing state for {component_name}: {e}")
             # Return a minimal state dictionary with error information
             return {
                 "error": str(e),
@@ -827,7 +831,7 @@ class AgentController:
         self.suggestions = []
         self.feedback = []
         
-        print(f"Starting new testing session: {self.session_id}")
+        logger.info(f"Starting new testing session: {self.session_id}")
         
         # Start the observation timer
         self.start_observation_timer()
@@ -842,7 +846,7 @@ class AgentController:
         """
         Create a UI for displaying suggestions and collecting feedback.
         """
-        print("Creating feedback UI")
+        logger.info("Creating feedback UI")
         
         # This is a placeholder implementation
         # In a real implementation, this would create actual UI components
@@ -853,7 +857,7 @@ class AgentController:
         try:
             # Check if the main window has a layout
             if hasattr(self.ui, "layout"):
-                print("Main window has a layout, adding feedback panel")
+                logger.info("Main window has a layout, adding feedback panel")
                 
                 # Create a feedback panel
                 self.feedback_panel = self._create_feedback_panel()
@@ -863,11 +867,11 @@ class AgentController:
                 # For example, in a Qt-based UI:
                 # self.ui.layout().addWidget(self.feedback_panel)
                 
-                print("Added feedback panel to main window")
+                logger.info("Added feedback panel to main window")
             else:
-                print("Main window does not have a layout, cannot add feedback panel")
+                logger.info("Main window does not have a layout, cannot add feedback panel")
         except Exception as e:
-            print(f"Error creating feedback UI: {e}")
+            logger.info(f"Error creating feedback UI: {e}")
             
     def _create_feedback_panel(self):
         """
@@ -885,7 +889,7 @@ class AgentController:
         # - QButtons for providing feedback (Accept, Reject, etc.)
         # - A QLineEdit for entering custom feedback
         
-        print("Creating feedback panel")
+        logger.info("Creating feedback panel")
         
         # Return a placeholder object
         # In a real implementation, this would return the actual UI component
@@ -899,13 +903,13 @@ class AgentController:
             suggestion (dict): The suggestion to display
         """
         if not self.ui or not hasattr(self, "feedback_panel"):
-            print(f"Cannot display suggestion: no feedback panel available")
+            logger.info("Cannot display suggestion: no feedback panel available")
             return
             
         # This is a placeholder implementation
         # In a real implementation, this would update the UI to display the suggestion
         
-        print(f"Displaying suggestion: {suggestion['message']}")
+        logger.info(f"Displaying suggestion: {suggestion['message']}")
         
         # In a real implementation, this would update the UI components
         # For example, in a Qt-based UI:
@@ -923,7 +927,7 @@ class AgentController:
             message (str, optional): Additional feedback message
         """
         if suggestion_id < 0 or suggestion_id >= len(self.suggestions):
-            print(f"Invalid suggestion ID: {suggestion_id}")
+            logger.info(f"Invalid suggestion ID: {suggestion_id}")
             return
             
         suggestion = self.suggestions[suggestion_id]
@@ -939,7 +943,7 @@ class AgentController:
         
         self.feedback.append(feedback)
         
-        print(f"Received feedback for suggestion {suggestion_id}: {feedback_type}")
+        logger.info(f"Received feedback for suggestion {suggestion_id}: {feedback_type}")
         
         # Learn from the feedback
         if self.learning_mode:
@@ -955,19 +959,19 @@ class AgentController:
         # This is a placeholder implementation
         # In a real implementation, this would use more sophisticated learning algorithms
         
-        print(f"Learning from feedback: {feedback['feedback_type']}")
+        logger.info(f"Learning from feedback: {feedback['feedback_type']}")
         
         # Simple learning example: adjust suggestion threshold based on feedback
         if feedback["feedback_type"] == "reject":
             # If the user rejects a suggestion, increase the threshold
             # to reduce the number of low-confidence suggestions
             self.suggestion_threshold = min(0.95, self.suggestion_threshold + 0.05)
-            print(f"Increased suggestion threshold to {self.suggestion_threshold}")
+            logger.info(f"Increased suggestion threshold to {self.suggestion_threshold}")
         elif feedback["feedback_type"] == "accept":
             # If the user accepts a suggestion, decrease the threshold
             # to allow more suggestions
             self.suggestion_threshold = max(0.5, self.suggestion_threshold - 0.05)
-            print(f"Decreased suggestion threshold to {self.suggestion_threshold}")
+            logger.info(f"Decreased suggestion threshold to {self.suggestion_threshold}")
         
     def start_recording(self):
         """
@@ -1107,7 +1111,7 @@ class AgentController:
             str: The path where the file was saved
         """
         if not self.session_active:
-            print("No active session to save")
+            logger.info("No active session to save")
             return None
             
         # Get the session data
@@ -1132,10 +1136,10 @@ class AgentController:
             with open(file_path, 'w') as f:
                 json.dump(session_data, f, indent=4)
                 
-            print(f"Saved session data to {file_path}")
+            logger.info(f"Saved session data to {file_path}")
             return file_path
         except Exception as e:
-            print(f"Error saving session data: {e}")
+            logger.info(f"Error saving session data: {e}")
             return None
             
     def load_session_data(self, file_path):
@@ -1152,10 +1156,10 @@ class AgentController:
             with open(file_path, 'r') as f:
                 session_data = json.load(f)
                 
-            print(f"Loaded session data from {file_path}")
+            logger.info(f"Loaded session data from {file_path}")
             return session_data
         except Exception as e:
-            print(f"Error loading session data: {e}")
+            logger.info(f"Error loading session data: {e}")
             return None
             
     def generate_report(self, session_data):

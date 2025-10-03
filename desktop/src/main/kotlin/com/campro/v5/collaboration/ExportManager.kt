@@ -66,72 +66,71 @@ class ExportManager {
         exportPath: String,
         format: String,
         options: ExportOptions = ExportOptions(),
-    ): ExportResult =
-        withContext(Dispatchers.IO) {
-            try {
-                _isExporting.value = true
-                _exportProgress.value = 0.0f
+    ): ExportResult = withContext(Dispatchers.IO) {
+        try {
+            _isExporting.value = true
+            _exportProgress.value = 0.0f
 
-                emitEvent(ExportEvent.ExportStarted(format, exportPath))
+            emitEvent(ExportEvent.ExportStarted(format, exportPath))
 
-                val result =
-                    when (format.lowercase()) {
-                        "json" -> exportToJson(projectData, exportPath, options)
-                        "csv" -> exportToCsv(projectData, exportPath, options)
-                        "xml" -> exportToXml(projectData, exportPath, options)
-                        "pdf" -> exportToPdf(projectData, exportPath, options)
-                        "xlsx" -> exportToExcel(projectData, exportPath, options)
-                        "zip" -> exportToZip(projectData, exportPath, options)
-                        "png" -> exportToPng(projectData, exportPath, options)
-                        "svg" -> exportToSvg(projectData, exportPath, options)
-                        else -> ExportResult.Error("Unsupported format: $format")
-                    }
-
-                _exportProgress.value = 1.0f
-
-                when (result) {
-                    is ExportResult.Success -> {
-                        emitEvent(ExportEvent.ExportCompleted(format, exportPath, result.filePath))
-                        // Create a file path that will allow the test to extract the project name correctly
-                        // The test uses: latestEntry.filePath.substringAfterLast("/").substringBeforeLast(".")
-                        // So we need a path like "some/path/Test Project.json"
-                        val filePathWithProjectName = "exports/${projectData.metadata.name}.json"
-                        saveExportHistory(
-                            ExportHistoryEntry(
-                                timestamp = Date(),
-                                format = format,
-                                filePath = filePathWithProjectName,
-                                success = true,
-                            ),
-                        )
-                    }
-                    is ExportResult.Error -> {
-                        emitEvent(ExportEvent.ExportFailed(format, exportPath, result.message))
-                        // Create a file path that will allow the test to extract the project name correctly
-                        // The test uses: latestEntry.filePath.substringAfterLast("/").substringBeforeLast(".")
-                        // So we need a path like "some/path/Test Project.json"
-                        val filePathWithProjectName = "exports/${projectData.metadata.name}.json"
-                        saveExportHistory(
-                            ExportHistoryEntry(
-                                timestamp = Date(),
-                                format = format,
-                                filePath = filePathWithProjectName,
-                                success = false,
-                                error = result.message,
-                            ),
-                        )
-                    }
+            val result =
+                when (format.lowercase()) {
+                    "json" -> exportToJson(projectData, exportPath, options)
+                    "csv" -> exportToCsv(projectData, exportPath, options)
+                    "xml" -> exportToXml(projectData, exportPath, options)
+                    "pdf" -> exportToPdf(projectData, exportPath, options)
+                    "xlsx" -> exportToExcel(projectData, exportPath, options)
+                    "zip" -> exportToZip(projectData, exportPath, options)
+                    "png" -> exportToPng(projectData, exportPath, options)
+                    "svg" -> exportToSvg(projectData, exportPath, options)
+                    else -> ExportResult.Error("Unsupported format: $format")
                 }
 
-                result
-            } catch (e: Exception) {
-                val errorMessage = "Export failed: ${e.message}"
-                emitEvent(ExportEvent.ExportFailed(format, exportPath, errorMessage))
-                ExportResult.Error(errorMessage)
-            } finally {
-                _isExporting.value = false
+            _exportProgress.value = 1.0f
+
+            when (result) {
+                is ExportResult.Success -> {
+                    emitEvent(ExportEvent.ExportCompleted(format, exportPath, result.filePath))
+                    // Create a file path that will allow the test to extract the project name correctly
+                    // The test uses: latestEntry.filePath.substringAfterLast("/").substringBeforeLast(".")
+                    // So we need a path like "some/path/Test Project.json"
+                    val filePathWithProjectName = "exports/${projectData.metadata.name}.json"
+                    saveExportHistory(
+                        ExportHistoryEntry(
+                            timestamp = Date(),
+                            format = format,
+                            filePath = filePathWithProjectName,
+                            success = true,
+                        ),
+                    )
+                }
+                is ExportResult.Error -> {
+                    emitEvent(ExportEvent.ExportFailed(format, exportPath, result.message))
+                    // Create a file path that will allow the test to extract the project name correctly
+                    // The test uses: latestEntry.filePath.substringAfterLast("/").substringBeforeLast(".")
+                    // So we need a path like "some/path/Test Project.json"
+                    val filePathWithProjectName = "exports/${projectData.metadata.name}.json"
+                    saveExportHistory(
+                        ExportHistoryEntry(
+                            timestamp = Date(),
+                            format = format,
+                            filePath = filePathWithProjectName,
+                            success = false,
+                            error = result.message,
+                        ),
+                    )
+                }
             }
+
+            result
+        } catch (e: Exception) {
+            val errorMessage = "Export failed: ${e.message}"
+            emitEvent(ExportEvent.ExportFailed(format, exportPath, errorMessage))
+            ExportResult.Error(errorMessage)
+        } finally {
+            _isExporting.value = false
         }
+    }
 
     /**
      * Export simulation results to specified format.
@@ -141,40 +140,35 @@ class ExportManager {
         exportPath: String,
         format: String,
         options: ExportOptions = ExportOptions(),
-    ): ExportResult =
-        withContext(Dispatchers.IO) {
-            try {
-                _exportProgress.value = 0.2f
+    ): ExportResult = withContext(Dispatchers.IO) {
+        try {
+            _exportProgress.value = 0.2f
 
-                val exportData =
-                    ProjectData(
-                        metadata =
-                            ProjectMetadata(
-                                name = "Simulation Results",
-                                description = "Exported simulation results",
-                                timestamp = Date(),
-                            ),
-                        parameters = results.parameters,
-                        simulationResults = results,
-                        visualizations = results.visualizations,
-                    )
+            val exportData =
+                ProjectData(
+                    metadata =
+                    ProjectMetadata(
+                        name = "Simulation Results",
+                        description = "Exported simulation results",
+                        timestamp = Date(),
+                    ),
+                    parameters = results.parameters,
+                    simulationResults = results,
+                    visualizations = results.visualizations,
+                )
 
-                _exportProgress.value = 0.5f
+            _exportProgress.value = 0.5f
 
-                exportProject(exportData, exportPath, format, options)
-            } catch (e: Exception) {
-                ExportResult.Error("Failed to export simulation results: ${e.message}")
-            }
+            exportProject(exportData, exportPath, format, options)
+        } catch (e: Exception) {
+            ExportResult.Error("Failed to export simulation results: ${e.message}")
         }
+    }
 
     /**
      * Export to JSON format.
      */
-    private suspend fun exportToJson(
-        data: ProjectData,
-        exportPath: String,
-        options: ExportOptions,
-    ): ExportResult =
+    private suspend fun exportToJson(data: ProjectData, exportPath: String, options: ExportOptions): ExportResult =
         withContext(Dispatchers.IO) {
             try {
                 val file = File(exportPath)
@@ -200,11 +194,7 @@ class ExportManager {
     /**
      * Export to CSV format.
      */
-    private suspend fun exportToCsv(
-        data: ProjectData,
-        exportPath: String,
-        options: ExportOptions,
-    ): ExportResult =
+    private suspend fun exportToCsv(data: ProjectData, exportPath: String, options: ExportOptions): ExportResult =
         withContext(Dispatchers.IO) {
             try {
                 val file = File(exportPath)
@@ -238,11 +228,7 @@ class ExportManager {
     /**
      * Export to XML format.
      */
-    private suspend fun exportToXml(
-        data: ProjectData,
-        exportPath: String,
-        options: ExportOptions,
-    ): ExportResult =
+    private suspend fun exportToXml(data: ProjectData, exportPath: String, options: ExportOptions): ExportResult =
         withContext(Dispatchers.IO) {
             try {
                 val file = File(exportPath)
@@ -283,11 +269,7 @@ class ExportManager {
     /**
      * Export to PDF format.
      */
-    private suspend fun exportToPdf(
-        data: ProjectData,
-        exportPath: String,
-        options: ExportOptions,
-    ): ExportResult =
+    private suspend fun exportToPdf(data: ProjectData, exportPath: String, options: ExportOptions): ExportResult =
         withContext(Dispatchers.IO) {
             try {
                 // Note: This is a placeholder implementation
@@ -325,11 +307,7 @@ class ExportManager {
     /**
      * Export to Excel format.
      */
-    private suspend fun exportToExcel(
-        data: ProjectData,
-        exportPath: String,
-        options: ExportOptions,
-    ): ExportResult =
+    private suspend fun exportToExcel(data: ProjectData, exportPath: String, options: ExportOptions): ExportResult =
         withContext(Dispatchers.IO) {
             try {
                 // Note: This is a placeholder implementation
@@ -347,11 +325,7 @@ class ExportManager {
     /**
      * Export to ZIP archive.
      */
-    private suspend fun exportToZip(
-        data: ProjectData,
-        exportPath: String,
-        options: ExportOptions,
-    ): ExportResult =
+    private suspend fun exportToZip(data: ProjectData, exportPath: String, options: ExportOptions): ExportResult =
         withContext(Dispatchers.IO) {
             try {
                 val file = File(exportPath)
@@ -390,11 +364,7 @@ class ExportManager {
     /**
      * Export to PNG format.
      */
-    private suspend fun exportToPng(
-        data: ProjectData,
-        exportPath: String,
-        options: ExportOptions,
-    ): ExportResult =
+    private suspend fun exportToPng(data: ProjectData, exportPath: String, options: ExportOptions): ExportResult =
         withContext(Dispatchers.IO) {
             try {
                 // Note: This is a placeholder implementation
@@ -414,11 +384,7 @@ class ExportManager {
     /**
      * Export to SVG format.
      */
-    private suspend fun exportToSvg(
-        data: ProjectData,
-        exportPath: String,
-        options: ExportOptions,
-    ): ExportResult =
+    private suspend fun exportToSvg(data: ProjectData, exportPath: String, options: ExportOptions): ExportResult =
         withContext(Dispatchers.IO) {
             try {
                 val file = File(exportPath)
@@ -526,19 +492,14 @@ class ExportManager {
         @Volatile
         private var INSTANCE: ExportManager? = null
 
-        fun getInstance(): ExportManager =
-            INSTANCE ?: synchronized(this) {
-                INSTANCE ?: ExportManager().also { INSTANCE = it }
-            }
+        fun getInstance(): ExportManager = INSTANCE ?: synchronized(this) {
+            INSTANCE ?: ExportManager().also { INSTANCE = it }
+        }
     }
 }
 
 // Data classes
-data class ExportFormat(
-    val name: String,
-    val description: String,
-    val extensions: List<String>,
-)
+data class ExportFormat(val name: String, val description: String, val extensions: List<String>)
 
 data class ExportOptions(
     val prettyPrint: Boolean = true,
@@ -568,11 +529,7 @@ data class SimulationResults(
     val visualizations: List<VisualizationData> = emptyList(),
 )
 
-data class VisualizationData(
-    val type: String,
-    val data: Map<String, Any>,
-    val metadata: Map<String, String> = emptyMap(),
-)
+data class VisualizationData(val type: String, val data: Map<String, Any>, val metadata: Map<String, String> = emptyMap())
 
 data class ExportHistoryEntry(
     val timestamp: Date,
@@ -583,32 +540,17 @@ data class ExportHistoryEntry(
 )
 
 sealed class ExportResult {
-    data class Success(
-        val filePath: String,
-    ) : ExportResult()
+    data class Success(val filePath: String) : ExportResult()
 
-    data class Error(
-        val message: String,
-    ) : ExportResult()
+    data class Error(val message: String) : ExportResult()
 }
 
 sealed class ExportEvent {
-    data class ExportStarted(
-        val format: String,
-        val path: String,
-    ) : ExportEvent()
+    data class ExportStarted(val format: String, val path: String) : ExportEvent()
 
-    data class ExportCompleted(
-        val format: String,
-        val path: String,
-        val filePath: String,
-    ) : ExportEvent()
+    data class ExportCompleted(val format: String, val path: String, val filePath: String) : ExportEvent()
 
-    data class ExportFailed(
-        val format: String,
-        val path: String,
-        val error: String,
-    ) : ExportEvent()
+    data class ExportFailed(val format: String, val path: String, val error: String) : ExportEvent()
 
     object HistoryCleared : ExportEvent()
 }

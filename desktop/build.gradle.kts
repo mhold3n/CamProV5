@@ -46,7 +46,7 @@ sourceSets {
             exclude("com/campro/v5/ui/PreviewsPanel.kt")
             exclude("com/campro/v5/ui/SimpleResizableLayout.kt")
             exclude("com/campro/v5/utils/JsonUtils.kt")
-            
+
             // Include only new workflow components (simplified for testing)
             include("com/campro/v5/MinimalTestMain.kt")
             include("com/campro/v5/NewWorkflowMain.kt")
@@ -56,7 +56,7 @@ sourceSets {
             include("com/campro/v5/models/**")
             include("com/campro/v5/utils/**")
             include("com/campro/v5/utils/JsonUtils.kt")
-            
+
             // Include the main desktop application with existing unified optimization tile
             include("com/campro/v5/DesktopMain.kt")
             include("com/campro/v5/ui/CamProTiles.kt")
@@ -82,12 +82,12 @@ sourceSets {
             // include("com/campro/v5/layout/**") // Excluded due to API compatibility issues
         }
     }
-    
+
     val test by getting {
         kotlin {
             // Exclude legacy/unrelated tests from this module's unit test compilation
             exclude("com/campro/v5/collaboration/**")
-            
+
             // Temporarily exclude problematic test files until API issues are fixed
             exclude("com/campro/v5/integration/**")
             exclude("com/campro/v5/performance/**")
@@ -99,7 +99,7 @@ sourceSets {
             exclude("com/campro/v5/error/**")
             exclude("com/campro/v5/accessibility/**")
             exclude("com/campro/v5/TestSuiteRunner.kt")
-            
+
             // Include only simple tests that work with current components
             include("com/campro/v5/SimpleFeatureFlagTest.kt")
         }

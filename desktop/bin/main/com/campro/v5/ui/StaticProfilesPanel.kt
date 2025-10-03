@@ -8,11 +8,7 @@ import androidx.compose.ui.Modifier
 
 /** Placeholder panel to satisfy references; can be expanded with real plots later. */
 @Composable
-fun StaticProfilesPanel(
-    parameters: Map<String, String>,
-    testingMode: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
+fun StaticProfilesPanel(parameters: Map<String, String>, testingMode: Boolean = false, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth()) {
         Text("Static Profiles (placeholder)")
         var count = 0

@@ -102,10 +102,12 @@ log_message "This may take some time. Please be patient."
 log_message ""
 
 # Run the Python integration test script if it exists
-if [ -f "./tests/test_integration.py" ]; then
+if [ -f "./tests/integration/test_pipeline_integration.py" ]; then
+    $PYTHON_CMD ./tests/integration/test_pipeline_integration.py 2>&1 | tee -a "$LOG_FILE"
+elif [ -f "./tests/test_integration.py" ]; then
     $PYTHON_CMD ./tests/test_integration.py 2>&1 | tee -a "$LOG_FILE"
 else
-    log_message "Warning: ./tests/test_integration.py not found. Skipping Python integration tests."
+    log_message "Warning: Integration test files not found. Skipping Python integration tests."
 fi
 
 # Copy the test results to our test run directory if they exist

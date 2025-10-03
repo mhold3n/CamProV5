@@ -18,11 +18,7 @@ import com.campro.v5.layout.LayoutManager
  * Scrollable wrapper for AnimationWidget
  */
 @Composable
-fun ScrollableAnimationWidget(
-    parameters: Map<String, String>,
-    testingMode: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
+fun ScrollableAnimationWidget(parameters: Map<String, String>, testingMode: Boolean = false, modifier: Modifier = Modifier) {
     val verticalScrollState = rememberScrollState()
     val horizontalScrollState = rememberScrollState()
 
@@ -32,10 +28,10 @@ fun ScrollableAnimationWidget(
         // Scrollable content
         Box(
             modifier =
-                Modifier
-                    .verticalScroll(verticalScrollState)
-                    .horizontalScroll(horizontalScrollState)
-                    .padding(8.dp),
+            Modifier
+                .verticalScroll(verticalScrollState)
+                .horizontalScroll(horizontalScrollState)
+                .padding(8.dp),
         ) {
             // Use fillMaxSize instead of fixed size
             Box(
@@ -54,11 +50,7 @@ fun ScrollableAnimationWidget(
  * Scrollable wrapper for PlotCarouselWidget
  */
 @Composable
-fun ScrollablePlotCarouselWidget(
-    parameters: Map<String, String>,
-    testingMode: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
+fun ScrollablePlotCarouselWidget(parameters: Map<String, String>, testingMode: Boolean = false, modifier: Modifier = Modifier) {
     val verticalScrollState = rememberScrollState()
     val horizontalScrollState = rememberScrollState()
 
@@ -68,10 +60,10 @@ fun ScrollablePlotCarouselWidget(
         // Scrollable content
         Box(
             modifier =
-                Modifier
-                    .verticalScroll(verticalScrollState)
-                    .horizontalScroll(horizontalScrollState)
-                    .padding(8.dp),
+            Modifier
+                .verticalScroll(verticalScrollState)
+                .horizontalScroll(horizontalScrollState)
+                .padding(8.dp),
         ) {
             // Use fillMaxSize instead of fixed size
             Box(
@@ -90,11 +82,7 @@ fun ScrollablePlotCarouselWidget(
  * Scrollable wrapper for DataDisplayPanel
  */
 @Composable
-fun ScrollableDataDisplayPanel(
-    parameters: Map<String, String>,
-    testingMode: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
+fun ScrollableDataDisplayPanel(parameters: Map<String, String>, testingMode: Boolean = false, modifier: Modifier = Modifier) {
     val verticalScrollState = rememberScrollState()
     val horizontalScrollState = rememberScrollState()
 
@@ -104,10 +92,10 @@ fun ScrollableDataDisplayPanel(
         // Scrollable content
         Box(
             modifier =
-                Modifier
-                    .verticalScroll(verticalScrollState)
-                    .horizontalScroll(horizontalScrollState)
-                    .padding(8.dp),
+            Modifier
+                .verticalScroll(verticalScrollState)
+                .horizontalScroll(horizontalScrollState)
+                .padding(8.dp),
         ) {
             // Use fillMaxSize instead of fixed size
             Box(
@@ -141,9 +129,9 @@ fun ScrollableParameterInputForm(
         // Scrollable content
         Box(
             modifier =
-                Modifier
-                    .verticalScroll(verticalScrollState)
-                    .padding(8.dp),
+            Modifier
+                .verticalScroll(verticalScrollState)
+                .padding(8.dp),
         ) {
             // The parameter form has its own internal scrolling, but this provides outer scrolling
             Box(
@@ -160,21 +148,17 @@ fun ScrollableParameterInputForm(
 }
 
 @Composable
-fun ScrollableStaticProfilesPanel(
-    parameters: Map<String, String>,
-    testingMode: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
+fun ScrollableStaticProfilesPanel(parameters: Map<String, String>, testingMode: Boolean = false, modifier: Modifier = Modifier) {
     val verticalScrollState = rememberScrollState()
     val horizontalScrollState = rememberScrollState()
 
     Box(modifier = modifier.fillMaxSize()) {
         Box(
             modifier =
-                Modifier
-                    .verticalScroll(verticalScrollState)
-                    .horizontalScroll(horizontalScrollState)
-                    .padding(8.dp),
+            Modifier
+                .verticalScroll(verticalScrollState)
+                .horizontalScroll(horizontalScrollState)
+                .padding(8.dp),
         ) {
             Box(Modifier.fillMaxSize()) {
                 StaticProfilesPanel(
@@ -205,23 +189,23 @@ fun ScrollableContent(
         // Scrollable content with extra top padding to compensate for removed titles
         Box(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .then(
-                        if (enableVerticalScroll) {
-                            Modifier.verticalScroll(scrollState)
-                        } else {
-                            Modifier
-                        },
-                    ).then(
-                        if (enableHorizontalScroll) {
-                            Modifier.horizontalScroll(rememberScrollState())
-                        } else {
-                            Modifier
-                        },
-                    )
-                    // Add extra top padding to compensate for removed titles
-                    .padding(top = 16.dp, start = 8.dp, end = 8.dp, bottom = 8.dp),
+            Modifier
+                .fillMaxSize()
+                .then(
+                    if (enableVerticalScroll) {
+                        Modifier.verticalScroll(scrollState)
+                    } else {
+                        Modifier
+                    },
+                ).then(
+                    if (enableHorizontalScroll) {
+                        Modifier.horizontalScroll(rememberScrollState())
+                    } else {
+                        Modifier
+                    },
+                )
+                // Add extra top padding to compensate for removed titles
+                .padding(top = 16.dp, start = 8.dp, end = 8.dp, bottom = 8.dp),
         ) {
             content()
         }

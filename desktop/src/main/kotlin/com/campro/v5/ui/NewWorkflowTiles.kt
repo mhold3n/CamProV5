@@ -10,23 +10,19 @@ import com.campro.v5.models.OptimizationResult
  * Simplified version that only includes the new workflow components.
  */
 @Composable
-fun createNewWorkflowTiles(
-    onResultsReceived: (OptimizationResult) -> Unit
-): List<TileConfig> {
-    return listOf(
-        TileConfig(
-            id = "unified_optimization",
-            title = "Unified Optimization",
-            icon = Icons.Default.AutoAwesome,
-            type = TileType.GRAPHICS,
-            minSize = TileSize.LARGE,
-            maxSize = TileSize.XLARGE,
-            defaultSize = TileSize.LARGE,
-            content = { 
-                UnifiedOptimizationTile(
-                    onResultsReceived = onResultsReceived
-                )
-            }
-        )
-    )
-}
+fun createNewWorkflowTiles(onResultsReceived: (OptimizationResult) -> Unit): List<TileConfig> = listOf(
+    TileConfig(
+        id = "unified_optimization",
+        title = "Unified Optimization",
+        icon = Icons.Default.AutoAwesome,
+        type = TileType.GRAPHICS,
+        minSize = TileSize.LARGE,
+        maxSize = TileSize.XLARGE,
+        defaultSize = TileSize.LARGE,
+        content = {
+            UnifiedOptimizationTile(
+                onResultsReceived = onResultsReceived,
+            )
+        },
+    ),
+)

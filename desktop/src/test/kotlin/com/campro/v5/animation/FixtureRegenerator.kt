@@ -35,7 +35,7 @@ class FixtureRegenerator {
                 rampProfile = (
                     (p["rampProfile"] as? String)?.let { runCatching { RampProfile.valueOf(it) }.getOrNull() }
                         ?: RampProfile.Cycloidal
-                ),
+                    ),
                 dwellTdcDeg = (p["dwellTdcDeg"] as? Number)?.toDouble() ?: 0.0,
                 dwellBdcDeg = (p["dwellBdcDeg"] as? Number)?.toDouble() ?: 0.0,
                 rampAfterTdcDeg = (p["rampAfterTdcDeg"] as? Number)?.toDouble() ?: 0.0,
@@ -60,7 +60,7 @@ class FixtureRegenerator {
                             meta.created_utc ?: java.time.Instant
                                 .now()
                                 .toString()
-                        ),
+                            ),
                         "params" to meta.params,
                     ),
                 "stepDeg" to generated.stepDeg,

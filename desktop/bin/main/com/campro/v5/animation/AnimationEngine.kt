@@ -4,7 +4,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import com.google.gson.JsonArray
 import java.io.File
 
 /**
@@ -40,13 +39,7 @@ interface AnimationEngine {
      * @param scale The scale factor
      * @param offset The offset
      */
-    fun drawFrame(
-        drawScope: DrawScope,
-        canvasWidth: Float,
-        canvasHeight: Float,
-        scale: Float,
-        offset: Offset,
-    )
+    fun drawFrame(drawScope: DrawScope, canvasWidth: Float, canvasHeight: Float, scale: Float, offset: Offset)
 
     /**
      * Get the animation parameters.
@@ -87,23 +80,17 @@ object AnimationEngineFactory {
      * @param parameters The initial parameters for the animation
      * @return The created animation engine
      */
-    fun createEngine(
-        type: AnimationType,
-        parameters: Map<String, String>,
-    ): AnimationEngine =
-        when (type) {
-            AnimationType.COMPONENT_BASED -> ComponentBasedAnimationEngine(parameters)
-            AnimationType.FEA_BASED -> FeaBasedAnimationEngine(parameters)
-        }
+    fun createEngine(type: AnimationType, parameters: Map<String, String>): AnimationEngine = when (type) {
+        AnimationType.COMPONENT_BASED -> ComponentBasedAnimationEngine(parameters)
+        AnimationType.FEA_BASED -> FeaBasedAnimationEngine(parameters)
+    }
 }
 
 /**
  * Animation engine for component-based animation.
  * This engine uses the motion law implementation from the Rust FEA engine.
  */
-class ComponentBasedAnimationEngine(
-    private var parameters: Map<String, String>,
-) : AnimationEngine {
+class ComponentBasedAnimationEngine(private var parameters: Map<String, String>) : AnimationEngine {
     private var currentAngle: Float = 0f
 
     // Use the global MotionLawEngine singleton that receives samples from parameter updates
@@ -136,13 +123,7 @@ class ComponentBasedAnimationEngine(
         cachedComponentPositions = null
     }
 
-    override fun drawFrame(
-        drawScope: DrawScope,
-        canvasWidth: Float,
-        canvasHeight: Float,
-        scale: Float,
-        offset: Offset,
-    ) {
+    override fun drawFrame(drawScope: DrawScope, canvasWidth: Float, canvasHeight: Float, scale: Float, offset: Offset) {
         println("DEBUG: ComponentBasedAnimationEngine.drawFrame called - Litvin active: ${motionLawEngine.isLitvinActive()}, tables: ${motionLawEngine.getLitvinTables() != null}, curves: ${motionLawEngine.getLitvinCurves() != null}")
         // Litvin rendering path (if enabled and data available)
         if (motionLawEngine.isLitvinActive() && motionLawEngine.getLitvinTables() != null && motionLawEngine.getLitvinCurves() != null) {
@@ -217,9 +198,7 @@ class ComponentBasedAnimationEngine(
  * Animation engine for FEA-based animation.
  * This engine uses the results of the FEA engine to generate the animation.
  */
-class FeaBasedAnimationEngine(
-    private var parameters: Map<String, String>,
-) : AnimationEngine {
+class FeaBasedAnimationEngine(private var parameters: Map<String, String>) : AnimationEngine {
     private var currentAngle: Float = 0f
     private var feaResults: File? = null
     private var analysisData: AnalysisData? = null
@@ -245,13 +224,7 @@ class FeaBasedAnimationEngine(
         analysisData = FeaResultsLoader.loadResults(resultsFile)
     }
 
-    override fun drawFrame(
-        drawScope: DrawScope,
-        canvasWidth: Float,
-        canvasHeight: Float,
-        scale: Float,
-        offset: Offset,
-    ) {
+    override fun drawFrame(drawScope: DrawScope, canvasWidth: Float, canvasHeight: Float, scale: Float, offset: Offset) {
         // Draw the FEA results
         FeaBasedAnimationRenderer.drawFrame(
             drawScope,
@@ -306,10 +279,7 @@ class AnimationManager {
      * @param parameters The initial parameters for the animation
      * @return The created animation engine
      */
-    fun createAndSetEngine(
-        type: AnimationType,
-        parameters: Map<String, String>,
-    ): AnimationEngine {
+    fun createAndSetEngine(type: AnimationType, parameters: Map<String, String>): AnimationEngine {
         val engine = AnimationEngineFactory.createEngine(type, parameters)
         setCurrentEngine(engine)
         return engine
@@ -329,11 +299,7 @@ class AnimationManager {
 /**
  * Data class for component positions.
  */
-data class ComponentPositions(
-    val pistonPosition: Offset,
-    val rodPosition: Offset,
-    val camPosition: Offset,
-)
+data class ComponentPositions(val pistonPosition: Offset, val rodPosition: Offset, val camPosition: Offset)
 
 /**
  * Placeholder for the FEA results loader.
@@ -442,11 +408,7 @@ object FeaResultsLoader {
 /**
  * Data class for FEA analysis data.
  */
-data class AnalysisData(
-    val displacements: Map<Int, Offset>,
-    val stresses: Map<Int, Float>,
-    val timeSteps: List<Float>,
-)
+data class AnalysisData(val displacements: Map<Int, Offset>, val stresses: Map<Int, Float>, val timeSteps: List<Float>)
 
 // Renderer classes are now defined in their own files:
 // - CycloidalAnimationRenderer.kt

@@ -124,10 +124,7 @@ class RecentFilesManager {
      * @param file The file to add
      * @param projectName The name of the project (optional)
      */
-    fun addRecentFile(
-        file: File,
-        projectName: String? = null,
-    ) {
+    fun addRecentFile(file: File, projectName: String? = null) {
         // Check if the file exists
         if (!file.exists() || !file.isFile) {
             return
@@ -301,12 +298,11 @@ class RecentFilesManager {
      * @param ascending Whether to sort in ascending order
      * @return A list of recent files sorted by last opened time
      */
-    fun getRecentFilesByLastOpened(ascending: Boolean = false): List<RecentFile> =
-        if (ascending) {
-            _recentFiles.value.sortedBy { it.lastOpened }
-        } else {
-            _recentFiles.value.sortedByDescending { it.lastOpened }
-        }
+    fun getRecentFilesByLastOpened(ascending: Boolean = false): List<RecentFile> = if (ascending) {
+        _recentFiles.value.sortedBy { it.lastOpened }
+    } else {
+        _recentFiles.value.sortedByDescending { it.lastOpened }
+    }
 
     /**
      * Get recent files sorted by name.
@@ -314,12 +310,11 @@ class RecentFilesManager {
      * @param ascending Whether to sort in ascending order
      * @return A list of recent files sorted by name
      */
-    fun getRecentFilesByName(ascending: Boolean = true): List<RecentFile> =
-        if (ascending) {
-            _recentFiles.value.sortedBy { it.name }
-        } else {
-            _recentFiles.value.sortedByDescending { it.name }
-        }
+    fun getRecentFilesByName(ascending: Boolean = true): List<RecentFile> = if (ascending) {
+        _recentFiles.value.sortedBy { it.name }
+    } else {
+        _recentFiles.value.sortedByDescending { it.name }
+    }
 
     /**
      * Get recent files sorted by file size.
@@ -327,12 +322,11 @@ class RecentFilesManager {
      * @param ascending Whether to sort in ascending order
      * @return A list of recent files sorted by file size
      */
-    fun getRecentFilesBySize(ascending: Boolean = true): List<RecentFile> =
-        if (ascending) {
-            _recentFiles.value.sortedBy { it.fileSize }
-        } else {
-            _recentFiles.value.sortedByDescending { it.fileSize }
-        }
+    fun getRecentFilesBySize(ascending: Boolean = true): List<RecentFile> = if (ascending) {
+        _recentFiles.value.sortedBy { it.fileSize }
+    } else {
+        _recentFiles.value.sortedByDescending { it.fileSize }
+    }
 
     /**
      * Get recent files sorted by last modified time.
@@ -340,12 +334,11 @@ class RecentFilesManager {
      * @param ascending Whether to sort in ascending order
      * @return A list of recent files sorted by last modified time
      */
-    fun getRecentFilesByLastModified(ascending: Boolean = false): List<RecentFile> =
-        if (ascending) {
-            _recentFiles.value.sortedBy { it.lastModifiedTime }
-        } else {
-            _recentFiles.value.sortedByDescending { it.lastModifiedTime }
-        }
+    fun getRecentFilesByLastModified(ascending: Boolean = false): List<RecentFile> = if (ascending) {
+        _recentFiles.value.sortedBy { it.lastModifiedTime }
+    } else {
+        _recentFiles.value.sortedByDescending { it.lastModifiedTime }
+    }
 
     /**
      * Get a preview of a file.
@@ -432,13 +425,12 @@ data class RecentFile(
      *
      * @return A formatted string of the file size
      */
-    fun getFormattedFileSize(): String =
-        when {
-            fileSize < 1024 -> "$fileSize B"
-            fileSize < 1024 * 1024 -> "${fileSize / 1024} KB"
-            fileSize < 1024 * 1024 * 1024 -> "${fileSize / (1024 * 1024)} MB"
-            else -> "${fileSize / (1024 * 1024 * 1024)} GB"
-        }
+    fun getFormattedFileSize(): String = when {
+        fileSize < 1024 -> "$fileSize B"
+        fileSize < 1024 * 1024 -> "${fileSize / 1024} KB"
+        fileSize < 1024 * 1024 * 1024 -> "${fileSize / (1024 * 1024)} MB"
+        else -> "${fileSize / (1024 * 1024 * 1024)} GB"
+    }
 
     /**
      * Get a formatted string of the creation time.
@@ -491,18 +483,14 @@ sealed class RecentFilesEvent {
      *
      * @param file The added file
      */
-    data class FileAdded(
-        val file: RecentFile,
-    ) : RecentFilesEvent()
+    data class FileAdded(val file: RecentFile) : RecentFilesEvent()
 
     /**
      * Event emitted when a file is removed from the recent files list.
      *
      * @param filePath The path of the removed file
      */
-    data class FileRemoved(
-        val filePath: String,
-    ) : RecentFilesEvent()
+    data class FileRemoved(val filePath: String) : RecentFilesEvent()
 
     /**
      * Event emitted when all files are cleared from the recent files list.
@@ -514,18 +502,14 @@ sealed class RecentFilesEvent {
      *
      * @param file The pinned file
      */
-    data class FilePinned(
-        val file: RecentFile,
-    ) : RecentFilesEvent()
+    data class FilePinned(val file: RecentFile) : RecentFilesEvent()
 
     /**
      * Event emitted when a file is unpinned.
      *
      * @param filePath The path of the unpinned file
      */
-    data class FileUnpinned(
-        val filePath: String,
-    ) : RecentFilesEvent()
+    data class FileUnpinned(val filePath: String) : RecentFilesEvent()
 }
 
 /**

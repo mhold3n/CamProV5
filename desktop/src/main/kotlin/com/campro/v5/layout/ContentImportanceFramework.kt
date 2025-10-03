@@ -12,10 +12,7 @@ import androidx.compose.ui.unit.dp
  */
 
 // Content importance hierarchy with five distinct levels
-enum class ContentImportance(
-    val weight: Float,
-    val description: String,
-) {
+enum class ContentImportance(val weight: Float, val description: String) {
     CRITICAL(1.0f, "Essential content that must always be visible"),
     HIGH(0.8f, "Important content that should be prominently displayed"),
     MEDIUM(0.6f, "Standard content with moderate importance"),
@@ -26,10 +23,7 @@ enum class ContentImportance(
 /**
  * Content type enumeration covering different panel content categories
  */
-enum class ContentType(
-    val defaultImportance: ContentImportance,
-    val preferredAspectRatio: Float,
-) {
+enum class ContentType(val defaultImportance: ContentImportance, val preferredAspectRatio: Float) {
     PARAMETERS(ContentImportance.HIGH, 0.75f), // Slightly taller than wide
     ANIMATION(ContentImportance.CRITICAL, 1.0f), // Square aspect ratio
     PLOTS(ContentImportance.HIGH, 1.33f), // Wider than tall for better visualization
@@ -82,11 +76,7 @@ data class PanelConfiguration(
     /**
      * Calculate dynamic importance based on application state and workflow
      */
-    fun calculateDynamicImportance(
-        applicationState: ApplicationState,
-        workflowType: WorkflowType,
-        usageFrequency: Float = 1.0f,
-    ): Float {
+    fun calculateDynamicImportance(applicationState: ApplicationState, workflowType: WorkflowType, usageFrequency: Float = 1.0f): Float {
         var adjustedWeight = baseImportance.weight
 
         // Adjust based on application state
@@ -232,10 +222,7 @@ data class PanelUsageData(
     /**
      * Calculate usage frequency score (0.0 to 1.0)
      */
-    fun calculateUsageFrequency(
-        currentTime: Long,
-        totalApplicationTime: Long,
-    ): Float {
+    fun calculateUsageFrequency(currentTime: Long, totalApplicationTime: Long): Float {
         if (totalApplicationTime <= 0) return 0.5f
 
         val visibilityRatio = totalTimeVisible.toFloat() / totalApplicationTime

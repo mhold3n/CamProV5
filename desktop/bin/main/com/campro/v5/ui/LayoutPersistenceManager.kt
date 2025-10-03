@@ -71,22 +71,12 @@ data class SerializableTabGroup(
     val height: Float,
 )
 
-data class SerializableRect(
-    val left: Float,
-    val top: Float,
-    val right: Float,
-    val bottom: Float,
-)
+data class SerializableRect(val left: Float, val top: Float, val right: Float, val bottom: Float)
 
 /**
  * Layout history entry for undo/redo functionality
  */
-data class LayoutHistoryEntry(
-    val id: String,
-    val timestamp: LocalDateTime,
-    val action: String,
-    val layout: SerializableLayout,
-)
+data class LayoutHistoryEntry(val id: String, val timestamp: LocalDateTime, val action: String, val layout: SerializableLayout)
 
 /**
  * Layout Persistence Manager for saving, loading, and managing panel layouts
@@ -131,187 +121,181 @@ class LayoutPersistenceManager {
         template: LayoutTemplate,
         dockingManager: DockingManager,
         containerBounds: androidx.compose.ui.geometry.Rect,
-    ): Result<String> =
-        withContext(Dispatchers.IO) {
-            try {
-                val layoutId = UUID.randomUUID().toString()
-                val timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    ): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val layoutId = UUID.randomUUID().toString()
+            val timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 
-                val panels =
-                    dockingManager.panels.value.values.map { panel ->
-                        SerializablePanelState(
-                            id = panel.id,
-                            title = panel.title,
-                            state = panel.state.name,
-                            x = panel.position.x.value,
-                            y = panel.position.y.value,
-                            width = panel.size.first.value,
-                            height = panel.size.second.value,
-                            minWidth = 200f, // Default minimum width
-                            minHeight = 150f, // Default minimum height
-                            maxWidth = 800f, // Default maximum width
-                            maxHeight = 600f, // Default maximum height
-                            dockZone = panel.dockZone.name,
-                            tabGroupId = panel.tabGroupId,
-                            isMinimized = panel.isMinimized,
-                            zIndex = panel.zIndex,
-                        )
-                    }
-
-                val tabGroups =
-                    dockingManager.tabGroups.value.values.map { tabGroup ->
-                        SerializableTabGroup(
-                            id = tabGroup.id,
-                            title = tabGroup.title,
-                            panelIds = tabGroup.panelIds,
-                            activePanel = tabGroup.activePanel,
-                            x = tabGroup.position.x.value,
-                            y = tabGroup.position.y.value,
-                            width = tabGroup.size.first.value,
-                            height = tabGroup.size.second.value,
-                        )
-                    }
-
-                val layout =
-                    SerializableLayout(
-                        id = layoutId,
-                        name = name,
-                        description = description,
-                        template = template,
-                        createdAt = timestamp,
-                        modifiedAt = timestamp,
-                        panels = panels,
-                        tabGroups = tabGroups,
-                        containerBounds =
-                            SerializableRect(
-                                left = containerBounds.left,
-                                top = containerBounds.top,
-                                right = containerBounds.right,
-                                bottom = containerBounds.bottom,
-                            ),
+            val panels =
+                dockingManager.panels.value.values.map { panel ->
+                    SerializablePanelState(
+                        id = panel.id,
+                        title = panel.title,
+                        state = panel.state.name,
+                        x = panel.position.x.value,
+                        y = panel.position.y.value,
+                        width = panel.size.first.value,
+                        height = panel.size.second.value,
+                        minWidth = 200f, // Default minimum width
+                        minHeight = 150f, // Default minimum height
+                        maxWidth = 800f, // Default maximum width
+                        maxHeight = 600f, // Default maximum height
+                        dockZone = panel.dockZone.name,
+                        tabGroupId = panel.tabGroupId,
+                        isMinimized = panel.isMinimized,
+                        zIndex = panel.zIndex,
                     )
-
-                // Save to file
-                val filename = "${name.replace(" ", "_").lowercase()}_$layoutId.json"
-                val file = File(layoutsDirectory, filename)
-                FileWriter(file).use { writer ->
-                    gson.toJson(layout, writer)
                 }
 
-                // Update in-memory list
-                _savedLayouts.value = _savedLayouts.value + layout
+            val tabGroups =
+                dockingManager.tabGroups.value.values.map { tabGroup ->
+                    SerializableTabGroup(
+                        id = tabGroup.id,
+                        title = tabGroup.title,
+                        panelIds = tabGroup.panelIds,
+                        activePanel = tabGroup.activePanel,
+                        x = tabGroup.position.x.value,
+                        y = tabGroup.position.y.value,
+                        width = tabGroup.size.first.value,
+                        height = tabGroup.size.second.value,
+                    )
+                }
 
-                // Add to history
-                addToHistory("SAVE", layout)
+            val layout =
+                SerializableLayout(
+                    id = layoutId,
+                    name = name,
+                    description = description,
+                    template = template,
+                    createdAt = timestamp,
+                    modifiedAt = timestamp,
+                    panels = panels,
+                    tabGroups = tabGroups,
+                    containerBounds =
+                    SerializableRect(
+                        left = containerBounds.left,
+                        top = containerBounds.top,
+                        right = containerBounds.right,
+                        bottom = containerBounds.bottom,
+                    ),
+                )
 
-                Result.success(layoutId)
-            } catch (e: Exception) {
-                Result.failure(e)
+            // Save to file
+            val filename = "${name.replace(" ", "_").lowercase()}_$layoutId.json"
+            val file = File(layoutsDirectory, filename)
+            FileWriter(file).use { writer ->
+                gson.toJson(layout, writer)
             }
+
+            // Update in-memory list
+            _savedLayouts.value = _savedLayouts.value + layout
+
+            // Add to history
+            addToHistory("SAVE", layout)
+
+            Result.success(layoutId)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
+    }
 
     /**
      * Load a layout and apply it to the docking manager
      */
-    suspend fun loadLayout(
-        layoutId: String,
-        dockingManager: DockingManager,
-    ): Result<SerializableLayout> =
-        withContext(Dispatchers.IO) {
-            try {
-                val layout =
-                    _savedLayouts.value.find { it.id == layoutId }
-                        ?: return@withContext Result.failure(Exception("Layout not found: $layoutId"))
+    suspend fun loadLayout(layoutId: String, dockingManager: DockingManager): Result<SerializableLayout> = withContext(Dispatchers.IO) {
+        try {
+            val layout =
+                _savedLayouts.value.find { it.id == layoutId }
+                    ?: return@withContext Result.failure(Exception("Layout not found: $layoutId"))
 
-                // Clear existing state
-                dockingManager.panels.value.keys.forEach { panelId ->
-                    dockingManager.unregisterPanel(panelId)
-                }
-
-                // Restore panels
-                layout.panels.forEach { panelData ->
-                    val panelState =
-                        PanelState(
-                            x = panelData.x.dp,
-                            y = panelData.y.dp,
-                            width = panelData.width.dp,
-                            height = panelData.height.dp,
-                            minWidth = panelData.minWidth.dp,
-                            minHeight = panelData.minHeight.dp,
-                            maxWidth = panelData.maxWidth.dp,
-                            maxHeight = panelData.maxHeight.dp,
-                        )
-
-                    dockingManager.registerPanel(
-                        id = panelData.id,
-                        title = panelData.title,
-                        initialPosition = DpOffset(panelData.x.dp, panelData.y.dp),
-                        initialSize = panelData.width.dp to panelData.height.dp,
-                        initialState = PanelDockState.valueOf(panelData.state),
-                    )
-
-                    // Apply minimization state
-                    if (panelData.isMinimized) {
-                        dockingManager.minimizePanel(panelData.id)
-                    }
-                }
-
-                // Restore tab groups
-                layout.tabGroups.forEach { tabGroupData ->
-                    dockingManager.createTabGroup(
-                        panelIds = tabGroupData.panelIds,
-                        position = DpOffset(tabGroupData.x.dp, tabGroupData.y.dp),
-                        size = tabGroupData.width.dp to tabGroupData.height.dp,
-                    )
-                }
-
-                // Update container bounds
-                val containerBounds =
-                    androidx.compose.ui.geometry.Rect(
-                        left = layout.containerBounds.left,
-                        top = layout.containerBounds.top,
-                        right = layout.containerBounds.right,
-                        bottom = layout.containerBounds.bottom,
-                    )
-                dockingManager.updateContainerBounds(containerBounds)
-
-                // Add to history
-                addToHistory("LOAD", layout)
-
-                Result.success(layout)
-            } catch (e: Exception) {
-                Result.failure(e)
+            // Clear existing state
+            dockingManager.panels.value.keys.forEach { panelId ->
+                dockingManager.unregisterPanel(panelId)
             }
+
+            // Restore panels
+            layout.panels.forEach { panelData ->
+                val panelState =
+                    PanelState(
+                        x = panelData.x.dp,
+                        y = panelData.y.dp,
+                        width = panelData.width.dp,
+                        height = panelData.height.dp,
+                        minWidth = panelData.minWidth.dp,
+                        minHeight = panelData.minHeight.dp,
+                        maxWidth = panelData.maxWidth.dp,
+                        maxHeight = panelData.maxHeight.dp,
+                    )
+
+                dockingManager.registerPanel(
+                    id = panelData.id,
+                    title = panelData.title,
+                    initialPosition = DpOffset(panelData.x.dp, panelData.y.dp),
+                    initialSize = panelData.width.dp to panelData.height.dp,
+                    initialState = PanelDockState.valueOf(panelData.state),
+                )
+
+                // Apply minimization state
+                if (panelData.isMinimized) {
+                    dockingManager.minimizePanel(panelData.id)
+                }
+            }
+
+            // Restore tab groups
+            layout.tabGroups.forEach { tabGroupData ->
+                dockingManager.createTabGroup(
+                    panelIds = tabGroupData.panelIds,
+                    position = DpOffset(tabGroupData.x.dp, tabGroupData.y.dp),
+                    size = tabGroupData.width.dp to tabGroupData.height.dp,
+                )
+            }
+
+            // Update container bounds
+            val containerBounds =
+                androidx.compose.ui.geometry.Rect(
+                    left = layout.containerBounds.left,
+                    top = layout.containerBounds.top,
+                    right = layout.containerBounds.right,
+                    bottom = layout.containerBounds.bottom,
+                )
+            dockingManager.updateContainerBounds(containerBounds)
+
+            // Add to history
+            addToHistory("LOAD", layout)
+
+            Result.success(layout)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
+    }
 
     /**
      * Delete a saved layout
      */
-    suspend fun deleteLayout(layoutId: String): Result<Unit> =
-        withContext(Dispatchers.IO) {
-            try {
-                val layout =
-                    _savedLayouts.value.find { it.id == layoutId }
-                        ?: return@withContext Result.failure(Exception("Layout not found: $layoutId"))
+    suspend fun deleteLayout(layoutId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val layout =
+                _savedLayouts.value.find { it.id == layoutId }
+                    ?: return@withContext Result.failure(Exception("Layout not found: $layoutId"))
 
-                // Find and delete the file
-                val filename = "${layout.name.replace(" ", "_").lowercase()}_$layoutId.json"
-                val file = File(layoutsDirectory, filename)
-                if (file.exists()) {
-                    file.delete()
-                }
-
-                // Update in-memory list
-                _savedLayouts.value = _savedLayouts.value.filter { it.id != layoutId }
-
-                // Add to history
-                addToHistory("DELETE", layout)
-
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Result.failure(e)
+            // Find and delete the file
+            val filename = "${layout.name.replace(" ", "_").lowercase()}_$layoutId.json"
+            val file = File(layoutsDirectory, filename)
+            if (file.exists()) {
+                file.delete()
             }
+
+            // Update in-memory list
+            _savedLayouts.value = _savedLayouts.value.filter { it.id != layoutId }
+
+            // Add to history
+            addToHistory("DELETE", layout)
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
+    }
 
     /**
      * Create layout templates for different workflows
@@ -343,175 +327,172 @@ class LayoutPersistenceManager {
     /**
      * Create development layout template
      */
-    private fun createDevelopmentTemplate(): SerializableLayout =
-        SerializableLayout(
-            id = "dev_template",
-            name = "Development Layout",
-            description = "Optimized for development with larger parameter panel",
-            template = LayoutTemplate.DEVELOPMENT,
-            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            modifiedAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            panels =
-                listOf(
-                    SerializablePanelState(
-                        id = "parameter_panel",
-                        title = "Parameters",
-                        state = "DOCKED",
-                        x = 0f,
-                        y = 0f,
-                        width = 600f,
-                        height = 500f,
-                        minWidth = 400f,
-                        minHeight = 300f,
-                        maxWidth = 800f,
-                        maxHeight = 700f,
-                        dockZone = "LEFT",
-                        tabGroupId = null,
-                        isMinimized = false,
-                        zIndex = 0f,
-                    ),
-                    SerializablePanelState(
-                        id = "animation_panel",
-                        title = "Animation",
-                        state = "DOCKED",
-                        x = 620f,
-                        y = 0f,
-                        width = 400f,
-                        height = 300f,
-                        minWidth = 300f,
-                        minHeight = 200f,
-                        maxWidth = 600f,
-                        maxHeight = 500f,
-                        dockZone = "RIGHT",
-                        tabGroupId = null,
-                        isMinimized = false,
-                        zIndex = 0f,
-                    ),
-                ),
-            tabGroups = emptyList(),
-            containerBounds = SerializableRect(0f, 0f, 1200f, 800f),
-        )
+    private fun createDevelopmentTemplate(): SerializableLayout = SerializableLayout(
+        id = "dev_template",
+        name = "Development Layout",
+        description = "Optimized for development with larger parameter panel",
+        template = LayoutTemplate.DEVELOPMENT,
+        createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+        modifiedAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+        panels =
+        listOf(
+            SerializablePanelState(
+                id = "parameter_panel",
+                title = "Parameters",
+                state = "DOCKED",
+                x = 0f,
+                y = 0f,
+                width = 600f,
+                height = 500f,
+                minWidth = 400f,
+                minHeight = 300f,
+                maxWidth = 800f,
+                maxHeight = 700f,
+                dockZone = "LEFT",
+                tabGroupId = null,
+                isMinimized = false,
+                zIndex = 0f,
+            ),
+            SerializablePanelState(
+                id = "animation_panel",
+                title = "Animation",
+                state = "DOCKED",
+                x = 620f,
+                y = 0f,
+                width = 400f,
+                height = 300f,
+                minWidth = 300f,
+                minHeight = 200f,
+                maxWidth = 600f,
+                maxHeight = 500f,
+                dockZone = "RIGHT",
+                tabGroupId = null,
+                isMinimized = false,
+                zIndex = 0f,
+            ),
+        ),
+        tabGroups = emptyList(),
+        containerBounds = SerializableRect(0f, 0f, 1200f, 800f),
+    )
 
     /**
      * Create analysis layout template
      */
-    private fun createAnalysisTemplate(): SerializableLayout =
-        SerializableLayout(
-            id = "analysis_template",
-            name = "Analysis Layout",
-            description = "Optimized for data analysis with larger plot and data panels",
-            template = LayoutTemplate.ANALYSIS,
-            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            modifiedAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            panels =
-                listOf(
-                    SerializablePanelState(
-                        id = "parameter_panel",
-                        title = "Parameters",
-                        state = "DOCKED",
-                        x = 0f,
-                        y = 0f,
-                        width = 300f,
-                        height = 400f,
-                        minWidth = 250f,
-                        minHeight = 300f,
-                        maxWidth = 500f,
-                        maxHeight = 600f,
-                        dockZone = "LEFT",
-                        tabGroupId = null,
-                        isMinimized = false,
-                        zIndex = 0f,
-                    ),
-                    SerializablePanelState(
-                        id = "plot_panel",
-                        title = "Plots",
-                        state = "DOCKED",
-                        x = 320f,
-                        y = 0f,
-                        width = 600f,
-                        height = 400f,
-                        minWidth = 400f,
-                        minHeight = 300f,
-                        maxWidth = 800f,
-                        maxHeight = 600f,
-                        dockZone = "CENTER",
-                        tabGroupId = null,
-                        isMinimized = false,
-                        zIndex = 0f,
-                    ),
-                    SerializablePanelState(
-                        id = "data_panel",
-                        title = "Data Display",
-                        state = "DOCKED",
-                        x = 320f,
-                        y = 420f,
-                        width = 600f,
-                        height = 300f,
-                        minWidth = 400f,
-                        minHeight = 200f,
-                        maxWidth = 800f,
-                        maxHeight = 500f,
-                        dockZone = "BOTTOM",
-                        tabGroupId = null,
-                        isMinimized = false,
-                        zIndex = 0f,
-                    ),
-                ),
-            tabGroups = emptyList(),
-            containerBounds = SerializableRect(0f, 0f, 1200f, 800f),
-        )
+    private fun createAnalysisTemplate(): SerializableLayout = SerializableLayout(
+        id = "analysis_template",
+        name = "Analysis Layout",
+        description = "Optimized for data analysis with larger plot and data panels",
+        template = LayoutTemplate.ANALYSIS,
+        createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+        modifiedAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+        panels =
+        listOf(
+            SerializablePanelState(
+                id = "parameter_panel",
+                title = "Parameters",
+                state = "DOCKED",
+                x = 0f,
+                y = 0f,
+                width = 300f,
+                height = 400f,
+                minWidth = 250f,
+                minHeight = 300f,
+                maxWidth = 500f,
+                maxHeight = 600f,
+                dockZone = "LEFT",
+                tabGroupId = null,
+                isMinimized = false,
+                zIndex = 0f,
+            ),
+            SerializablePanelState(
+                id = "plot_panel",
+                title = "Plots",
+                state = "DOCKED",
+                x = 320f,
+                y = 0f,
+                width = 600f,
+                height = 400f,
+                minWidth = 400f,
+                minHeight = 300f,
+                maxWidth = 800f,
+                maxHeight = 600f,
+                dockZone = "CENTER",
+                tabGroupId = null,
+                isMinimized = false,
+                zIndex = 0f,
+            ),
+            SerializablePanelState(
+                id = "data_panel",
+                title = "Data Display",
+                state = "DOCKED",
+                x = 320f,
+                y = 420f,
+                width = 600f,
+                height = 300f,
+                minWidth = 400f,
+                minHeight = 200f,
+                maxWidth = 800f,
+                maxHeight = 500f,
+                dockZone = "BOTTOM",
+                tabGroupId = null,
+                isMinimized = false,
+                zIndex = 0f,
+            ),
+        ),
+        tabGroups = emptyList(),
+        containerBounds = SerializableRect(0f, 0f, 1200f, 800f),
+    )
 
     /**
      * Create presentation layout template
      */
-    private fun createPresentationTemplate(): SerializableLayout =
-        SerializableLayout(
-            id = "presentation_template",
-            name = "Presentation Layout",
-            description = "Optimized for presentations with larger animation panel",
-            template = LayoutTemplate.PRESENTATION,
-            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            modifiedAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            panels =
-                listOf(
-                    SerializablePanelState(
-                        id = "animation_panel",
-                        title = "Animation",
-                        state = "DOCKED",
-                        x = 0f,
-                        y = 0f,
-                        width = 800f,
-                        height = 600f,
-                        minWidth = 600f,
-                        minHeight = 400f,
-                        maxWidth = 1000f,
-                        maxHeight = 800f,
-                        dockZone = "CENTER",
-                        tabGroupId = null,
-                        isMinimized = false,
-                        zIndex = 0f,
-                    ),
-                    SerializablePanelState(
-                        id = "parameter_panel",
-                        title = "Parameters",
-                        state = "MINIMIZED",
-                        x = 820f,
-                        y = 0f,
-                        width = 300f,
-                        height = 200f,
-                        minWidth = 250f,
-                        minHeight = 150f,
-                        maxWidth = 400f,
-                        maxHeight = 400f,
-                        dockZone = "RIGHT",
-                        tabGroupId = null,
-                        isMinimized = true,
-                        zIndex = 0f,
-                    ),
-                ),
-            tabGroups = emptyList(),
-            containerBounds = SerializableRect(0f, 0f, 1200f, 800f),
-        )
+    private fun createPresentationTemplate(): SerializableLayout = SerializableLayout(
+        id = "presentation_template",
+        name = "Presentation Layout",
+        description = "Optimized for presentations with larger animation panel",
+        template = LayoutTemplate.PRESENTATION,
+        createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+        modifiedAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+        panels =
+        listOf(
+            SerializablePanelState(
+                id = "animation_panel",
+                title = "Animation",
+                state = "DOCKED",
+                x = 0f,
+                y = 0f,
+                width = 800f,
+                height = 600f,
+                minWidth = 600f,
+                minHeight = 400f,
+                maxWidth = 1000f,
+                maxHeight = 800f,
+                dockZone = "CENTER",
+                tabGroupId = null,
+                isMinimized = false,
+                zIndex = 0f,
+            ),
+            SerializablePanelState(
+                id = "parameter_panel",
+                title = "Parameters",
+                state = "MINIMIZED",
+                x = 820f,
+                y = 0f,
+                width = 300f,
+                height = 200f,
+                minWidth = 250f,
+                minHeight = 150f,
+                maxWidth = 400f,
+                maxHeight = 400f,
+                dockZone = "RIGHT",
+                tabGroupId = null,
+                isMinimized = true,
+                zIndex = 0f,
+            ),
+        ),
+        tabGroups = emptyList(),
+        containerBounds = SerializableRect(0f, 0f, 1200f, 800f),
+    )
 
     /**
      * Load all saved layouts from disk
@@ -544,34 +525,30 @@ class LayoutPersistenceManager {
     /**
      * Load a template layout
      */
-    suspend fun loadTemplate(template: LayoutTemplate): Result<SerializableLayout> =
-        withContext(Dispatchers.IO) {
-            try {
-                val filename = "${template.name.lowercase()}_template.json"
-                val file = File(templatesDirectory, filename)
+    suspend fun loadTemplate(template: LayoutTemplate): Result<SerializableLayout> = withContext(Dispatchers.IO) {
+        try {
+            val filename = "${template.name.lowercase()}_template.json"
+            val file = File(templatesDirectory, filename)
 
-                if (!file.exists()) {
-                    return@withContext Result.failure(Exception("Template not found: ${template.name}"))
+            if (!file.exists()) {
+                return@withContext Result.failure(Exception("Template not found: ${template.name}"))
+            }
+
+            val layout =
+                FileReader(file).use { reader ->
+                    gson.fromJson(reader, SerializableLayout::class.java)
                 }
 
-                val layout =
-                    FileReader(file).use { reader ->
-                        gson.fromJson(reader, SerializableLayout::class.java)
-                    }
-
-                Result.success(layout)
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
+            Result.success(layout)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
+    }
 
     /**
      * Add entry to layout history for undo/redo functionality
      */
-    private fun addToHistory(
-        action: String,
-        layout: SerializableLayout,
-    ) {
+    private fun addToHistory(action: String, layout: SerializableLayout) {
         val entry =
             LayoutHistoryEntry(
                 id = UUID.randomUUID().toString(),
@@ -639,64 +616,59 @@ class LayoutPersistenceManager {
     /**
      * Export layout to a specific file
      */
-    suspend fun exportLayout(
-        layoutId: String,
-        exportFile: File,
-    ): Result<Unit> =
-        withContext(Dispatchers.IO) {
-            try {
-                val layout =
-                    _savedLayouts.value.find { it.id == layoutId }
-                        ?: return@withContext Result.failure(Exception("Layout not found: $layoutId"))
+    suspend fun exportLayout(layoutId: String, exportFile: File): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val layout =
+                _savedLayouts.value.find { it.id == layoutId }
+                    ?: return@withContext Result.failure(Exception("Layout not found: $layoutId"))
 
-                FileWriter(exportFile).use { writer ->
-                    gson.toJson(layout, writer)
-                }
-
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Result.failure(e)
+            FileWriter(exportFile).use { writer ->
+                gson.toJson(layout, writer)
             }
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
+    }
 
     /**
      * Import layout from a file
      */
-    suspend fun importLayout(importFile: File): Result<String> =
-        withContext(Dispatchers.IO) {
-            try {
-                val layout =
-                    FileReader(importFile).use { reader ->
-                        gson.fromJson(reader, SerializableLayout::class.java)
-                    }
-
-                // Generate new ID to avoid conflicts
-                val newId = UUID.randomUUID().toString()
-                val importedLayout =
-                    layout.copy(
-                        id = newId,
-                        name = "${layout.name} (Imported)",
-                        modifiedAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                    )
-
-                // Save to layouts directory
-                val filename = "${importedLayout.name.replace(" ", "_").lowercase()}_$newId.json"
-                val file = File(layoutsDirectory, filename)
-                FileWriter(file).use { writer ->
-                    gson.toJson(importedLayout, writer)
+    suspend fun importLayout(importFile: File): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val layout =
+                FileReader(importFile).use { reader ->
+                    gson.fromJson(reader, SerializableLayout::class.java)
                 }
 
-                // Update in-memory list
-                _savedLayouts.value = _savedLayouts.value + importedLayout
+            // Generate new ID to avoid conflicts
+            val newId = UUID.randomUUID().toString()
+            val importedLayout =
+                layout.copy(
+                    id = newId,
+                    name = "${layout.name} (Imported)",
+                    modifiedAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                )
 
-                // Add to history
-                addToHistory("IMPORT", importedLayout)
-
-                Result.success(newId)
-            } catch (e: Exception) {
-                Result.failure(e)
+            // Save to layouts directory
+            val filename = "${importedLayout.name.replace(" ", "_").lowercase()}_$newId.json"
+            val file = File(layoutsDirectory, filename)
+            FileWriter(file).use { writer ->
+                gson.toJson(importedLayout, writer)
             }
+
+            // Update in-memory list
+            _savedLayouts.value = _savedLayouts.value + importedLayout
+
+            // Add to history
+            addToHistory("IMPORT", importedLayout)
+
+            Result.success(newId)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
+    }
 }
 
 /**

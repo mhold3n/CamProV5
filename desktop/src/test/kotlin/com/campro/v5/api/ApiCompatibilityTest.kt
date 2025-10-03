@@ -1,6 +1,5 @@
 package com.campro.v5.api
 
-import com.campro.v5.ui.UnifiedOptimizationTile
 import com.campro.v5.optimization.OptimizationStateManager
 import com.campro.v5.pipeline.UnifiedOptimizationBridge
 import com.campro.v5.visualization.MotionLawVisualization
@@ -18,12 +17,11 @@ import com.campro.v5.batch.BatchProcessor
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.assertThrows
 
 /**
  * TDD Tests for API compatibility issues in the comprehensive GUI components.
- * 
- * These tests will initially FAIL (Red phase) and then PASS (Green phase) 
+ *
+ * These tests will initially FAIL (Red phase) and then PASS (Green phase)
  * as we fix the API compatibility issues.
  */
 class ApiCompatibilityTest {
@@ -45,7 +43,7 @@ class ApiCompatibilityTest {
         assertDoesNotThrow {
             val bridge = UnifiedOptimizationBridge()
             val stateManager = OptimizationStateManager(bridge)
-            
+
             // Should have correct StateFlow type
             assertNotNull(stateManager.optimizationState)
         }
@@ -58,17 +56,17 @@ class ApiCompatibilityTest {
             // MotionLawVisualization should use Compose Canvas, not Android Canvas
             assertNotNull(MotionLawVisualization::class.java)
         }
-        
+
         assertDoesNotThrow {
             // GearProfileVisualization should use Compose Canvas, not Android Canvas
             assertNotNull(GearProfileVisualization::class.java)
         }
-        
+
         assertDoesNotThrow {
             // EfficiencyAnalysisVisualization should use Compose Canvas, not Android Canvas
             assertNotNull(EfficiencyAnalysisVisualization::class.java)
         }
-        
+
         assertDoesNotThrow {
             // FEAAnalysisVisualization should use Compose Canvas, not Android Canvas
             assertNotNull(FEAAnalysisVisualization::class.java)
@@ -161,7 +159,7 @@ class ApiCompatibilityTest {
             val exporter = ResultExporter()
             val presetManager = PresetManager()
             val batchProcessor = BatchProcessor()
-            
+
             // All should be created successfully
             assertNotNull(bridge)
             assertNotNull(stateManager)

@@ -21,11 +21,7 @@ object ComponentBasedAnimationRenderer {
      * @param pistonDiameter The diameter of the piston
      * @return The bounds of all components as a Pair of width and height
      */
-    private fun calculateComponentBounds(
-        baseCircleRadius: Float,
-        maxLift: Float,
-        pistonDiameter: Float,
-    ): Pair<Float, Float> {
+    private fun calculateComponentBounds(baseCircleRadius: Float, maxLift: Float, pistonDiameter: Float): Pair<Float, Float> {
         // Calculate the maximum extent of the cam profile
         val camProfileRadius = baseCircleRadius + maxLift
 
@@ -305,13 +301,7 @@ object ComponentBasedAnimationRenderer {
         val fallStart = tdcAngle + halfTDC
         val fallEnd = (360f - halfBDC).coerceAtLeast(fallStart + 1e-4f)
 
-        fun shmDisp(
-            theta: Float,
-            startDeg: Float,
-            endDeg: Float,
-            s0: Float,
-            s1: Float,
-        ): Float {
+        fun shmDisp(theta: Float, startDeg: Float, endDeg: Float, s0: Float, s1: Float): Float {
             val range = (endDeg - startDeg).coerceAtLeast(1e-6f)
             val p = ((theta - startDeg) / range).coerceIn(0f, 1f)
             return s0 + (s1 - s0) * (1f - cos(PI.toFloat() * p)) / 2f
@@ -357,15 +347,15 @@ object ComponentBasedAnimationRenderer {
         drawPath(
             path = camPath,
             brush =
-                androidx.compose.ui.graphics.Brush.radialGradient(
-                    colors =
-                        listOf(
-                            Color(0xFF8A8A8A), // Light metallic gray at center
-                            Color(0xFF5A5A5A), // Darker gray at edges
-                        ),
-                    center = Offset(centerX, centerY),
-                    radius = baseCircleRadius + maxLift * 1.5f,
+            androidx.compose.ui.graphics.Brush.radialGradient(
+                colors =
+                listOf(
+                    Color(0xFF8A8A8A), // Light metallic gray at center
+                    Color(0xFF5A5A5A), // Darker gray at edges
                 ),
+                center = Offset(centerX, centerY),
+                radius = baseCircleRadius + maxLift * 1.5f,
+            ),
             alpha = 0.9f,
         )
 
@@ -455,24 +445,19 @@ object ComponentBasedAnimationRenderer {
      * @param radius The radius of the follower roller
      * @param angle The current angle in degrees
      */
-    private fun DrawScope.drawRollerFollower(
-        centerX: Float,
-        centerY: Float,
-        radius: Float,
-        angle: Float,
-    ) {
+    private fun DrawScope.drawRollerFollower(centerX: Float, centerY: Float, radius: Float, angle: Float) {
         // Draw the main roller body with metallic gradient
         drawCircle(
             brush =
-                androidx.compose.ui.graphics.Brush.radialGradient(
-                    colors =
-                        listOf(
-                            Color(0xFFD0D0D0), // Light silver at center
-                            Color(0xFF909090), // Darker silver at edges
-                        ),
-                    center = Offset(centerX, centerY),
-                    radius = radius * 1.2f,
+            androidx.compose.ui.graphics.Brush.radialGradient(
+                colors =
+                listOf(
+                    Color(0xFFD0D0D0), // Light silver at center
+                    Color(0xFF909090), // Darker silver at edges
                 ),
+                center = Offset(centerX, centerY),
+                radius = radius * 1.2f,
+            ),
             radius = radius,
             center = Offset(centerX, centerY),
         )
@@ -540,13 +525,7 @@ object ComponentBasedAnimationRenderer {
      * @param pistonY The y-coordinate of the piston end
      * @param width The width of the connecting rod
      */
-    private fun DrawScope.drawConnectingRod(
-        followerX: Float,
-        followerY: Float,
-        pistonX: Float,
-        pistonY: Float,
-        width: Float,
-    ) {
+    private fun DrawScope.drawConnectingRod(followerX: Float, followerY: Float, pistonX: Float, pistonY: Float, width: Float) {
         // Calculate rod angle and length
         val rodAngle = atan2(pistonY - followerY, pistonX - followerX)
         val rodLength = sqrt((pistonX - followerX).pow(2) + (pistonY - followerY).pow(2))
@@ -589,16 +568,16 @@ object ComponentBasedAnimationRenderer {
         drawPath(
             path = rodPath,
             brush =
-                androidx.compose.ui.graphics.Brush.linearGradient(
-                    colors =
-                        listOf(
-                            Color(0xFF909090), // Darker gray at top
-                            Color(0xFFB0B0B0), // Medium gray in middle
-                            Color(0xFF707070), // Darkest gray at bottom
-                        ),
-                    start = Offset(followerX, followerY - width),
-                    end = Offset(followerX, followerY + width),
+            androidx.compose.ui.graphics.Brush.linearGradient(
+                colors =
+                listOf(
+                    Color(0xFF909090), // Darker gray at top
+                    Color(0xFFB0B0B0), // Medium gray in middle
+                    Color(0xFF707070), // Darkest gray at bottom
                 ),
+                start = Offset(followerX, followerY - width),
+                end = Offset(followerX, followerY + width),
+            ),
             alpha = 0.9f,
         )
 
@@ -612,15 +591,15 @@ object ComponentBasedAnimationRenderer {
         // Draw small end (follower end)
         drawCircle(
             brush =
-                androidx.compose.ui.graphics.Brush.radialGradient(
-                    colors =
-                        listOf(
-                            Color(0xFFB0B0B0), // Light gray at center
-                            Color(0xFF808080), // Darker gray at edges
-                        ),
-                    center = Offset(followerX, followerY),
-                    radius = smallEndRadius * 1.2f,
+            androidx.compose.ui.graphics.Brush.radialGradient(
+                colors =
+                listOf(
+                    Color(0xFFB0B0B0), // Light gray at center
+                    Color(0xFF808080), // Darker gray at edges
                 ),
+                center = Offset(followerX, followerY),
+                radius = smallEndRadius * 1.2f,
+            ),
             radius = smallEndRadius,
             center = Offset(followerX, followerY),
         )
@@ -635,15 +614,15 @@ object ComponentBasedAnimationRenderer {
         // Draw big end (piston end)
         drawCircle(
             brush =
-                androidx.compose.ui.graphics.Brush.radialGradient(
-                    colors =
-                        listOf(
-                            Color(0xFFB0B0B0), // Light gray at center
-                            Color(0xFF808080), // Darker gray at edges
-                        ),
-                    center = Offset(pistonX, pistonY),
-                    radius = bigEndRadius * 1.2f,
+            androidx.compose.ui.graphics.Brush.radialGradient(
+                colors =
+                listOf(
+                    Color(0xFFB0B0B0), // Light gray at center
+                    Color(0xFF808080), // Darker gray at edges
                 ),
+                center = Offset(pistonX, pistonY),
+                radius = bigEndRadius * 1.2f,
+            ),
             radius = bigEndRadius,
             center = Offset(pistonX, pistonY),
         )
@@ -679,12 +658,7 @@ object ComponentBasedAnimationRenderer {
      * @param diameter The diameter of the piston
      * @param height The height of the piston
      */
-    private fun DrawScope.drawPiston(
-        centerX: Float,
-        centerY: Float,
-        diameter: Float,
-        height: Float,
-    ) {
+    private fun DrawScope.drawPiston(centerX: Float, centerY: Float, diameter: Float, height: Float) {
         val radius = diameter / 2
 
         // Draw piston body (cylinder)
@@ -709,16 +683,16 @@ object ComponentBasedAnimationRenderer {
         drawPath(
             path = pistonPath,
             brush =
-                androidx.compose.ui.graphics.Brush.linearGradient(
-                    colors =
-                        listOf(
-                            Color(0xFFC0C0C0), // Light gray at left
-                            Color(0xFFE0E0E0), // Lightest gray in middle
-                            Color(0xFFA0A0A0), // Darker gray at right
-                        ),
-                    start = Offset(centerX - radius, centerY),
-                    end = Offset(centerX + radius, centerY),
+            androidx.compose.ui.graphics.Brush.linearGradient(
+                colors =
+                listOf(
+                    Color(0xFFC0C0C0), // Light gray at left
+                    Color(0xFFE0E0E0), // Lightest gray in middle
+                    Color(0xFFA0A0A0), // Darker gray at right
                 ),
+                start = Offset(centerX - radius, centerY),
+                end = Offset(centerX + radius, centerY),
+            ),
             alpha = 0.9f,
         )
 
@@ -750,8 +724,8 @@ object ComponentBasedAnimationRenderer {
             color = Color.DarkGray,
             topLeft = Offset(centerX - radius * 0.4f, centerY - radius * 0.3f),
             size =
-                androidx.compose.ui.geometry
-                    .Size(radius * 0.8f, radius * 0.6f),
+            androidx.compose.ui.geometry
+                .Size(radius * 0.8f, radius * 0.6f),
             alpha = 0.8f,
         )
 
@@ -760,8 +734,8 @@ object ComponentBasedAnimationRenderer {
             color = Color.White,
             topLeft = Offset(centerX - radius * 0.7f, centerY - height * 0.4f),
             size =
-                androidx.compose.ui.geometry
-                    .Size(radius * 0.3f, height * 0.2f),
+            androidx.compose.ui.geometry
+                .Size(radius * 0.3f, height * 0.2f),
             alpha = 0.2f,
         )
     }
@@ -796,13 +770,7 @@ object ComponentBasedAnimationRenderer {
         val fallStart = tdcAngle + halfTDC
         val fallEnd = (360f - halfBDC).coerceAtLeast(fallStart + 1e-4f)
 
-        fun shmDisp(
-            theta: Float,
-            startDeg: Float,
-            endDeg: Float,
-            s0: Float,
-            s1: Float,
-        ): Float {
+        fun shmDisp(theta: Float, startDeg: Float, endDeg: Float, s0: Float, s1: Float): Float {
             val range = (endDeg - startDeg).coerceAtLeast(1e-6f)
             val p = ((theta - startDeg) / range).coerceIn(0f, 1f)
             return s0 + (s1 - s0) * (1f - cos(PI.toFloat() * p)) / 2f

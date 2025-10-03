@@ -2,7 +2,7 @@ package com.campro.v5.models
 
 /**
  * Result from the unified optimization pipeline.
- * 
+ *
  * This class contains all the results from the unified optimization
  * pipeline, including motion law data, gear profiles, tooth profiles,
  * and FEA analysis results.
@@ -14,19 +14,19 @@ data class OptimizationResult(
     val toothProfiles: ToothProfileData,
     val feaAnalysis: FEAAnalysisData,
     val executionTime: Double = 0.0,
-    val error: String? = null
+    val error: String? = null,
 ) {
-    
+
     /**
      * Check if optimization was successful.
      */
     fun isSuccess(): Boolean = status == "success"
-    
+
     /**
      * Check if optimization failed.
      */
     fun isFailure(): Boolean = status == "failed"
-    
+
     /**
      * Get error message if optimization failed.
      */
@@ -40,7 +40,7 @@ data class MotionLawData(
     val thetaDeg: DoubleArray,
     val displacement: DoubleArray,
     val velocity: DoubleArray,
-    val acceleration: DoubleArray
+    val acceleration: DoubleArray,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -74,7 +74,13 @@ data class GearProfileData(
     val rRingInner: DoubleArray,
     val gearRatio: Double,
     val optimalMethod: String,
-    val efficiencyAnalysis: Map<String, Any>?
+    val efficiencyAnalysis: Map<String, Any>?,
+    // New fields for variable instantaneous ratio
+    val instantaneousRatio: DoubleArray = doubleArrayOf(),
+    val journalOffset: DoubleArray = doubleArrayOf(),
+    val accumulatedPlanetAngleDeg: Double = 0.0,
+    // Discrete efficiency values for each angle
+    val forceTransferEfficiency: DoubleArray = doubleArrayOf(),
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -104,11 +110,7 @@ data class GearProfileData(
 /**
  * Tooth profile data from optimization.
  */
-data class ToothProfileData(
-    val sunTeeth: Array<DoubleArray>?,
-    val planetTeeth: Array<DoubleArray>?,
-    val ringTeeth: Array<DoubleArray>?
-) {
+data class ToothProfileData(val sunTeeth: Array<DoubleArray>?, val planetTeeth: Array<DoubleArray>?, val ringTeeth: Array<DoubleArray>?) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -118,17 +120,23 @@ data class ToothProfileData(
         if (sunTeeth != null) {
             if (other.sunTeeth == null) return false
             if (!sunTeeth.contentDeepEquals(other.sunTeeth)) return false
-        } else if (other.sunTeeth != null) return false
-        
+        } else if (other.sunTeeth != null) {
+            return false
+        }
+
         if (planetTeeth != null) {
             if (other.planetTeeth == null) return false
             if (!planetTeeth.contentDeepEquals(other.planetTeeth)) return false
-        } else if (other.planetTeeth != null) return false
-        
+        } else if (other.planetTeeth != null) {
+            return false
+        }
+
         if (ringTeeth != null) {
             if (other.ringTeeth == null) return false
             if (!ringTeeth.contentDeepEquals(other.ringTeeth)) return false
-        } else if (other.ringTeeth != null) return false
+        } else if (other.ringTeeth != null) {
+            return false
+        }
 
         return true
     }
@@ -149,7 +157,7 @@ data class FEAAnalysisData(
     val naturalFrequencies: DoubleArray,
     val fatigueLife: Double,
     val modeShapes: Array<String>,
-    val recommendations: Array<String>
+    val recommendations: Array<String>,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

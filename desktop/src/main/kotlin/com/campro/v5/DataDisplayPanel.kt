@@ -5,13 +5,11 @@ package com.campro.v5
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
-import com.campro.v5.debug.DebugButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.campro.v5.debug.DebugButton
 import kotlin.math.*
 
 /**
@@ -21,10 +19,7 @@ import kotlin.math.*
  * @param testingMode Whether the widget is in testing mode
  */
 @Composable
-fun DataDisplayPanel(
-    parameters: Map<String, String>,
-    testingMode: Boolean = false,
-) {
+fun DataDisplayPanel(parameters: Map<String, String>, testingMode: Boolean = false) {
     // Tab state
     var selectedTabIndex by remember { mutableStateOf(0) }
 
@@ -65,7 +60,7 @@ fun DataDisplayPanel(
         ) {
             DebugButton(
                 buttonId = "data-refresh",
-                onClick = { /* TODO: Refresh data */ }
+                onClick = { /* TODO: Refresh data */ },
             ) {
                 Icon(Icons.Default.Refresh, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
@@ -74,7 +69,7 @@ fun DataDisplayPanel(
 
             DebugButton(
                 buttonId = "data-export",
-                onClick = { /* TODO: Export data */ }
+                onClick = { /* TODO: Export data */ },
             ) {
                 Icon(Icons.Default.Download, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
@@ -405,19 +400,8 @@ fun EfficiencyTab(parameters: Map<String, String>) {
 }
 
 // Data classes for tables
-data class KinematicsData(
-    val angle: Int,
-    val displacement: Float,
-    val velocity: Float,
-    val acceleration: Float,
-)
+data class KinematicsData(val angle: Int, val displacement: Float, val velocity: Float, val acceleration: Float)
 
-data class ForceData(
-    val angle: Int,
-    val pressure: Float,
-    val pistonForce: Float,
-    val rodForce: Float,
-    val sideForce: Float,
-)
+data class ForceData(val angle: Int, val pressure: Float, val pistonForce: Float, val rodForce: Float, val sideForce: Float)
 
 // No custom extension function needed as we're directly importing androidx.compose.foundation.background

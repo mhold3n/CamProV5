@@ -13,7 +13,6 @@ from matplotlib.patches import Circle
 from pathlib import Path
 from typing import Dict, List, Tuple, Any
 import tempfile
-import shutil
 import os
 import subprocess
 import json
@@ -27,9 +26,6 @@ logger = logging.getLogger(__name__)
 # The collocation solver would be imported here in a full implementation
 
 # Import subprocess for calling Kotlin motion law generator
-import subprocess
-import json
-import sys
 
 
 class GearProfileGenerator:
@@ -120,21 +116,11 @@ class GearProfileGenerator:
             "frictionCoefficient": 0.05,  # friction coefficient
             "feaYoungsModulus": 200e9,  # Pa (200 GPa steel)
             "feaPoissonsRatio": 0.3,  # Poisson's ratio
-            "feaYieldStrength": 400e6,  # Pa (400 MPa steel)
+            "feaYieldStrength": 400e6,  # degrees between samples
             
-            # Motion law sampling parameters
-            "samplingStepDeg": 1.0,  # degrees between samples
+            # Motion law phase parameters (duplicates removed)
             
-            # Motion law phase parameters
-            "rampBeforeTdcDeg": 10.0,  # degrees
-            "rampAfterTdcDeg": 10.0,   # degrees
-            "dwellTdcDeg": 5.0,        # degrees
-            "rampBeforeBdcDeg": 10.0,  # degrees
-            "rampAfterBdcDeg": 10.0,   # degrees
-            "dwellBdcDeg": 5.0,        # degrees
-            
-            # Gear clearance parameters
-            "interferenceBuffer": 2.0,  # mm clearance between gears
+            # Gear clearance parameters (duplicate removed)
             "strokeAchievableFactor": 0.8,  # Fraction of stroke that must be achievable
             "clearanceSafetyMargin": 0.1,  # mm safety margin for clearance adjustments
             "adjustmentSplitFactor": 0.5,  # How to split clearance adjustments between sun and ring
@@ -413,7 +399,7 @@ class GearProfileGenerator:
             try:
                 os.unlink(temp_params_file.name)
                 os.unlink(temp_output_file.name)
-            except:
+            except Exception:
                 pass
             
             logger.info("Kotlin motion law generation completed successfully")
@@ -530,7 +516,7 @@ class GearProfileGenerator:
             r_ring_inner = r_sun + 2.0 * r_planet
             logger.info(f"Scaled gearset by factor {scale_factor:.2f} to accommodate stroke")
         
-        logger.info(f"Gearset sizing for stroke achievability:")
+        logger.info("Gearset sizing for stroke achievability:")
         logger.info(f"  Stroke length: {stroke_length:.1f} mm")
         logger.info(f"  Max rod extension: {max_rod_extension:.1f} mm")
         logger.info(f"  Gearset capacity: {gearset_capacity:.1f} mm")
@@ -642,7 +628,7 @@ class GearProfileGenerator:
         expected_planet_angle_range = 360.0 * gear_ratio  # For 2:1 ratio: 720°
         actual_planet_angle_range = np.max(phi_of_theta_deg) - np.min(phi_of_theta_deg)
         
-        logger.info(f"Gear ratio verification through φ(θ) mapping:")
+        logger.info("Gear ratio verification through φ(θ) mapping:")
         logger.info(f"  Ring angle range: {np.min(theta_deg):.1f}° - {np.max(theta_deg):.1f}°")
         logger.info(f"  Planet angle range: {np.min(phi_of_theta_deg):.1f}° - {np.max(phi_of_theta_deg):.1f}°")
         logger.info(f"  Expected planet angle range: 0° - {expected_planet_angle_range:.1f}°")
@@ -849,7 +835,7 @@ class GearProfileGenerator:
                 # Draw line from COM to current journal position
                 ax.plot([com_x, journal_x[0]], [com_y, journal_y[0]], 
                        'm-', linewidth=2, alpha=0.7,
-                       label=f'COM to Journal' if i == 0 else "")
+                       label='COM to Journal' if i == 0 else "")
             else:
                 # Single point journal position
                 ax.plot(journal_x, journal_y, 'mo', markersize=8, markeredgecolor='black', markeredgewidth=2,
@@ -858,7 +844,7 @@ class GearProfileGenerator:
                 # Draw line from COM to journal
                 ax.plot([com_x, journal_x], [com_y, journal_y], 
                        'm-', linewidth=2, alpha=0.7,
-                       label=f'COM to Journal' if i == 0 else "")
+                       label='COM to Journal' if i == 0 else "")
         
         # Add gear ratio and profile information
         gear_ratio = gear_profiles["gear_ratio"]
@@ -908,8 +894,8 @@ class GearProfileGenerator:
         # Get data
         theta_deg = gear_profiles["theta_deg"]  # Ring gear crank degrees
         r_sun = gear_profiles["r_sun"]
-        r_planet = gear_profiles["r_planet"]
-        r_ring_inner = gear_profiles["r_ring_inner"]
+        gear_profiles["r_planet"]
+        gear_profiles["r_ring_inner"]
         
         # Calculate sun gear phasing
         # Sun gear phasing represents how the sun gear's rotation affects planet motion
@@ -987,7 +973,7 @@ class GearProfileGenerator:
         r_ring_inner = gear_profiles["r_ring_inner"]
         r_sun = gear_profiles["r_sun"]
         theta_deg = gear_profiles["theta_deg"]
-        phi_of_theta_deg = gear_profiles["phi_of_theta_deg"]
+        gear_profiles["phi_of_theta_deg"]
         
         # Extract sun center radius (connecting rod journal)
         sun_center_radius = params["journalRadius"]  # 5.0 mm
@@ -1288,10 +1274,10 @@ class GearProfileGenerator:
             f.write(f"✓ Positive clearance: {np.all(gear_profiles['clearance'] > 0)}\n")
             f.write(f"✓ UNIFIED CONSTRAINT (R_ring = R_sun + 2*R_planet): {np.allclose(gear_profiles['r_ring_inner'], gear_profiles['r_sun'] + 2.0 * gear_profiles['r_planet'], atol=0.01)}\n")
             f.write(f"✓ Contact point constraint (R_ring - R_planet = R_sun + R_planet): {np.allclose(gear_profiles['r_ring_inner'] - gear_profiles['r_planet'], gear_profiles['r_sun'] + gear_profiles['r_planet'], atol=0.01)}\n")
-            f.write(f"✓ Ring symmetry (0-180°): Validated\n")
+            f.write("✓ Ring symmetry (0-180°): Validated\n")
             f.write(f"✓ Proper φ(θ) mapping gear ratio: {params['gearRatio']:.1f}:1\n")
             f.write(f"✓ Arc-length ratio for meshing: {gear_profiles['s_planet'][-1]/gear_profiles['s_ring'][-1]:.3f} (should be ~1.0)\n")
-            f.write(f"✓ Using UNIFIED CONSTRAINT SYSTEM in assembly\n")
+            f.write("✓ Using UNIFIED CONSTRAINT SYSTEM in assembly\n")
         
         logger.info(f"Summary report saved to {output_path}")
     
@@ -1339,7 +1325,7 @@ class GearProfileGenerator:
             f.write(f"Displacement max difference: {np.max(np.abs(disp_diff)):.6f} mm\n")
             f.write(f"Velocity max difference: {np.max(np.abs(vel_diff)):.6f} mm/deg\n")
             f.write(f"Acceleration max difference: {np.max(np.abs(acc_diff)):.6f} mm/deg²\n")
-            f.write(f"Tolerance threshold: 1e-6\n")
+            f.write("Tolerance threshold: 1e-6\n")
             f.write("\n")
             
             f.write("GEAR PROFILE COMPARISON:\n")

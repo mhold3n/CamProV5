@@ -17,11 +17,7 @@ import androidx.compose.ui.unit.dp
  * @param modifier Modifier for customizing the component
  */
 @Composable
-fun EmptyStateWidget(
-    message: String,
-    icon: ImageVector? = null,
-    modifier: Modifier = Modifier,
-) {
+fun EmptyStateWidget(message: String, icon: ImageVector? = null, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
