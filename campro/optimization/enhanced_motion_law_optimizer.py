@@ -245,12 +245,13 @@ class EnhancedMotionLawOptimizer:
         
         # Create stage parameters for consistency
         class DummyStageParams:
-            def __init__(self, n, max_vel, max_acc):
+            def __init__(self, n, max_vel, max_acc, grid_vals):
                 self.grid_nodes = n
                 self.colloc_degree = 1
                 self.enable_constraints = {'stress': True, 'jerk': True}
-        
-        stage_params = DummyStageParams(n, max_velocity, max_acceleration)
+                self.grid = np.asarray(grid_vals, dtype=float)
+
+        stage_params = DummyStageParams(n, max_velocity, max_acceleration, grid)
         
         # Use _make_fg to build consistent constraints
         f, g = self._make_fg(x_all, p, stage_params)
@@ -894,8 +895,16 @@ class EnhancedMotionLawOptimizer:
         v = x[n:n+(n-1)]
         a = x[n+(n-1):]
         
-        # Create grid
-        grid = np.linspace(0, 2*np.pi, N)
+        # Use provided grid if available, otherwise fall back to a uniform grid
+        grid = getattr(params, 'grid', None)
+        if grid is not None:
+            grid = np.asarray(grid, dtype=float)
+            if grid.shape[0] != N:
+                raise ValueError(
+                    f"Stage grid length {grid.shape[0]} does not match grid_nodes {N}"
+                )
+        else:
+            grid = np.linspace(0, 2 * np.pi, N)
         
         # Extract parameters from p vector
         pmap = self.base_meta['pmap']
