@@ -78,7 +78,36 @@ class TestEnhancedMotionLawOptimizer:
         assert 'lbg' in nlp_info
         assert 'ubg' in nlp_info
         assert 'x0' in nlp_info
-    
+
+    def test_motion_law_respects_stroke_length_mm(self, optimizer):
+        """Regression: ensure bounds honor strokeLengthMm inputs."""
+        motion_params = {
+            'strokeLengthMm': 12.5,
+            'ringRotationDeg': 180.0,
+            'samplingStepDeg': 10.0,
+            'compressionDurationPercent': 70.0,
+            'maxVelocity': 100.0,
+            'maxAcceleration': 200.0
+        }
+
+        grid = optimizer._create_motion_law_grid(motion_params)
+        nlp_info = optimizer._build_enhanced_nlp_formulation(motion_params, grid)
+
+        n = nlp_info['n']
+        stroke_length_m = motion_params['strokeLengthMm'] / 1000.0
+
+        displacement_lbx = nlp_info['lbx'][:n]
+        displacement_ubx = nlp_info['ubx'][:n]
+        displacement_x0 = nlp_info['x0'][:n]
+
+        assert displacement_lbx[0] == pytest.approx(0.0)
+        assert displacement_ubx[0] == pytest.approx(0.0)
+        assert displacement_x0[0] == pytest.approx(0.0)
+
+        assert displacement_lbx[-1] == pytest.approx(stroke_length_m)
+        assert displacement_ubx[-1] == pytest.approx(stroke_length_m)
+        assert displacement_x0[-1] == pytest.approx(stroke_length_m)
+
     def test_thermodynamic_objectives(self, optimizer):
         """Test thermodynamic objectives calculation."""
         motion_params = {

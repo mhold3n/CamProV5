@@ -222,7 +222,7 @@ class EnhancedMotionLawOptimizer:
         x_all = ca.vertcat(x, v, a)
         
         # Extract user parameters
-        stroke_length = motion_params.get('strokeLengthMm', 10.0) / 1000.0  # Convert to meters
+        stroke_length_m = motion_params.get('strokeLengthMm', 10.0) / 1000.0  # Convert to meters
         compression_duration_percent = motion_params.get('compressionDurationPercent', 70.0)
         ring_rotation_deg = motion_params.get('ringRotationDeg', 180.0)
         
@@ -260,8 +260,9 @@ class EnhancedMotionLawOptimizer:
         f = f + self._add_thermodynamic_objectives(x, v, a, grid, motion_params)
         
         # Use consistent bounds from _make_bounds
-        stroke_length = motion_params.get('strokeLength', 0.01)  # Read from motion_params
-        lbx, ubx, lbg, ubg = self._make_bounds(n, 1, {'stress': True, 'jerk': True}, stroke_length)
+        lbx, ubx, lbg, ubg = self._make_bounds(
+            n, 1, {'stress': True, 'jerk': True}, stroke_length_m
+        )
         
         # Initial guess: simple linear based on motion law phases
         x0 = np.zeros(n)
@@ -270,14 +271,14 @@ class EnhancedMotionLawOptimizer:
         
         # Simple linear displacement guess that respects boundary conditions
         for i in range(n):
-            x0[i] = stroke_length * i / (n-1)
+            x0[i] = stroke_length_m * i / (n-1)
         
         # Ensure boundary conditions are satisfied in initial guess
         x0[0] = 0.0  # x(0) = 0
-        x0[n-1] = stroke_length  # x(T) = stroke_length
+        x0[n-1] = stroke_length_m  # x(T) = stroke_length
         
         # Simple velocity guess (constant)
-        v0[:] = stroke_length / (2*np.pi)  # Average velocity
+        v0[:] = stroke_length_m / (2*np.pi)  # Average velocity
         
         # Simple acceleration guess (zero)
         a0[:] = 0.0
@@ -952,7 +953,13 @@ class EnhancedMotionLawOptimizer:
         
         return f, ca.vertcat(*g) if g else ca.SX()
     
-    def _make_bounds(self, N: int, deg: int, act: Dict[str, bool], stroke_length: float = 0.01) -> Tuple[List, List, List, List]:
+    def _make_bounds(
+        self,
+        N: int,
+        deg: int,
+        act: Dict[str, bool],
+        stroke_length_m: float = 0.01
+    ) -> Tuple[List, List, List, List]:
         """
         Build bounds for decision variables and constraints.
         
@@ -960,7 +967,7 @@ class EnhancedMotionLawOptimizer:
             N: Number of grid points
             deg: Collocation degree
             act: Constraint activation flags
-            stroke_length: Stroke length in meters (default 0.01m = 10mm)
+            stroke_length_m: Stroke length in meters (default 0.01m = 10mm)
             
         Returns:
             Tuple of (lbx, ubx, lbg, ubg)
@@ -970,12 +977,12 @@ class EnhancedMotionLawOptimizer:
         # Variable bounds: displacement (n) + velocity (n-1) + acceleration (n-2)
         # Displacement bounds: 0 to stroke_length for all points
         lbx = [0.0] * n + [-100.0] * (n-1) + [-200.0] * (n-2)
-        ubx = [stroke_length] * n + [100.0] * (n-1) + [200.0] * (n-2)
+        ubx = [stroke_length_m] * n + [100.0] * (n-1) + [200.0] * (n-2)
         
         # CRITICAL FIX: Enforce boundary conditions via variable bounds
         # Fix x(0) = 0 and x(T) = stroke_length
         lbx[0] = ubx[0] = 0.0  # x(0) = 0
-        lbx[n-1] = ubx[n-1] = stroke_length  # x(T) = stroke_length
+        lbx[n-1] = ubx[n-1] = stroke_length_m  # x(T) = stroke_length
         
         # Constraint bounds (only kinematic constraints, no boundary conditions)
         # Count: kinematic (n-1) + acceleration (n-2) = 2n-3
