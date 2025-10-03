@@ -99,16 +99,13 @@ class TestBSplineMotionLaw:
         control_points = np.linspace(0, 0.1, bspline.params.num_control_points)
         
         motion_law = bspline.create_motion_law(control_points)
-        
+
         # Check that motion law functions are created
-        assert 'position' in motion_law
-        assert 'velocity' in motion_law
-        assert 'acceleration' in motion_law
-        assert 'jerk' in motion_law
-        
-        # Check that functions are CasADi functions
-        for func_name, func in motion_law.items():
-            assert isinstance(func, ca.Function)
+        for key in ['position', 'velocity', 'acceleration', 'jerk']:
+            assert key in motion_law
+            assert isinstance(motion_law[key], ca.Function)
+
+        assert motion_law['control_points_symbol'].size1() == bspline.params.num_control_points
     
     def test_boundary_constraints(self, bspline):
         """Test boundary constraint creation."""
@@ -127,7 +124,7 @@ class TestBSplineMotionLaw:
     def test_initial_guess_creation(self, bspline):
         """Test initial guess creation."""
         initial_guess = bspline.create_initial_guess()
-        
+
         # Check initial guess shape
         assert len(initial_guess) == bspline.params.num_control_points
         
@@ -137,6 +134,39 @@ class TestBSplineMotionLaw:
         
         # Check that it's a reasonable interpolation
         assert np.all(np.diff(initial_guess) >= 0)  # Non-decreasing
+
+    def test_initial_guess_satisfies_boundary_constraints(self, bspline):
+        """Initial guess should respect position/velocity boundary constraints."""
+        initial_guess = bspline.create_initial_guess()
+        control_points = ca.SX.sym('cp', bspline.params.num_control_points)
+        constraints = bspline.create_boundary_constraints(control_points)
+        constraint_func = ca.Function('boundary', [control_points], [ca.vertcat(*constraints)])
+        residual = np.array(constraint_func(ca.DM(initial_guess).reshape((-1, 1))))
+        assert np.allclose(residual, 0.0, atol=1e-10)
+
+    def test_motion_law_responds_to_control_point_changes(self, bspline):
+        """Perturbing a control point should change the motion law and derivatives."""
+        control_points_symbol = ca.SX.sym('cp', bspline.params.num_control_points)
+        motion_law = bspline.create_motion_law(control_points_symbol)
+
+        baseline = bspline.create_initial_guess()
+        perturbed = baseline.copy()
+        perturbed[3] += 1e-3
+
+        t_sample = 0.4 * bspline.params.cycle_time
+        baseline_dm = ca.DM(baseline).reshape((-1, 1))
+        perturbed_dm = ca.DM(perturbed).reshape((-1, 1))
+
+        pos_base = float(motion_law['position'](t_sample, baseline_dm))
+        pos_pert = float(motion_law['position'](t_sample, perturbed_dm))
+        vel_base = float(motion_law['velocity'](t_sample, baseline_dm))
+        vel_pert = float(motion_law['velocity'](t_sample, perturbed_dm))
+        jerk_base = float(motion_law['jerk'](t_sample, baseline_dm))
+        jerk_pert = float(motion_law['jerk'](t_sample, perturbed_dm))
+
+        assert abs(pos_base - pos_pert) > 1e-8
+        assert abs(vel_base - vel_pert) > 1e-8
+        assert abs(jerk_base - jerk_pert) > 1e-8
     
     def test_motion_law_evaluation(self, bspline):
         """Test motion law evaluation."""
