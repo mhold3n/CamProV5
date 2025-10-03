@@ -8,7 +8,7 @@ the interface between solver, diagnostics, and tests.
 from dataclasses import dataclass
 import casadi as ca
 import numpy as np
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 from campro.logging import get_logger
 
 logger = get_logger(__name__)
@@ -26,6 +26,7 @@ class StageParams:
     tolerance: float
     max_iter: int
     description: str
+    grid: Optional[np.ndarray] = None
 
 
 @dataclass

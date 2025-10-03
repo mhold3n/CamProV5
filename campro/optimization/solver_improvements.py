@@ -820,23 +820,45 @@ class ContinuationStrategy:
         
         stage_problem = deepcopy(base_problem)
         
+        # Determine the grid associated with this stage
+        grid = stage_problem.get('grid', None)
+        if grid is None and 'nlp_problem' in stage_problem and stage_problem['nlp_problem'] is not None:
+            nlp_meta = stage_problem['nlp_problem'].meta
+            grid = nlp_meta.get('grid_t') or nlp_meta.get('grid')
+
+        if grid is not None:
+            grid = np.asarray(grid, dtype=float)
+            grid_nodes = grid.shape[0]
+        else:
+            grid_nodes = stage_params.get('grid_nodes', 32)
+
         # Convert stage_params to StageParams object
         stage_params_obj = StageParams(
             epsilon_valve=stage_params['epsilon_valve'],
             epsilon_friction=stage_params['epsilon_friction'],
             stress_factor=stage_params['stress_factor'],
-            grid_nodes=stage_params.get('grid_nodes', 32),
+            grid_nodes=grid_nodes,
             colloc_degree=stage_params.get('colloc_degree', 1),
             enable_constraints=stage_params.get('enable_constraints', {}),
             tolerance=stage_params['tolerance'],
             max_iter=stage_params['max_iter'],
-            description=stage_params['description']
+            description=stage_params['description'],
+            grid=grid
         )
         
         # Apply grid refinement for later stages
         if stage_number > 1:
             stage_problem = self._refine_grid(stage_problem, stage_number)
-            stage_params_obj.grid_nodes = stage_problem.get('grid_nodes', stage_params_obj.grid_nodes)
+            refined_grid = stage_problem.get('grid', stage_params_obj.grid)
+            if refined_grid is None and 'nlp_problem' in stage_problem and stage_problem['nlp_problem'] is not None:
+                nlp_meta = stage_problem['nlp_problem'].meta
+                refined_grid = nlp_meta.get('grid_t') or nlp_meta.get('grid')
+
+            if refined_grid is not None:
+                stage_params_obj.grid = np.asarray(refined_grid, dtype=float)
+                stage_params_obj.grid_nodes = stage_params_obj.grid.shape[0]
+            else:
+                stage_params_obj.grid_nodes = stage_problem.get('grid_nodes', stage_params_obj.grid_nodes)
         
         # Get base metadata for NLP building
         base_meta = None

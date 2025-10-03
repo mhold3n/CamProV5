@@ -24,7 +24,15 @@ def build_nlp_problem_from_stage(params: StageParams, base_meta: Dict[str, Any])
         Complete NLPProblem with compiled functions and structure signature
     """
     # Extract structural parameters
-    N = params.grid_nodes
+    grid = getattr(params, 'grid', None)
+    if grid is not None:
+        grid = np.asarray(grid, dtype=float)
+        N = grid.shape[0]
+        if params.grid_nodes != N:
+            params.grid_nodes = N
+        params.grid = grid
+    else:
+        N = params.grid_nodes
     deg = params.colloc_degree
     act = params.enable_constraints
     
@@ -64,6 +72,7 @@ def build_nlp_problem_from_stage(params: StageParams, base_meta: Dict[str, Any])
         'stage_params': params,
         'pmap': pmap,
         'np': np_total,
+        'grid': grid,
         **base_meta
     }
     
