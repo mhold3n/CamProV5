@@ -13,6 +13,14 @@ from dataclasses import dataclass
 import logging
 import time
 
+from campro.utils.angle_units import (
+    ensure_percent_grid,
+    percent_to_degrees,
+    percent_to_radians,
+    resolve_cycle_percent,
+    degrees_to_percent,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -178,12 +186,14 @@ class Phase2GearOptimizer:
         """Create collocation grid for gear profile optimization."""
         self.logger.info("Creating gear profile collocation grid")
         
-        # Use the same grid as motion law for consistency
-        gear_grid = np.deg2rad(theta_grid)
-        
-        # Ensure proper scaling for gear optimization
-        ring_rotation_deg = gear_params.get('ringRotationDeg', 180.0)
-        scale_factor = 2 * np.pi / ring_rotation_deg
+        # Use the same grid as motion law for consistency but normalise units
+        theta_percent = degrees_to_percent(theta_grid)
+        gear_grid = percent_to_radians(theta_percent)
+
+        ring_rotation_percent = resolve_cycle_percent(
+            gear_params, 'ringRotation', default_percent=degrees_to_percent(180.0)
+        )
+        scale_factor = (2 * np.pi) / percent_to_radians(ring_rotation_percent)
         gear_grid = gear_grid * scale_factor
         
         self.logger.info(f"Gear collocation grid created with {len(gear_grid)} points")
@@ -291,9 +301,11 @@ class Phase2GearOptimizer:
         noslip_residual = r_inst * planet_radius - ring_radius
 
         # Global integral residual (use same step)
-        ring_rotation_deg = gear_params.get('ringRotationDeg', 180.0)
-        step_deg = ring_rotation_deg / (n - 1) if n > 1 else ring_rotation_deg
-        integral_r = ca.sum1(r_inst) * step_deg
+        ring_rotation_percent = resolve_cycle_percent(
+            gear_params, 'ringRotation', default_percent=degrees_to_percent(180.0)
+        )
+        step_percent = ring_rotation_percent / (n - 1) if n > 1 else ring_rotation_percent
+        integral_r = ca.sum1(r_inst) * percent_to_radians(step_percent)
         expected_integral = 2.0 * np.pi
         integral_residual = integral_r - expected_integral
 
@@ -682,7 +694,13 @@ class Phase2GearOptimizer:
         if len(theta_grid_deg) > 1:
             step_deg = float(theta_grid_deg[1] - theta_grid_deg[0])
         else:
-            step_deg = float(gear_params.get('ringRotationDeg', 180.0))
+            step_deg = float(
+                percent_to_degrees(
+                    resolve_cycle_percent(
+                        gear_params, 'ringRotation', default_percent=degrees_to_percent(180.0)
+                    )
+                )
+            )
         # Accumulate over intervals to be consistent with the constraint
         if n > 1:
             accumulated_phi_deg = float(np.sum(r_inst[: n - 1]) * step_deg)

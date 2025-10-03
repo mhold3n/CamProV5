@@ -9,6 +9,14 @@ import numpy as np
 from typing import Dict, List, Tuple, Any
 import logging
 
+from campro.utils.angle_units import (
+    ensure_percent_grid,
+    percent_to_degrees,
+    percent_to_radians,
+    resolve_cycle_percent,
+    degrees_to_percent,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -38,11 +46,16 @@ class GearProfileGenerator:
         """
         self.logger.info("Generating motion law using piecewise method with proper acceleration profile...")
         
-        # CORRECTED: Generate motion law for 180° ring rotation (planetary gearset)
-        # The motion law should span 180° ring rotation for complete 2-stroke cycle
-        ring_rotation_deg = params["ringRotationDeg"]  # 180°
-        theta_deg = np.arange(0, ring_rotation_deg, params["samplingStepDeg"])
-        n = len(theta_deg)
+        # CORRECTED: Generate motion law using percent of the ring rotation.
+        ring_rotation_pct = resolve_cycle_percent(params, "ringRotation")
+        sampling_step_pct = ensure_percent_grid(
+            resolve_cycle_percent(params, "samplingStep")
+        )
+
+        theta_pct = np.arange(0.0, ring_rotation_pct, sampling_step_pct)
+        theta_rad = percent_to_radians(theta_pct)
+        theta_deg = percent_to_degrees(theta_pct)
+        n = len(theta_pct)
         
         # Initialize arrays
         displacement = np.zeros(n)
@@ -51,16 +64,20 @@ class GearProfileGenerator:
         
         # Motion law parameters
         stroke_length = params["strokeLengthMm"]  # Full stroke length in mm
-        ramp_before_tdc = params["rampBeforeTdcDeg"]
-        ramp_after_tdc = params["rampAfterTdcDeg"]
-        dwell_tdc = params["dwellTdcDeg"]
-        ramp_before_bdc = params["rampBeforeBdcDeg"]
-        ramp_after_bdc = params["rampAfterBdcDeg"]
-        dwell_bdc = params["dwellBdcDeg"]
-        
+        ramp_before_tdc = resolve_cycle_percent(params, "rampBeforeTdc")
+        ramp_after_tdc = resolve_cycle_percent(params, "rampAfterTdc")
+        dwell_tdc = resolve_cycle_percent(params, "dwellTdc")
+        ramp_before_bdc = resolve_cycle_percent(params, "rampBeforeBdc")
+        ramp_after_bdc = resolve_cycle_percent(params, "rampAfterBdc")
+        dwell_bdc = resolve_cycle_percent(params, "dwellBdc")
+
         # Calculate phase boundaries (FIXED: use parameterized values)
-        constant_velocity_tdc = params.get("constantVelocityTdcDeg", 30.0)
-        constant_velocity_bdc = params.get("constantVelocityBdcDeg", 40.0)
+        constant_velocity_tdc = resolve_cycle_percent(
+            params, "constantVelocityTdc", default_percent=degrees_to_percent(30.0)
+        )
+        constant_velocity_bdc = resolve_cycle_percent(
+            params, "constantVelocityBdc", default_percent=degrees_to_percent(40.0)
+        )
         
         # CORRECTED: Motion law represents piston stroke from BDC (0) to TDC (stroke_length)
         # Phase 1: Acceleration from BDC to constant velocity
@@ -80,10 +97,10 @@ class GearProfileGenerator:
         # Phase 8: Dwell at BDC (zero displacement)
         phase8_end = phase7_end + dwell_tdc
         
-        # Scale phases to fit 180° ring rotation
+        # Scale phases to fit requested ring rotation percent
         total_phases = phase8_end
-        scale_factor = ring_rotation_deg / total_phases
-        
+        scale_factor = ring_rotation_pct / total_phases
+
         phase1_end *= scale_factor
         phase2_end *= scale_factor
         phase3_end *= scale_factor
@@ -92,73 +109,202 @@ class GearProfileGenerator:
         phase6_end *= scale_factor
         phase7_end *= scale_factor
         phase8_end *= scale_factor
-        
-        self.logger.info(f"Motion law phases (scaled to {ring_rotation_deg}°):")
-        self.logger.info(f"  0-{phase1_end:.1f}°: Acceleration from BDC to constant velocity")
-        self.logger.info(f"  {phase1_end:.1f}-{phase2_end:.1f}°: Constant velocity during upstroke")
-        self.logger.info(f"  {phase2_end:.1f}-{phase3_end:.1f}°: Deceleration to dwell at TDC")
-        self.logger.info(f"  {phase3_end:.1f}-{phase4_end:.1f}°: Dwell at TDC (max displacement: {stroke_length}mm)")
-        self.logger.info(f"  {phase4_end:.1f}-{phase5_end:.1f}°: Acceleration from TDC to constant velocity")
-        self.logger.info(f"  {phase5_end:.1f}-{phase6_end:.1f}°: Constant velocity during downstroke")
-        self.logger.info(f"  {phase6_end:.1f}-{phase7_end:.1f}°: Deceleration to dwell at BDC")
-        self.logger.info(f"  {phase7_end:.1f}-{phase8_end:.1f}°: Dwell at BDC (zero displacement)")
+
+        self.logger.info(
+            f"Motion law phases (scaled to {ring_rotation_pct:.3f}% of cycle):"
+        )
+        self.logger.info(
+            "  0-{:.3f}%: Acceleration from BDC to constant velocity".format(phase1_end)
+        )
+        self.logger.info(
+            "  {:.3f}-{:.3f}%: Constant velocity during upstroke".format(
+                phase1_end, phase2_end
+            )
+        )
+        self.logger.info(
+            "  {:.3f}-{:.3f}%: Deceleration to dwell at TDC".format(
+                phase2_end, phase3_end
+            )
+        )
+        self.logger.info(
+            "  {:.3f}-{:.3f}%: Dwell at TDC (max displacement: {}mm)".format(
+                phase3_end, phase4_end, stroke_length
+            )
+        )
+        self.logger.info(
+            "  {:.3f}-{:.3f}%: Acceleration from TDC to constant velocity".format(
+                phase4_end, phase5_end
+            )
+        )
+        self.logger.info(
+            "  {:.3f}-{:.3f}%: Constant velocity during downstroke".format(
+                phase5_end, phase6_end
+            )
+        )
+        self.logger.info(
+            "  {:.3f}-{:.3f}%: Deceleration to dwell at BDC".format(
+                phase6_end, phase7_end
+            )
+        )
+        self.logger.info(
+            "  {:.3f}-{:.3f}%: Dwell at BDC (zero displacement)".format(
+                phase7_end, phase8_end
+            )
+        )
+
+        phase1_end_rad = percent_to_radians(phase1_end)
+        phase2_end_rad = percent_to_radians(phase2_end)
+        phase3_end_rad = percent_to_radians(phase3_end)
+        phase4_end_rad = percent_to_radians(phase4_end)
+        phase5_end_rad = percent_to_radians(phase5_end)
+        phase6_end_rad = percent_to_radians(phase6_end)
+        phase7_end_rad = percent_to_radians(phase7_end)
+        phase8_end_rad = percent_to_radians(phase8_end)
         
         # Generate motion law - CORRECTED to represent proper piston stroke
-        for i, theta in enumerate(theta_deg):
-            if theta <= phase1_end:
+        for i, (theta_percent, theta_value_rad) in enumerate(zip(theta_pct, theta_rad)):
+            if theta_percent <= phase1_end:
                 # Phase 1: Acceleration from BDC to constant velocity during upstroke
-                beta = theta / phase1_end
-                displacement[i] = stroke_length * 0.5 * (beta - np.sin(2 * np.pi * beta) / (2 * np.pi))
-                velocity[i] = stroke_length * 0.5 * (1 - np.cos(2 * np.pi * beta)) / (2 * np.pi * phase1_end * np.pi / 180)
-                acceleration[i] = stroke_length * 0.5 * np.sin(2 * np.pi * beta) / (phase1_end * np.pi / 180)**2
-                
-            elif theta <= phase2_end:
+                if phase1_end_rad == 0.0:
+                    beta = 0.0
+                else:
+                    beta = theta_value_rad / phase1_end_rad
+                displacement[i] = stroke_length * 0.5 * (
+                    beta - np.sin(2 * np.pi * beta) / (2 * np.pi)
+                )
+                if phase1_end_rad:
+                    velocity[i] = (
+                        stroke_length
+                        * 0.5
+                        * (1 - np.cos(2 * np.pi * beta))
+                        / phase1_end_rad
+                    )
+                    acceleration[i] = (
+                        stroke_length
+                        * np.pi
+                        * np.sin(2 * np.pi * beta)
+                        / (phase1_end_rad**2)
+                    )
+                else:
+                    velocity[i] = 0.0
+                    acceleration[i] = 0.0
+
+            elif theta_percent <= phase2_end:
                 # Phase 2: Constant velocity during upstroke
-                displacement[i] = stroke_length * 0.5 + stroke_length * 0.5 * (theta - phase1_end) / (phase2_end - phase1_end)
-                velocity[i] = stroke_length * 0.5 / (phase2_end - phase1_end) * np.pi / 180
+                displacement[i] = stroke_length * 0.5 + stroke_length * 0.5 * (
+                    (theta_percent - phase1_end) / (phase2_end - phase1_end)
+                )
+                if phase2_end_rad > phase1_end_rad:
+                    velocity[i] = (
+                        stroke_length
+                        * 0.5
+                        / (phase2_end_rad - phase1_end_rad)
+                    )
+                else:
+                    velocity[i] = 0.0
                 acceleration[i] = 0.0
-                
-            elif theta <= phase3_end:
-                # Phase 3: Deceleration to dwell at TDC (stay at max displacement, decelerate to zero velocity)
-                beta = (theta - phase2_end) / (phase3_end - phase2_end)
-                displacement[i] = stroke_length  # Stay at maximum displacement during deceleration to dwell
-                # Decelerate from constant velocity to zero velocity
-                velocity[i] = stroke_length * 0.5 * (1 - beta) / (phase2_end - phase1_end) * np.pi / 180
-                acceleration[i] = -stroke_length * 0.5 / (phase2_end - phase1_end) / (phase3_end - phase2_end) * np.pi / 180
-                
-            elif theta <= phase4_end:
+
+            elif theta_percent <= phase3_end:
+                # Phase 3: Deceleration to dwell at TDC (stay at max displacement)
+                beta = (theta_percent - phase2_end) / (phase3_end - phase2_end)
+                displacement[i] = stroke_length
+                if phase2_end_rad > phase1_end_rad:
+                    velocity[i] = (
+                        stroke_length
+                        * 0.5
+                        * (1 - beta)
+                        / (phase2_end_rad - phase1_end_rad)
+                    )
+                else:
+                    velocity[i] = 0.0
+                if (phase2_end_rad > phase1_end_rad) and (phase3_end_rad > phase2_end_rad):
+                    acceleration[i] = (
+                        -stroke_length
+                        * 0.5
+                        / (phase2_end_rad - phase1_end_rad)
+                        / (phase3_end_rad - phase2_end_rad)
+                    )
+                else:
+                    acceleration[i] = 0.0
+
+            elif theta_percent <= phase4_end:
                 # Phase 4: Dwell at TDC (maximum displacement)
                 displacement[i] = stroke_length
                 velocity[i] = 0.0
                 acceleration[i] = 0.0
-                
-            elif theta <= phase5_end:
+
+            elif theta_percent <= phase5_end:
                 # Phase 5: Acceleration from TDC to constant velocity during downstroke
-                beta = (theta - phase4_end) / (phase5_end - phase4_end)
-                displacement[i] = stroke_length * (1 - 0.5 * (beta - np.sin(2 * np.pi * beta) / (2 * np.pi)))
-                velocity[i] = -stroke_length * 0.5 * (1 - np.cos(2 * np.pi * beta)) / (2 * np.pi * (phase5_end - phase4_end) * np.pi / 180)
-                acceleration[i] = -stroke_length * 0.5 * np.sin(2 * np.pi * beta) / ((phase5_end - phase4_end) * np.pi / 180)**2
-                
-            elif theta <= phase6_end:
+                if phase5_end_rad > phase4_end_rad:
+                    beta = (theta_value_rad - phase4_end_rad) / (
+                        phase5_end_rad - phase4_end_rad
+                    )
+                else:
+                    beta = 0.0
+                displacement[i] = stroke_length * (
+                    1 - 0.5 * (beta - np.sin(2 * np.pi * beta) / (2 * np.pi))
+                )
+                if phase5_end_rad > phase4_end_rad:
+                    velocity[i] = (
+                        -stroke_length
+                        * 0.5
+                        * (1 - np.cos(2 * np.pi * beta))
+                        / (phase5_end_rad - phase4_end_rad)
+                    )
+                    acceleration[i] = (
+                        -stroke_length
+                        * np.pi
+                        * np.sin(2 * np.pi * beta)
+                        / (phase5_end_rad - phase4_end_rad) ** 2
+                    )
+                else:
+                    velocity[i] = 0.0
+                    acceleration[i] = 0.0
+
+            elif theta_percent <= phase6_end:
                 # Phase 6: Constant velocity during downstroke
-                displacement[i] = stroke_length * 0.5 - stroke_length * 0.5 * (theta - phase5_end) / (phase6_end - phase5_end)
-                velocity[i] = -stroke_length * 0.5 / (phase6_end - phase5_end) * np.pi / 180
+                displacement[i] = stroke_length * 0.5 - stroke_length * 0.5 * (
+                    (theta_percent - phase5_end) / (phase6_end - phase5_end)
+                )
+                if phase6_end_rad > phase5_end_rad:
+                    velocity[i] = (
+                        -stroke_length
+                        * 0.5
+                        / (phase6_end_rad - phase5_end_rad)
+                    )
+                else:
+                    velocity[i] = 0.0
                 acceleration[i] = 0.0
-                
-            elif theta <= phase7_end:
-                # Phase 7: Deceleration to dwell at BDC (stay at zero displacement, decelerate to zero velocity)
-                beta = (theta - phase6_end) / (phase7_end - phase6_end)
-                displacement[i] = 0.0  # Stay at zero displacement during deceleration to dwell at BDC
-                # Decelerate from constant velocity to zero velocity
-                velocity[i] = -stroke_length * 0.5 * (1 - beta) / (phase6_end - phase5_end) * np.pi / 180
-                acceleration[i] = stroke_length * 0.5 / (phase6_end - phase5_end) / (phase7_end - phase6_end) * np.pi / 180
-                
-            elif theta <= phase8_end:
+
+            elif theta_percent <= phase7_end:
+                # Phase 7: Deceleration to dwell at BDC
+                beta = (theta_percent - phase6_end) / (phase7_end - phase6_end)
+                displacement[i] = 0.0
+                if phase6_end_rad > phase5_end_rad:
+                    velocity[i] = (
+                        -stroke_length
+                        * 0.5
+                        * (1 - beta)
+                        / (phase6_end_rad - phase5_end_rad)
+                    )
+                else:
+                    velocity[i] = 0.0
+                if (phase6_end_rad > phase5_end_rad) and (phase7_end_rad > phase6_end_rad):
+                    acceleration[i] = (
+                        stroke_length
+                        * 0.5
+                        / (phase6_end_rad - phase5_end_rad)
+                        / (phase7_end_rad - phase6_end_rad)
+                    )
+                else:
+                    acceleration[i] = 0.0
+
+            elif theta_percent <= phase8_end:
                 # Phase 8: Dwell at BDC (zero displacement)
                 displacement[i] = 0.0
                 velocity[i] = 0.0
                 acceleration[i] = 0.0
-                
+
             else:
                 # Beyond defined phases - should not happen
                 displacement[i] = 0.0
@@ -185,8 +331,11 @@ class GearProfileGenerator:
         self.logger.info("Generating UNIFIED gear profiles using displacement and connecting rod length...")
 
         n = len(theta_deg)
-        step_deg = params["samplingStepDeg"]
-        step_rad = np.deg2rad(step_deg)
+        step_percent = ensure_percent_grid(
+            resolve_cycle_percent(params, "samplingStep")
+        )
+        step_deg = percent_to_degrees(step_percent)
+        step_rad = percent_to_radians(step_percent)
 
         # UNIFIED CONSTRAINT SYSTEM WITH DISPLACEMENT AND CONNECTING ROD
         # ===============================================================
@@ -569,7 +718,9 @@ class GearProfileGenerator:
         sun_center_radius = params.get("journalRadius", 5.0)  # 5.0 mm default
         
         planet_count = int(params.get("planetCount", 2))
-        carrier_offset_deg = float(params.get("carrierOffsetDeg", 180.0))
+        carrier_offset_deg = percent_to_degrees(
+            resolve_cycle_percent(params, "carrierOffset", default_percent=degrees_to_percent(180.0))
+        )
         
         planets = []
         
@@ -599,10 +750,14 @@ class GearProfileGenerator:
             # For now, we'll place it at a fixed offset from the COM
             # This should be calculated based on the actual connecting rod geometry
             journal_offset_radius = params.get("journalOffsetRadius", 5.0)  # mm offset from COM
-            journal_angle_offset = params.get("journalAngleOffset", 0.0)  # degrees offset from COM
+            journal_angle_offset_deg = percent_to_degrees(
+                resolve_cycle_percent(
+                    params, "journalAngleOffset", default_percent=degrees_to_percent(0.0)
+                )
+            )  # offset from COM
             
             # Journal position relative to planet COM
-            journal_angle_rad = np.deg2rad(psi_deg + journal_angle_offset)
+            journal_angle_rad = np.deg2rad(psi_deg + journal_angle_offset_deg)
             journal_x = center_x + journal_offset_radius * np.cos(journal_angle_rad)
             journal_y = center_y + journal_offset_radius * np.sin(journal_angle_rad)
             
@@ -621,7 +776,8 @@ class GearProfileGenerator:
                 "journal_x": journal_x,
                 "journal_y": journal_y,
                 "journal_offset_radius": journal_offset_radius,
-                "journal_angle_offset": journal_angle_offset
+                "journal_angle_offset_deg": journal_angle_offset_deg,
+                "journal_angle_offset_percent": degrees_to_percent(journal_angle_offset_deg),
             })
         
         return planets

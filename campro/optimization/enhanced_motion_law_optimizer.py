@@ -22,6 +22,13 @@ from campro.physics.thermodynamics import (
     CombustionModel, StateEquations, ThermodynamicOptimizer
 )
 from campro.optimization.solver_improvements import SolverParameters, SolverImprovements
+from campro.utils.angle_units import (
+    ensure_percent_grid,
+    percent_to_degrees,
+    percent_to_radians,
+    resolve_cycle_percent,
+    degrees_to_percent,
+)
 
 log = get_logger(__name__)
 
@@ -192,15 +199,27 @@ class EnhancedMotionLawOptimizer:
     
     def _create_motion_law_grid(self, motion_params: Dict[str, Any]) -> np.ndarray:
         """Create grid for motion law optimization."""
-        ring_rotation_deg = motion_params.get('ringRotationDeg', 180.0)
-        sampling_step_deg = motion_params.get('samplingStepDeg', 5.0)
-        
-        # Create grid from 0 to ring_rotation_deg
-        n_points = int(ring_rotation_deg / sampling_step_deg) + 1
-        grid_deg = np.linspace(0, ring_rotation_deg, n_points)
-        grid_rad = np.radians(grid_deg)
-        
-        self.logger.info(f"Created motion law grid: {n_points} points from 0° to {ring_rotation_deg}°")
+        ring_rotation_percent = resolve_cycle_percent(
+            motion_params, 'ringRotation', default_percent=degrees_to_percent(180.0)
+        )
+        sampling_step_percent = ensure_percent_grid(
+            resolve_cycle_percent(
+                motion_params, 'samplingStep', default_percent=degrees_to_percent(5.0)
+            )
+        )
+
+        if sampling_step_percent <= 0:
+            raise ValueError("samplingStep must be positive")
+
+        n_points = int(np.floor(ring_rotation_percent / sampling_step_percent + 1e-9)) + 1
+        grid_percent = np.linspace(0.0, ring_rotation_percent, n_points)
+        grid_rad = percent_to_radians(grid_percent)
+
+        self.logger.info(
+            "Created motion law grid: %d points from 0%% to %.3f%% of cycle",
+            n_points,
+            ring_rotation_percent,
+        )
         return grid_rad
     
     def _build_enhanced_nlp_formulation(self, motion_params: Dict[str, Any], 
@@ -224,16 +243,29 @@ class EnhancedMotionLawOptimizer:
         # Extract user parameters
         stroke_length_m = motion_params.get('strokeLengthMm', 10.0) / 1000.0  # Convert to meters
         compression_duration_percent = motion_params.get('compressionDurationPercent', 70.0)
-        ring_rotation_deg = motion_params.get('ringRotationDeg', 180.0)
-        
-        # Calculate phase durations
-        total_duration_deg = ring_rotation_deg
-        compression_duration_deg = (compression_duration_percent / 100.0) * total_duration_deg
+        ring_rotation_percent = resolve_cycle_percent(
+            motion_params, 'ringRotation', default_percent=degrees_to_percent(180.0)
+        )
+
+        # Calculate phase durations using consistent units
+        total_duration_deg = percent_to_degrees(ring_rotation_percent)
+        compression_duration_deg = (
+            compression_duration_percent / 100.0
+        ) * total_duration_deg
+        expansion_duration_percent = 100.0 - compression_duration_percent
         expansion_duration_deg = total_duration_deg - compression_duration_deg
-        
+
         self.logger.info("Enhanced motion law phases with thermodynamics:")
-        self.logger.info(f"  Compression: {compression_duration_deg:.1f}° ({compression_duration_percent}%)")
-        self.logger.info(f"  Expansion: {expansion_duration_deg:.1f}° ({100-compression_duration_percent}%)")
+        self.logger.info(
+            "  Compression: %.1f° (%.1f%%)",
+            compression_duration_deg,
+            compression_duration_percent,
+        )
+        self.logger.info(
+            "  Expansion: %.1f° (%.1f%%)",
+            expansion_duration_deg,
+            expansion_duration_percent,
+        )
         
         # Extract physical limits
         max_velocity = motion_params.get('maxVelocity', 100.0)
