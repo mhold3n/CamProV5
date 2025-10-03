@@ -191,73 +191,48 @@ class BSplineMotionLaw:
         Returns:
             Dictionary of motion law functions (position, velocity, acceleration, jerk)
         """
-        # Handle both numpy arrays and CasADi SX
-        if isinstance(control_points, ca.SX):
+        # Handle both numpy arrays and CasADi types
+        if isinstance(control_points, (ca.SX, ca.MX)):
             n_points = control_points.size1()
+            cp_symbol = control_points
+        elif isinstance(control_points, ca.DM):
+            control_points = np.array(control_points.full()).reshape((-1,))
+            n_points = control_points.size
+            cp_symbol = ca.SX.sym('control_points', n_points)
         else:
-            n_points = len(control_points)
-        
+            control_points = np.asarray(control_points).reshape((-1,))
+            n_points = control_points.size
+            cp_symbol = ca.SX.sym('control_points', n_points)
+
         if n_points != self.params.num_control_points:
-            raise ValueError(f"Expected {self.params.num_control_points} control points, "
-                           f"got {n_points}")
-        
+            raise ValueError(
+                f"Expected {self.params.num_control_points} control points, got {n_points}"
+            )
+
         # Create symbolic time variable
         t = ca.SX.sym('t')
-        
-        # For now, use a simplified approach with polynomial interpolation
-        # This ensures boundary conditions are satisfied
-        position = self._create_polynomial_motion_law(t, control_points)
-        
-        # Calculate derivatives
-        velocity = ca.jacobian(position, t)
-        acceleration = ca.jacobian(velocity, t)
-        jerk = ca.jacobian(acceleration, t)
-        
-        # Create CasADi functions
+
+        # Evaluate basis and derivative vectors and project with control points
+        basis_values = self.basis_eval_func(t)[0]
+        velocity_basis = self.velocity_eval_func(t)[0]
+        acceleration_basis = self.acceleration_eval_func(t)[0]
+        jerk_basis = self.jerk_eval_func(t)[0]
+
+        position = ca.dot(basis_values, cp_symbol)
+        velocity = ca.dot(velocity_basis, cp_symbol)
+        acceleration = ca.dot(acceleration_basis, cp_symbol)
+        jerk = ca.dot(jerk_basis, cp_symbol)
+
+        # Create CasADi functions parameterized by control points
         motion_law = {
-            'position': ca.Function('position', [t], [position]),
-            'velocity': ca.Function('velocity', [t], [velocity]),
-            'acceleration': ca.Function('acceleration', [t], [acceleration]),
-            'jerk': ca.Function('jerk', [t], [jerk])
+            'position': ca.Function('position', [t, cp_symbol], [position]),
+            'velocity': ca.Function('velocity', [t, cp_symbol], [velocity]),
+            'acceleration': ca.Function('acceleration', [t, cp_symbol], [acceleration]),
+            'jerk': ca.Function('jerk', [t, cp_symbol], [jerk]),
+            'control_points_symbol': cp_symbol
         }
-        
+
         return motion_law
-    
-    def _create_polynomial_motion_law(self, t: ca.SX, control_points) -> ca.SX:
-        """
-        Create polynomial motion law that satisfies boundary conditions.
-        
-        Args:
-            t: Time variable
-            control_points: Control points
-            
-        Returns:
-            Position as polynomial function of time
-        """
-        # Normalize time to [0, 1]
-        t_norm = t / self.params.cycle_time
-        
-        # Create a polynomial that satisfies boundary conditions
-        # x(0) = 0, x(1) = S, v(0) = 0, v(1) = 0
-        # Use a 4th order polynomial: x(t) = a*t^4 + b*t^3 + c*t^2 + d*t + e
-        
-        # Boundary conditions:
-        # x(0) = 0 -> e = 0
-        # x(1) = S -> a + b + c + d = S
-        # v(0) = 0 -> d = 0
-        # v(1) = 0 -> 4a + 3b + 2c = 0
-        
-        # Solve: a + b + c = S, 4a + 3b + 2c = 0
-        # From the second equation: 4a + 3b + 2c = 0
-        # From the first equation: a + b + c = S
-        # Let c = 0, then: a + b = S, 4a + 3b = 0
-        # Solving: a = -3S, b = 4S
-        
-        S = self.params.stroke_length
-        
-        position = -3*S*t_norm**4 + 4*S*t_norm**3
-        
-        return position
     
     def create_boundary_constraints(self, control_points: ca.SX) -> List[ca.SX]:
         """
@@ -318,11 +293,11 @@ class BSplineMotionLaw:
         
         # Create motion law for constraint evaluation
         motion_law = self.create_motion_law(control_points)
-        
+
         # Evaluate jerk at time grid points
         for t_val in time_grid:
-            jerk_val = motion_law['jerk'](t_val)
-            
+            jerk_val = motion_law['jerk'](t_val, control_points)
+
             # Add jerk bound constraints: |j(t)| ≤ j_max
             constraints.append(jerk_val - self.params.max_jerk)  # j(t) ≤ j_max
             constraints.append(-jerk_val - self.params.max_jerk)  # -j(t) ≤ j_max
@@ -331,8 +306,14 @@ class BSplineMotionLaw:
     
     def create_initial_guess(self) -> np.ndarray:
         """
-        Create initial guess for control points.
-        
+        Create an initial guess that satisfies boundary constraints.
+
+        The first two and last two control points are clamped to the initial and
+        final positions so that the default zero-velocity boundary constraints
+        created by :meth:`create_boundary_constraints` are exactly satisfied.
+        Interior points follow a smooth-step profile to provide a feasible yet
+        gently varying trajectory for the optimizer to refine.
+
         Returns:
             Initial guess for control points
         """
@@ -340,14 +321,21 @@ class BSplineMotionLaw:
         # This ensures the boundary conditions are satisfied
         
         control_points = np.zeros(self.params.num_control_points)
-        
-        # Linear interpolation from 0 to S
-        for i in range(self.params.num_control_points):
-            # Map control point index to time
-            t_ratio = i / (self.params.num_control_points - 1)
-            control_points[i] = self.params.initial_position + \
-                              t_ratio * (self.params.final_position - self.params.initial_position)
-        
+
+        # Enforce clamped boundary values explicitly so v(0) = v(T_cyc) = 0.
+        control_points[0] = control_points[1] = self.params.initial_position
+        control_points[-1] = control_points[-2] = self.params.final_position
+
+        # Fill interior points using a C1-eased ramp to keep derivatives small.
+        if self.params.num_control_points > 4:
+            interior_count = self.params.num_control_points - 4
+            delta = self.params.final_position - self.params.initial_position
+            for idx in range(interior_count):
+                # Normalized parameter in (0, 1) for interior points.
+                s = (idx + 1) / (interior_count + 1)
+                eased = s * s * (3 - 2 * s)  # Smoothstep: zero slope at boundaries.
+                control_points[2 + idx] = self.params.initial_position + delta * eased
+
         return control_points
     
     def evaluate_motion_law(self, control_points: np.ndarray, 
@@ -364,6 +352,11 @@ class BSplineMotionLaw:
         """
         # Create motion law functions
         motion_law = self.create_motion_law(control_points)
+
+        if isinstance(control_points, (ca.SX, ca.MX)):
+            raise TypeError("control_points must be numeric for evaluation")
+
+        cp_vector = ca.DM(np.asarray(control_points).reshape((-1, 1)))
         
         # Evaluate at time grid points
         results = {
@@ -374,10 +367,10 @@ class BSplineMotionLaw:
         }
         
         for i, t_val in enumerate(time_grid):
-            results['position'][i] = float(motion_law['position'](t_val))
-            results['velocity'][i] = float(motion_law['velocity'](t_val))
-            results['acceleration'][i] = float(motion_law['acceleration'](t_val))
-            results['jerk'][i] = float(motion_law['jerk'](t_val))
+            results['position'][i] = float(motion_law['position'](t_val, cp_vector))
+            results['velocity'][i] = float(motion_law['velocity'](t_val, cp_vector))
+            results['acceleration'][i] = float(motion_law['acceleration'](t_val, cp_vector))
+            results['jerk'][i] = float(motion_law['jerk'](t_val, cp_vector))
         
         return results
     
@@ -496,8 +489,10 @@ class BSplineMotionLawOptimizer:
         objective = ca.SX.sym('velocity_flatness_obj', 1)
         objective[0] = 0
         
+        cp_symbol = motion_law['control_points_symbol']
+
         for t_val in time_grid:
-            velocity = motion_law['velocity'](t_val)
+            velocity = motion_law['velocity'](t_val, cp_symbol)
             objective[0] += (velocity - target_velocity)**2
         
         return objective[0]
@@ -518,8 +513,10 @@ class BSplineMotionLawOptimizer:
         objective = ca.SX.sym('jerk_reg_obj', 1)
         objective[0] = 0
         
+        cp_symbol = motion_law['control_points_symbol']
+
         for t_val in time_grid:
-            jerk = motion_law['jerk'](t_val)
+            jerk = motion_law['jerk'](t_val, cp_symbol)
             objective[0] += jerk**2
         
         return objective[0]
