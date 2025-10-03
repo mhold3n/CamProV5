@@ -41,6 +41,7 @@ def build_nlp_problem_from_stage(params: StageParams, base_meta: Dict[str, Any])
     p_val[pmap['epsilon_valve']] = params.epsilon_valve
     p_val[pmap['epsilon_friction']] = params.epsilon_friction
     p_val[pmap['stress_factor']] = params.stress_factor
+    p_val[pmap['jerk_weight']] = params.jerk_weight
     
     # Construct f(x,p), g(x,p) using current grid/degree/activations
     f, g = base_meta['make_fg'](x, p, params)
@@ -97,6 +98,7 @@ def update_p_val_for_stage(nlp: NLPProblem, params: StageParams) -> NLPProblem:
     p_val[pmap['epsilon_valve']] = params.epsilon_valve
     p_val[pmap['epsilon_friction']] = params.epsilon_friction
     p_val[pmap['stress_factor']] = params.stress_factor
+    p_val[pmap['jerk_weight']] = params.jerk_weight
     
     # Update the NLP problem
     nlp.p_val = p_val

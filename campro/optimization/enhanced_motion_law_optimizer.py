@@ -335,7 +335,8 @@ class EnhancedMotionLawOptimizer:
             'grid': grid,
             'n': n,
             'motion_params': motion_params,
-            'base_meta': self.base_meta  # Add base_meta for robust continuation
+            'base_meta': self.base_meta,  # Add base_meta for robust continuation
+            'jerk_weight': self.params.jerk_weight
         }
         
         self.logger.info(f"Enhanced NLP formulation complete: {3*n-3} variables, {g.shape[0]} constraints")

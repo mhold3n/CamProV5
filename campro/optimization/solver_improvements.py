@@ -819,12 +819,36 @@ class ContinuationStrategy:
         from .builders import build_nlp_problem_from_stage, update_p_val_for_stage, should_rebuild_nlp
         
         stage_problem = deepcopy(base_problem)
-        
+
+        # Determine jerk weight for this stage
+        stage_params = dict(stage_params)
+        jerk_weight = stage_params.get('jerk_weight')
+
+        if jerk_weight is None:
+            # Check if existing stage problem already stored a jerk weight
+            jerk_weight = stage_problem.get('jerk_weight')
+
+        if jerk_weight is None and stage_problem.get('nlp_problem') is not None:
+            prev_stage_params = stage_problem['nlp_problem'].meta.get('stage_params')
+            if prev_stage_params is not None and hasattr(prev_stage_params, 'jerk_weight'):
+                jerk_weight = prev_stage_params.jerk_weight
+
+        if jerk_weight is None and 'motion_law_optimizer' in stage_problem:
+            optimizer = stage_problem['motion_law_optimizer']
+            jerk_weight = getattr(getattr(optimizer, 'params', None), 'jerk_weight', None)
+
+        if jerk_weight is None:
+            # Fallback to zero to avoid None values propagating into the NLP parameters
+            jerk_weight = 0.0
+
+        stage_params['jerk_weight'] = jerk_weight
+
         # Convert stage_params to StageParams object
         stage_params_obj = StageParams(
             epsilon_valve=stage_params['epsilon_valve'],
             epsilon_friction=stage_params['epsilon_friction'],
             stress_factor=stage_params['stress_factor'],
+            jerk_weight=stage_params['jerk_weight'],
             grid_nodes=stage_params.get('grid_nodes', 32),
             colloc_degree=stage_params.get('colloc_degree', 1),
             enable_constraints=stage_params.get('enable_constraints', {}),
@@ -905,6 +929,7 @@ class ContinuationStrategy:
         # Update stage metadata
         stage_problem['stage_number'] = stage_number
         stage_problem['stage_params'] = stage_params
+        stage_problem['jerk_weight'] = jerk_weight
         
         # Log stage information
         self.logger.info(f"Created Stage {stage_number}: {stage_params['description']}")

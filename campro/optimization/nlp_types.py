@@ -20,6 +20,7 @@ class StageParams:
     epsilon_valve: float
     epsilon_friction: float
     stress_factor: float
+    jerk_weight: float
     grid_nodes: int
     colloc_degree: int
     enable_constraints: Dict[str, bool]  # e.g., {"stress": True, "jerk": True}

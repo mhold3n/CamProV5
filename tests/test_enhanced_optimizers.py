@@ -14,6 +14,8 @@ import casadi as ca
 from campro.optimization.enhanced_motion_law_optimizer import (
     EnhancedMotionLawParameters, EnhancedMotionLawOptimizer
 )
+from campro.optimization.builders import build_nlp_problem_from_stage
+from campro.optimization.nlp_types import StageParams
 from campro.optimization.enhanced_gear_optimizer import (
     EnhancedGearParameters, EnhancedGearOptimizer
 )
@@ -162,25 +164,58 @@ class TestEnhancedMotionLawOptimizer:
             'samplingStepDeg': 10.0,
             'compressionDurationPercent': 70.0
         }
-        
+
         grid = optimizer._create_motion_law_grid(motion_params)
         x0 = optimizer._create_enhanced_initial_guess(grid, motion_params)
-        
+
         # Check that initial guess is created
         assert isinstance(x0, np.ndarray)
         assert len(x0) > 0
-        
+
         # Check that initial guess has reasonable values
         # Displacement and velocity should be non-negative, acceleration can be negative
         n_grid = len(grid)
         displacement = x0[:n_grid]
         velocity = x0[n_grid:n_grid+n_grid-1]
         acceleration = x0[n_grid+n_grid-1:]  # noqa: F841
-        
+
         assert np.all(displacement >= 0.0)  # Displacement should be non-negative
         assert np.all(velocity >= 0.0)  # Velocity should be non-negative
         # Acceleration can be negative, so we don't check it
-    
+
+    def test_jerk_weight_penalty_affects_objective(self, optimizer):
+        """Ensure non-zero jerk weight adds to the objective."""
+        stage_params = StageParams(
+            epsilon_valve=1e-2,
+            epsilon_friction=1e-2,
+            stress_factor=1.0,
+            jerk_weight=1e-3,
+            grid_nodes=5,
+            colloc_degree=1,
+            enable_constraints={'jerk': True},
+            tolerance=1e-6,
+            max_iter=100,
+            description='Unit test stage'
+        )
+
+        nlp = build_nlp_problem_from_stage(stage_params, optimizer.base_meta)
+        pmap = optimizer.base_meta['pmap']
+
+        # Construct a state vector with non-zero jerk contribution
+        x_disp = np.linspace(0.0, 1.0, stage_params.grid_nodes)
+        v = np.array([0.1, 0.2, 0.1, 0.05])
+        a = np.array([0.0, 1.0, -0.5])
+        x_test = np.concatenate([x_disp, v, a])
+
+        p_nonzero = np.array(nlp.p_val, copy=True)
+        p_zero = np.array(nlp.p_val, copy=True)
+        p_zero[pmap['jerk_weight']] = 0.0
+
+        obj_with_jerk = float(nlp.fun(x_test, p_nonzero))
+        obj_without_jerk = float(nlp.fun(x_test, p_zero))
+
+        assert obj_with_jerk > obj_without_jerk
+
     def test_thermodynamic_data_calculation(self, optimizer):
         """Test thermodynamic data calculation."""
         # Create test data - asymmetric cycle to get positive work
