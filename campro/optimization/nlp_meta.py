@@ -6,7 +6,7 @@ robust x₀ transfer between different NLP formulations.
 """
 
 from dataclasses import dataclass
-from typing import Dict, Tuple, List, Optional
+from typing import Dict, Tuple
 import numpy as np
 
 

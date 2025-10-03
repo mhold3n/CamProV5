@@ -11,9 +11,8 @@ import time
 import logging
 from pathlib import Path
 
-# Add the project root to the path
+# Project root for subprocess working directory
 project_root = Path(__file__).parent.parent  # Go up one level from tests/ to project root
-sys.path.insert(0, str(project_root))
 
 # Set up test logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

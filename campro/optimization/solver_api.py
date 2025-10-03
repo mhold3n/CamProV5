@@ -6,7 +6,7 @@ interface compatibility issues and ensure consistent result handling.
 """
 
 from dataclasses import dataclass, asdict
-from typing import Optional, Dict, Any, Mapping, Protocol, TYPE_CHECKING
+from typing import Optional, Dict, Any, Protocol, TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:

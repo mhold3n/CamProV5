@@ -13,12 +13,14 @@ description: Machine-friendly consolidation of all sheets from engine_optimizati
 This document consolidates all worksheets into normalized Markdown tables with **snake_case** headers. Equations are wrapped in inline LaTeX where applicable. Empty cells are omitted.
 
 ## Contents
-- [Phase 1 - Gas Dynamics](#phase-1-gas-dynamics)
-- [Phase 2 - Transmission](#phase-2-transmission)
-- [Global – IPOPT&CasADi](#global-ipopt-casadi)
-- [Phase 1 – Revised](#phase-1-revised)
-- [Phase 2 – Revised](#phase-2-revised)
-- [Phase 3 – System Co-Design](#phase-3-system-co-design)
+- [Engine Optimization — Unified Tables](#engine-optimization--unified-tables)
+  - [Contents](#contents)
+  - [Phase 1 - Gas Dynamics](#phase-1---gas-dynamics)
+  - [Phase 2 - Transmission](#phase-2---transmission)
+  - [Global – IPOPT\&CasADi](#global--ipoptcasadi)
+  - [Phase 1 – Revised](#phase-1--revised)
+  - [Phase 2 – Revised](#phase-2--revised)
+  - [Phase 3 – System Co-Design](#phase-3--system-co-design)
 
 ## Phase 1 - Gas Dynamics
 

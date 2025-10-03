@@ -8,11 +8,7 @@ they work correctly when moved to the new modular structure.
 
 import pytest
 import numpy as np
-import sys
 from pathlib import Path
-
-# Add campro to path for imports
-sys.path.append(str(Path(__file__).parent.parent.parent / "campro"))
 
 from campro.optimization.collocation_optimizer import CollocationOptimizer, CollocationParameters, CollocationSolution
 

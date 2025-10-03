@@ -6,13 +6,10 @@ for the Rust FEA engine JNI integration.
 """
 
 import pytest
-import sys
 import tempfile
 import json
 from pathlib import Path
 
-# Add campro to path
-sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from campro.analysis.rust_engine_wrapper import RustEngineWrapper
 

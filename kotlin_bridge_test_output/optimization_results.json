@@ -1,6 +1,6 @@
 {
   "status": "failed",
-  "error": "Stage 1 failed and no previous solution available",
+  "error": "Preflight failed: Initial guess violates constraints at 2 indices",
   "execution_time": 0.0,
   "stage": "pipeline_execution"
 }

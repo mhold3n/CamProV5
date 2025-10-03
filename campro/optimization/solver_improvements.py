@@ -14,7 +14,6 @@ from typing import Dict, List, Any, Union, Callable, Tuple, Optional
 from dataclasses import dataclass
 
 from campro.logging import get_logger
-from .nlp_meta import BlockSlices, create_motion_law_block_slices, create_gear_optimization_block_slices
 log = get_logger(__name__)
 
 
