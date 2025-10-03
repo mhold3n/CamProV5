@@ -657,7 +657,11 @@ class TestIntegration:
                         'g': np.array([0.0]),
                         'lam_x': np.array([0.0, 0.0]),
                         'lam_g': np.array([1.0]),
-                        'iterations': 10
+                        'iterations': 10,
+                        'success': True,
+                        'status': 'Solve_Succeeded',
+                        'is_fallback': False,
+                        'iter_count': 10
                     }
             return MockSolver()
         
@@ -666,9 +670,9 @@ class TestIntegration:
         
         # Check that solution is returned
         assert isinstance(solution, dict)
-        assert 'x' in solution
-        assert 'f' in solution
-        assert 'g' in solution
+        assert 'continuation_solutions' in solution
+        assert len(solution['continuation_solutions']) == 3
+        assert 'success' in solution
         
         # Check that convergence diagnostics are added
         if solver_improvements.params.diagnostics_enabled:

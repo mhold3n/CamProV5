@@ -1,6 +1,7 @@
 {
-  "status": "failed",
-  "error": "Preflight failed: Initial guess violates constraints at 2 indices",
+  "status": "PREFAIL",
+  "message": "Initial guess violates variable bounds",
+  "hint": "Initial guess violated bounds; see x0_transfer logs",
   "execution_time": 0.0,
-  "stage": "pipeline_execution"
+  "stage": "preflight_check"
 }

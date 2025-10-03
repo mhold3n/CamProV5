@@ -14,7 +14,6 @@ import logging
 import time
 
 from campro.utils.angle_units import (
-    ensure_percent_grid,
     percent_to_degrees,
     percent_to_radians,
     resolve_cycle_percent,
@@ -447,7 +446,7 @@ class Phase2GearOptimizer:
             'ubg': ubg,
             'x0': x0,
             'block_slices': block_slices,  # Add block slices for x₀ transfer
-            'grid_t': gear_grid  # Store grid for interpolation
+            'grid_t': grid  # Store grid for interpolation
         }
         
         self.logger.info(f"Gear NLP formulation complete: {5*n} variables, {len(g)} constraints")

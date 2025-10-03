@@ -242,6 +242,7 @@ class EnhancedMotionLawOptimizer:
         
         # Extract user parameters
         stroke_length_m = motion_params.get('strokeLengthMm', 10.0) / 1000.0  # Convert to meters
+        self.logger.info(f"Stroke length from motion_params: {motion_params.get('strokeLengthMm', 10.0)}mm -> {stroke_length_m}m")
         compression_duration_percent = motion_params.get('compressionDurationPercent', 70.0)
         ring_rotation_percent = resolve_cycle_percent(
             motion_params, 'ringRotation', default_percent=degrees_to_percent(180.0)
@@ -296,24 +297,32 @@ class EnhancedMotionLawOptimizer:
             n, 1, {'stress': True, 'jerk': True}, stroke_length_m
         )
         
-        # Initial guess: simple linear based on motion law phases
+        # Initial guess: consistent with kinematic constraints
         x0 = np.zeros(n)
         v0 = np.zeros(n-1)
         a0 = np.zeros(n-2)
         
-        # Simple linear displacement guess that respects boundary conditions
+        # Create a smooth displacement profile that satisfies boundary conditions
         for i in range(n):
-            x0[i] = stroke_length_m * i / (n-1)
+            # Use a smooth step function instead of linear
+            t_norm = i / (n-1)
+            # Smooth step: 3t^2 - 2t^3 (smoothstep function)
+            smooth_factor = 3 * t_norm**2 - 2 * t_norm**3
+            x0[i] = stroke_length_m * smooth_factor
         
         # Ensure boundary conditions are satisfied in initial guess
         x0[0] = 0.0  # x(0) = 0
         x0[n-1] = stroke_length_m  # x(T) = stroke_length
         
-        # Simple velocity guess (constant)
-        v0[:] = stroke_length_m / (2*np.pi)  # Average velocity
+        # Create velocity guess that's EXACTLY consistent with displacement using same formula as constraints
+        for i in range(n-1):
+            # Use the exact same formula as in the kinematic constraints
+            v0[i] = (x0[i+1] - x0[i]) / (grid[i+1] - grid[i])
         
-        # Simple acceleration guess (zero)
-        a0[:] = 0.0
+        # Create acceleration guess that's EXACTLY consistent with velocity using same formula as constraints
+        for i in range(n-2):
+            # Use the exact same formula as in the kinematic constraints
+            a0[i] = (v0[i+1] - v0[i]) / (grid[i+1] - grid[i])
         
         x0_all = np.concatenate([x0, v0, a0])
         
@@ -693,10 +702,12 @@ class EnhancedMotionLawOptimizer:
                         'g': np.array([]),  # Not used in legacy format
                         'lam_x': result.get('lam_x', np.array([])),  # Use signed lam_x
                         'lam_g': result.get('lam_g', np.array([])),
-                        'iterations': result.get('iter_count', 0),
+                        'iter_count': result.get('iter_count', 0),  # Fixed: use iter_count not iterations
                         'success': result.get('success', False),
+                        'status': result.get('status', 'UNKNOWN'),  # Add status field
+                        'message': result.get('message', ''),  # Add message field
                         'stats': result.get('meta', {}).get('ipopt', {}),
-                        'kkt_residuals': result.get('kkt', {}),
+                        'kkt': result.get('kkt', {}),  # Fixed: use kkt not kkt_residuals
                         'is_fallback': result.get('is_fallback', False)
                     }
                 else:
@@ -789,7 +800,7 @@ class EnhancedMotionLawOptimizer:
     def _post_process_enhanced_motion_law(self, solution: Dict[str, Any], grid: np.ndarray,
                                         motion_params: Dict[str, Any]) -> Dict[str, Any]:
         """Post-process the optimization solution with thermodynamic data."""
-        if not solution['success'] or solution['x_opt'] is None or np.isnan(solution.get('f_opt', float('inf'))):
+        if not solution['success'] or solution['x_opt'] is None or np.isnan(solution.get('f_opt', solution.get('f', float('inf')))):
             self.logger.error("Cannot post-process failed solution")
             # Create a simple fallback motion law for integration tests
             n_grid = len(grid)
@@ -848,7 +859,7 @@ class EnhancedMotionLawOptimizer:
             'grid': grid.tolist(),
             'theta_deg': theta_deg.tolist(),  # Add theta_deg field
             'success': True,
-            'objective_value': solution['f_opt'],
+            'objective_value': solution.get('f_opt', solution.get('f', float('inf'))),
             'thermodynamic_data': thermo_data  # NEW
         }
         
@@ -1015,6 +1026,7 @@ class EnhancedMotionLawOptimizer:
         # Fix x(0) = 0 and x(T) = stroke_length
         lbx[0] = ubx[0] = 0.0  # x(0) = 0
         lbx[n-1] = ubx[n-1] = stroke_length_m  # x(T) = stroke_length
+        self.logger.info(f"Boundary conditions: x(0)={lbx[0]}, x(T)={lbx[n-1]} (stroke_length_m={stroke_length_m})")
         
         # Constraint bounds (only kinematic constraints, no boundary conditions)
         # Count: kinematic (n-1) + acceleration (n-2) = 2n-3

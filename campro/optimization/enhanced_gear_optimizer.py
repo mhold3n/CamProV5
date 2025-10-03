@@ -23,7 +23,6 @@ from campro.physics.transmission import (
 )
 from campro.optimization.solver_improvements import SolverParameters, SolverImprovements
 from campro.utils.angle_units import (
-    ensure_percent_grid,
     percent_to_degrees,
     percent_to_radians,
     resolve_cycle_percent,
@@ -183,11 +182,9 @@ class EnhancedGearOptimizer:
         # Build enhanced NLP formulation with transmission physics
         nlp_info = self._build_enhanced_gear_nlp_formulation(motion_law, gear_params, gear_grid)
         
-        # Solve optimization with improvements
-        if self.solver_improvements:
-            solution = self._solve_with_improvements(nlp_info, gear_params)
-        else:
-            solution = self._solve_enhanced_gear_nlp(nlp_info, gear_params)
+        # Solve optimization - use simpler approach for gear optimization
+        # Gear optimization doesn't need the complex continuation strategy
+        solution = self._solve_enhanced_gear_nlp(nlp_info, gear_params)
         
         # Post-process results with transmission data
         gear_profiles = self._post_process_enhanced_gear_solution(solution, gear_grid, motion_law, gear_params)
@@ -286,7 +283,11 @@ class EnhancedGearOptimizer:
             'grid': grid,
             'n': n,
             'motion_law': motion_law,
-            'gear_params': gear_params
+            'gear_params': gear_params,
+            'meta': {
+                'optimization_type': 'gear',
+                'gear_params': gear_params
+            }
         }
         
         self.logger.info(f"Enhanced gear NLP formulation complete: {5*n} variables, {len(g)} constraints")
@@ -573,6 +574,9 @@ class EnhancedGearOptimizer:
                                gear_params: Dict[str, Any]) -> Dict[str, Any]:
         """Solve optimization problem with solver improvements."""
         self.logger.info("Solving enhanced gear NLP with solver improvements")
+        
+        # Add base_meta to nlp_info for robust continuation
+        nlp_info['base_meta'] = nlp_info.get('meta', {})
         
         # Real solver factory that includes gear parameters
         def solver_factory(problem):

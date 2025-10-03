@@ -134,7 +134,6 @@ def _preflight(prob: NLPProblem, x0: np.ndarray) -> None:
                 raise ValueError(f"Initial guess violates constraints at {len(g_violations)} indices")
             
             # Enhanced constraint diagnostics
-            g_norm = _inf_norm(g0)
             g_max_violation = np.max(np.maximum(0, prob.lbg - g0)) + np.max(np.maximum(0, g0 - prob.ubg))
             logger.info(f"Constraint characteristics: {len(prob.lbg)} constraints, "
                        f"lbg_range=[{np.min(prob.lbg):.2e}, {np.max(prob.lbg):.2e}], "

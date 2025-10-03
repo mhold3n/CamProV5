@@ -7,11 +7,11 @@ handling both parameterization and structural changes correctly.
 
 import casadi as ca
 import numpy as np
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from .nlp_types import NLPProblem, StageParams
 
 
-def build_nlp_problem_from_stage(params: StageParams, base_meta: Dict[str, Any]) -> NLPProblem:
+def build_nlp_problem_from_stage(params: StageParams, base_meta: Dict[str, Any], original_meta: Optional[Dict[str, Any]] = None) -> NLPProblem:
     """
     Build the symbolic NLP (x,p,f,g) for the given stage parameters,
     compile numeric functions, and attach bounds/params/meta.
@@ -52,7 +52,14 @@ def build_nlp_problem_from_stage(params: StageParams, base_meta: Dict[str, Any])
     
     # Construct f(x,p), g(x,p) using current grid/degree/activations
     f, g = base_meta['make_fg'](x, p, params)
-    lbx, ubx, lbg, ubg = base_meta['make_bounds'](N, deg, act)
+    
+    # Get stroke length from motion_params if available
+    stroke_length_m = 0.01  # Default value
+    if original_meta is not None and 'motion_params' in original_meta:
+        motion_params = original_meta['motion_params']
+        stroke_length_m = motion_params.get('strokeLengthMm', 10.0) / 1000.0  # Convert mm to meters
+    
+    lbx, ubx, lbg, ubg = base_meta['make_bounds'](N, deg, act, stroke_length_m)
     
     # Compile numeric functions once
     fun = ca.Function('f', [x, p], [f])
@@ -75,6 +82,10 @@ def build_nlp_problem_from_stage(params: StageParams, base_meta: Dict[str, Any])
         'grid': grid,
         **base_meta
     }
+    
+    # Preserve motion_params from original metadata if available
+    if original_meta is not None and 'motion_params' in original_meta:
+        meta['motion_params'] = original_meta['motion_params']
     
     return NLPProblem(
         x=x, p=p, f=f, g=g,

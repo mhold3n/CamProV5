@@ -159,7 +159,7 @@ class GearProfileGenerator:
         phase5_end_rad = percent_to_radians(phase5_end)
         phase6_end_rad = percent_to_radians(phase6_end)
         phase7_end_rad = percent_to_radians(phase7_end)
-        phase8_end_rad = percent_to_radians(phase8_end)
+        # phase8_end_rad = percent_to_radians(phase8_end)  # Currently unused
         
         # Generate motion law - CORRECTED to represent proper piston stroke
         for i, (theta_percent, theta_value_rad) in enumerate(zip(theta_pct, theta_rad)):
