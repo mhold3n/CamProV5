@@ -15,6 +15,7 @@ data class OptimizationResult(
     val feaAnalysis: FEAAnalysisData,
     val executionTime: Double = 0.0,
     val error: String? = null,
+    val convergence: ConvergenceStatus? = null,
 ) {
 
     /**
@@ -32,6 +33,15 @@ data class OptimizationResult(
      */
     fun getErrorMessage(): String? = if (isFailure()) error else null
 }
+
+data class ConvergenceStatus(
+    val converged: Boolean,
+    val kktError: Double?,
+    val constraintTotalViolation: Double?,
+    val iterations: Int?,
+    val objectiveValue: Double?,
+    val solverSuccess: Boolean?,
+)
 
 /**
  * Motion law data from optimization.

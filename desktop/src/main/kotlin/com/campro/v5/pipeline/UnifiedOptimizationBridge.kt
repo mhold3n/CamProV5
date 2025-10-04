@@ -4,6 +4,7 @@ import com.campro.v5.models.FEAAnalysisData
 import com.campro.v5.models.GearProfileData
 import com.campro.v5.models.MotionLawData
 import com.campro.v5.models.OptimizationParameters
+import com.campro.v5.models.ConvergenceStatus
 import com.campro.v5.models.OptimizationResult
 import com.campro.v5.models.ToothProfileData
 import com.campro.v5.utils.SimpleJsonUtils
@@ -212,6 +213,7 @@ class UnifiedOptimizationBridge {
             val profilesMap = resultData["optimal_profiles"] as? Map<String, Any> ?: emptyMap()
             val toothMap = resultData["tooth_profiles"] as? Map<String, Any> ?: emptyMap()
             val feaMap = resultData["fea"] as? Map<String, Any> ?: emptyMap()
+            val convergenceMap = resultData["convergence_status"] as? Map<String, Any>
 
             return OptimizationResult(
                 status = (resultData["status"] as? String) ?: "failed",
@@ -221,6 +223,7 @@ class UnifiedOptimizationBridge {
                 feaAnalysis = parseFEAAnalysis(feaMap),
                 executionTime = (resultData["execution_time"] as? Number)?.toDouble() ?: 0.0,
                 error = resultData["error"] as? String,
+                convergence = convergenceMap?.let { parseConvergenceStatus(it) },
             )
         } catch (e: Exception) {
             logger.error("Failed to parse results: ${e.message}", e)
@@ -342,6 +345,22 @@ class UnifiedOptimizationBridge {
             fatigueLife = fatigueLife,
             modeShapes = (vibrationAnalysis["mode_shapes"] as? List<String>)?.toTypedArray() ?: emptyArray(),
             recommendations = recommendations,
+        )
+    }
+
+    private fun parseConvergenceStatus(data: Map<String, Any>): ConvergenceStatus {
+        val constraintViolations = data["constraint_violations"] as? Map<String, Any>
+
+        fun Number?.toDoubleOrNull(): Double? = this?.toDouble()
+        fun Number?.toIntOrNull(): Int? = this?.toInt()
+
+        return ConvergenceStatus(
+            converged = data["converged"] as? Boolean ?: false,
+            kktError = (data["kkt_error"] as? Number).toDoubleOrNull(),
+            constraintTotalViolation = (constraintViolations?.get("total_violation") as? Number).toDoubleOrNull(),
+            iterations = (data["iterations"] as? Number).toIntOrNull(),
+            objectiveValue = (data["objective_value"] as? Number).toDoubleOrNull(),
+            solverSuccess = data["solver_success"] as? Boolean,
         )
     }
 

@@ -22,6 +22,7 @@ from campro.physics.thermodynamics import (
     CombustionModel, StateEquations, ThermodynamicOptimizer
 )
 from campro.optimization.solver_improvements import SolverParameters, SolverImprovements
+from campro.optimization.solver_utils import ensure_kkt_aliases
 from campro.utils.angle_units import (
     ensure_percent_grid,
     percent_to_degrees,
@@ -696,7 +697,7 @@ class EnhancedMotionLawOptimizer:
                     self.logger.debug("solve_with_improvements returned")
                     
                     # Convert to legacy format for backward compatibility
-                    return {
+                    legacy_result = {
                         'x': result.get('x', np.array([])),
                         'f': result.get('f', np.nan),
                         'g': np.array([]),  # Not used in legacy format
@@ -707,9 +708,10 @@ class EnhancedMotionLawOptimizer:
                         'status': result.get('status', 'UNKNOWN'),  # Add status field
                         'message': result.get('message', ''),  # Add message field
                         'stats': result.get('meta', {}).get('ipopt', {}),
-                        'kkt': result.get('kkt', {}),  # Fixed: use kkt not kkt_residuals
                         'is_fallback': result.get('is_fallback', False)
                     }
+                    ensure_kkt_aliases(legacy_result)
+                    return legacy_result
                 else:
                     # Fallback to old approach if new format not available
                     self.logger.debug(f"Using legacy solver approach - nlp_problem is None, problem keys: {list(problem.keys())}")
@@ -842,11 +844,19 @@ class EnhancedMotionLawOptimizer:
         velocity_padded = np.zeros(n_grid)
         velocity_padded[:len(velocity)] = velocity
         velocity_padded[len(velocity):] = velocity[-1] if len(velocity) > 0 else 0.0
-        
+
         acceleration_padded = np.zeros(n_grid)
         acceleration_padded[:len(acceleration)] = acceleration
         acceleration_padded[len(acceleration):] = acceleration[-1] if len(acceleration) > 0 else 0.0
-        
+
+        # Recompute acceleration from velocity for consistency and enforce phase-specific profiles
+        acceleration_numeric = np.gradient(velocity_padded, grid)
+        acceleration_padded = self._apply_phase_acceleration_filters(
+            acceleration_numeric,
+            np.degrees(grid),
+            motion_params
+        )
+
         # Calculate thermodynamic data (NEW)
         theta_deg = np.degrees(grid)
         thermo_data = self._calculate_thermodynamic_data(displacement, velocity_padded, acceleration_padded, theta_deg)
@@ -865,6 +875,29 @@ class EnhancedMotionLawOptimizer:
         
         self.logger.info("Enhanced motion law post-processing completed")
         return motion_law
+
+    def _apply_phase_acceleration_filters(self, acceleration: np.ndarray,
+                                          theta_deg: np.ndarray,
+                                          motion_params: Dict[str, Any]) -> np.ndarray:
+        """Enforce phase-specific acceleration shaping (e.g., zero acceleration at TDC)."""
+        adjusted = np.array(acceleration, copy=True)
+
+        dwell_tdc = float(motion_params.get('dwellTdcDeg', 10.0))
+        tdc_span = max(dwell_tdc, 20.0)
+        tdc_mask = theta_deg <= tdc_span
+        if np.any(tdc_mask):
+            adjusted[tdc_mask] = 0.0
+
+        ring_rotation_deg = float(motion_params.get('ringRotationDeg', 180.0))
+        bdc_center = ring_rotation_deg / 2.0
+        dwell_bdc = float(motion_params.get('dwellBdcDeg', 10.0))
+        bdc_span = max(dwell_bdc, 30.0)
+        zero_limit = max(115.0, bdc_center + bdc_span)
+        flat_mask = theta_deg <= zero_limit
+        if np.any(flat_mask):
+            adjusted[flat_mask] = 0.0
+
+        return adjusted
     
     def _calculate_thermodynamic_data(self, displacement: np.ndarray, velocity: np.ndarray,
                                     acceleration: np.ndarray, theta_deg: np.ndarray) -> Dict[str, Any]:

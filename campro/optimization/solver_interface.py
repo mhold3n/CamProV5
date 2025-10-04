@@ -12,6 +12,7 @@ from dataclasses import dataclass
 if TYPE_CHECKING:
     from .nlp_types import NLPProblem
 
+from .solver_utils import extract_kkt
 
 @dataclass
 class SolverResult:
@@ -83,6 +84,7 @@ class LegacyAdapter:
         legacy_result = self.legacy_solver.solve(nlp_problem)
         
         # Convert to standardized format
+        legacy_kkt = extract_kkt(legacy_result)
         return SolverResult(
             success=legacy_result.get('success', False),
             x=legacy_result.get('x', np.array([])),
@@ -91,7 +93,7 @@ class LegacyAdapter:
             lam_g=legacy_result.get('lam_g', np.array([])),
             iter_count=legacy_result.get('iter_count', 0),
             status=legacy_result.get('status', 'UNKNOWN'),
-            kkt_residuals=legacy_result.get('kkt_residuals', {}),
+            kkt_residuals=legacy_kkt,
             meta=legacy_result.get('meta', {}),
             is_fallback=legacy_result.get('is_fallback', False)
         )

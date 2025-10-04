@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from campro.logging import get_logger
 log = get_logger(__name__)
 
+from .solver_utils import extract_kkt, solution_to_dict
+
 
 # ============================================================================
 # Robust x₀ Transfer and Bounds Handling
@@ -1361,14 +1363,14 @@ class ContinuationStrategy:
         
         # Return final solution with continuation diagnostics
         if current_solution:
-            # Convert SolverResult to dict if needed
-            if hasattr(current_solution, 'to_dict'):
-                final_solution = current_solution.to_dict()
-            else:
-                final_solution = dict(current_solution) if hasattr(current_solution, 'items') else {}
+            final_solution = solution_to_dict(current_solution)
         else:
             final_solution = {}
-        final_solution['continuation_solutions'] = solutions
+
+        final_solution['continuation_solutions'] = [
+            solution_to_dict(sol) if not isinstance(sol, dict) else sol
+            for sol in solutions
+        ]
         final_solution['continuation_stages_completed'] = len(solutions)
         
         return final_solution
@@ -1664,16 +1666,18 @@ class ConvergenceDiagnostics:
         violations = {}
         
         try:
+            solution_data = solution if isinstance(solution, dict) else solution_to_dict(solution)
+
             # Extract solution components
-            x = solution.get('x', np.array([]))
-            g = solution.get('g', np.array([]))
+            x = solution_data.get('x', np.array([]))
+            g = solution_data.get('g', np.array([]))
             
             # Extract problem components
             lbx = problem.get('lbx', [])
             ubx = problem.get('ubx', [])
             lbg = problem.get('lbg', [])
             ubg = problem.get('ubg', [])
-            
+
             # Calculate variable bound violations
             if len(lbx) > 0 and len(ubx) > 0:
                 x_violations = []
@@ -1696,13 +1700,29 @@ class ConvergenceDiagnostics:
                 
                 violations['constraint_violations'] = max(g_violations) if g_violations else 0.0
             
+            # Incorporate primal residual from KKT diagnostics when available
+            kkt_data = extract_kkt(solution_data)
+            if kkt_data:
+                primal_residual = float(kkt_data.get('primal', 0.0))
+                violations['kkt_primal_residual'] = primal_residual
+
+                if 'constraint_violations' not in violations:
+                    violations['constraint_violations'] = primal_residual
+                else:
+                    violations['constraint_violations'] = max(violations['constraint_violations'], primal_residual)
+
+                if 'variable_bound_violations' not in violations:
+                    violations['variable_bound_violations'] = primal_residual
+                else:
+                    violations['variable_bound_violations'] = max(violations['variable_bound_violations'], primal_residual)
+
             # Calculate total violation
             violations['total_violation'] = max(violations.values()) if violations else 0.0
-            
+
         except Exception as e:
             self.logger.error(f"Error calculating constraint violations: {str(e)}")
             violations['error'] = float('inf')
-        
+
         return violations
     
     def check_convergence(self, solution: Dict[str, Any],
@@ -1719,55 +1739,29 @@ class ConvergenceDiagnostics:
         """
         # Change: Use attribute access instead of dictionary methods
         self.logger.debug(f"check_convergence called with solution type: {type(solution)}")
-        if hasattr(solution, 'kkt'):
-            self.logger.debug(f"solution has kkt attribute: {solution.kkt is not None}")
-            self.logger.debug(f"kkt content: {solution.kkt}")
-        elif hasattr(solution, 'kkt_residuals'):
-            self.logger.debug(f"solution has kkt_residuals attribute: {solution.kkt_residuals is not None}")
-            self.logger.debug(f"kkt_residuals content: {solution.kkt_residuals}")
+
+        if not isinstance(solution, dict):
+            solution = solution_to_dict(solution)
+        solution_dict = solution
+
+        kkt_residuals = extract_kkt(solution_dict)
+        if kkt_residuals:
+            kkt_error = max(
+                float(kkt_residuals.get('stationarity', float('inf'))),
+                float(kkt_residuals.get('primal', float('inf')))
+            )
+            self.logger.debug(f"KKT residuals detected, error={kkt_error:.3e}")
         else:
-            # Fallback for dictionary-style results
-            self.logger.debug(f"solution has 'kkt' key: {'kkt' in solution}")
-            self.logger.debug(f"solution has 'kkt_residuals' key: {'kkt_residuals' in solution}")
-            if 'kkt' in solution:
-                self.logger.debug(f"kkt content: {solution['kkt']}")
-            if 'kkt_residuals' in solution:
-                self.logger.debug(f"kkt_residuals content: {solution['kkt_residuals']}")
-        
-        # Change: Calculate KKT error using new format with proper gating
-        if hasattr(solution, 'kkt') and solution.kkt is not None:
-            # New standardized format with attribute access
-            kkt_residuals = solution.kkt
-            kkt_error = max(
-                float(kkt_residuals.get('stationarity', float('inf'))),
-                float(kkt_residuals.get('primal', float('inf')))
-            )
-            self.logger.debug(f"KKT error from new format (attribute): {kkt_error}")
-        elif 'kkt' in solution and solution.get('kkt') is not None:  # Dictionary format
-            kkt_residuals = solution.get('kkt', {})
-            kkt_error = max(
-                float(kkt_residuals.get('stationarity', float('inf'))),
-                float(kkt_residuals.get('primal', float('inf')))
-            )
-            self.logger.debug(f"KKT error from new format (dict): {kkt_error}")
-        elif 'kkt_residuals' in solution:  # Alternative new format
-            kkt_residuals = solution.get('kkt_residuals', {})
-            kkt_error = max(
-                float(kkt_residuals.get('stationarity', float('inf'))),
-                float(kkt_residuals.get('primal', float('inf')))
-            )
-            self.logger.debug(f"KKT error from new format (kkt_residuals): {kkt_error}")
-        else:  # No KKT data available
             self.logger.debug("No KKT data available - not computed for this solve")
             kkt_error = float('inf')
-        
+
         # Calculate constraint violations
-        violations = self.calculate_constraint_violations(solution, problem)
+        violations = self.calculate_constraint_violations(solution_dict, problem)
         
         # Check convergence criteria with relaxed tolerances for motion law optimization
         # For motion law optimization, when IPOPT reports Solve_Succeeded, we trust it
         # Check if solution reports success
-        solver_success = solution.get('success', False) and solution.get('status', '') == 'Solve_Succeeded'
+        solver_success = solution_dict.get('success', False) and solution_dict.get('status', '') == 'Solve_Succeeded'
         
         # Use the same relaxed tolerances as is_stage_success
         stat_tolerance = problem.get('stat_tolerance', 10.0)  # Very relaxed stationarity tolerance
@@ -1782,18 +1776,10 @@ class ConvergenceDiagnostics:
         converged = kkt_converged and constraint_converged
         
         # Get objective value from solution - handle both SolverResult types
-        if hasattr(solution, 'f'):
-            objective_value = solution.f
-        elif hasattr(solution, 'objective_value'):
-            objective_value = solution.objective_value
-        else:
-            objective_value = solution.get('f', solution.get('objective_value', float('inf')))
-        
+        objective_value = solution_dict.get('f', solution_dict.get('objective_value', float('inf')))
+
         # Get iterations from solution - handle both SolverResult types
-        if hasattr(solution, 'iter_count'):
-            iterations = solution.iter_count
-        else:
-            iterations = solution.get('iterations', solution.get('iter_count', 0))
+        iterations = solution_dict.get('iterations', solution_dict.get('iter_count', 0))
         
         convergence_status = {
             'converged': converged,
@@ -1948,10 +1934,13 @@ class SolverImprovements:
             # Solve directly using standardized interface
             from .solver_interface import create_solver_adapter
             compatible_solver = create_solver_adapter(solver_factory, enhanced_problem)
-            solution = compatible_solver.solve(enhanced_problem)
-        
+            raw_solution = compatible_solver.solve(enhanced_problem)
+            solution = solution_to_dict(raw_solution)
+
         # Ensure solution has success field and x_opt field
+        solver_success_flag = False
         if solution is not None:
+            solver_success_flag = bool(solution.get('success', False))
             # Ensure x_opt field exists (mapped from x)
             if 'x' in solution and 'x_opt' not in solution:
                 solution['x_opt'] = solution['x']
@@ -1959,7 +1948,7 @@ class SolverImprovements:
             # Ensure f_opt field exists (mapped from f)
             if 'f' in solution and 'f_opt' not in solution:
                 solution['f_opt'] = solution['f']
-        
+
         # Add convergence diagnostics
         if self.params.diagnostics_enabled and solution is not None:
             convergence_status = self.convergence_diagnostics.check_convergence(solution, enhanced_problem)
@@ -1975,6 +1964,9 @@ class SolverImprovements:
                     stats_success = False
             strict_converged = bool(convergence_status.get('converged', False)) and stats_success
 
+            solution['solver_success'] = solver_success_flag
             solution['success'] = strict_converged
-        
+        elif solution is not None:
+            solution['solver_success'] = solver_success_flag
+
         return solution

@@ -190,11 +190,12 @@ def compute_kkt_residuals(prob: NLPProblem, sol: Dict[str, Any]) -> Dict[str, fl
             raise ValueError(f"Jg shape {Jg.shape} incompatible with lam_g length {lam_g.size}")
         
         # CRITICAL FIX: Correct stationarity with signed lam_x
-        # Stationarity: ∇f + Jg^T λ - lam_x = 0 (where lam_x = z_U - z_L)
+        # CasADi returns lam_x = z_L - z_U, so IPOPT stationarity is
+        # ∇f + Jg^T λ + lam_x = 0
         if lam_g.size:
-            stationarity_term = grad_f + Jg.T @ lam_g - lam_x
+            stationarity_term = grad_f + Jg.T @ lam_g + lam_x
         else:
-            stationarity_term = grad_f - lam_x
+            stationarity_term = grad_f + lam_x
         stationarity = np.linalg.norm(stationarity_term, ord=np.inf)
         
         # Primal feasibility: constraints and variable bounds
@@ -365,10 +366,10 @@ def solve_with_improvements(prob: NLPProblem,
         lam_g = np.array(r.get('lam_g', [])).squeeze()
         
         # Reconstruct separate nonnegative bound multipliers
-        # CasADi convention: lam_x > 0 => upper bound active, lam_x < 0 => lower bound active
-        # IPOPT KKT: ∇f + J_g^T λ + z_L - z_U = 0, where lam_x = z_U - z_L
-        z_U = np.clip(lam_x, 0.0, np.inf)   # upper bound multipliers (nonnegative)
-        z_L = np.clip(-lam_x, 0.0, np.inf)  # lower bound multipliers (nonnegative)
+        # CasADi convention: lam_x = z_L - z_U (positive => lower bound active)
+        # IPOPT KKT: ∇f + J_g^T λ + z_L - z_U = 0
+        z_L = np.clip(lam_x, 0.0, np.inf)   # lower bound multipliers (nonnegative)
+        z_U = np.clip(-lam_x, 0.0, np.inf)  # upper bound multipliers (nonnegative)
     else:
         lam_x = np.array([])
         lam_g = np.array([])
@@ -382,7 +383,7 @@ def solve_with_improvements(prob: NLPProblem,
         'iter_count': int(stats.get('iter_count', 0)),
         'x': x,
         'f': float(np.array(r['f']).squeeze()) if ok else np.nan,
-        'lam_x': lam_x,  # signed (z_U - z_L)
+        'lam_x': lam_x,  # signed (z_L - z_U)
         'lam_g': lam_g,
         'z_L': z_L,      # lower bound multipliers (nonnegative)
         'z_U': z_U,      # upper bound multipliers (nonnegative)

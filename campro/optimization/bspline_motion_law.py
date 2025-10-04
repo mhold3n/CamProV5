@@ -107,9 +107,17 @@ class BSplineMotionLaw:
         # Create basis functions for each control point
         self.basis_functions = []
         
+        last_index = self.params.num_control_points - 1
+
         for i in range(self.params.num_control_points):
             # Create B-spline basis function using Cox-de Boor recursion
-            basis_func = self._create_basis_function(t, knot_vector, i, self.params.spline_order)
+            basis_func = self._create_basis_function(
+                t,
+                knot_vector,
+                i,
+                self.params.spline_order,
+                is_last=(i == last_index)
+            )
             self.basis_functions.append(basis_func)
         
         # Create CasADi function for basis evaluation
@@ -118,8 +126,8 @@ class BSplineMotionLaw:
         # Create derivative functions for velocity and acceleration
         self._create_derivative_functions(t)
     
-    def _create_basis_function(self, t: ca.SX, knots: np.ndarray, 
-                              i: int, p: int) -> ca.SX:
+    def _create_basis_function(self, t: ca.SX, knots: np.ndarray,
+                              i: int, p: int, *, is_last: bool = False) -> ca.SX:
         """
         Create B-spline basis function using Cox-de Boor recursion.
         
@@ -133,11 +141,11 @@ class BSplineMotionLaw:
             B-spline basis function
         """
         if p == 0:
-            # Base case: piecewise constant
-            return ca.if_else(
-                ca.logic_and(t >= knots[i], t < knots[i+1]),
-                1.0, 0.0
-            )
+            # Base case: piecewise constant. Include right endpoint for final basis.
+            in_support = ca.logic_and(t >= knots[i], t < knots[i+1])
+            if is_last:
+                in_support = ca.logic_or(in_support, ca.logic_and(t >= knots[i+1], t <= knots[i+1]))
+            return ca.if_else(in_support, 1.0, 0.0)
         else:
             # Recursive case
             term1 = 0.0
@@ -146,12 +154,13 @@ class BSplineMotionLaw:
             # First term
             if knots[i+p] != knots[i]:
                 term1 = (t - knots[i]) / (knots[i+p] - knots[i]) * \
-                       self._create_basis_function(t, knots, i, p-1)
+                       self._create_basis_function(t, knots, i, p-1, is_last=is_last)
             
             # Second term
             if knots[i+p+1] != knots[i+1]:
+                propagate_last = is_last and (i + 1 == self.params.num_control_points - 1)
                 term2 = (knots[i+p+1] - t) / (knots[i+p+1] - knots[i+1]) * \
-                       self._create_basis_function(t, knots, i+1, p-1)
+                       self._create_basis_function(t, knots, i+1, p-1, is_last=propagate_last)
             
             return term1 + term2
     
@@ -213,10 +222,10 @@ class BSplineMotionLaw:
         t = ca.SX.sym('t')
 
         # Evaluate basis and derivative vectors and project with control points
-        basis_values = self.basis_eval_func(t)[0]
-        velocity_basis = self.velocity_eval_func(t)[0]
-        acceleration_basis = self.acceleration_eval_func(t)[0]
-        jerk_basis = self.jerk_eval_func(t)[0]
+        basis_values = self.basis_eval_func(t)
+        velocity_basis = self.velocity_eval_func(t)
+        acceleration_basis = self.acceleration_eval_func(t)
+        jerk_basis = self.jerk_eval_func(t)
 
         position = ca.dot(basis_values, cp_symbol)
         velocity = ca.dot(velocity_basis, cp_symbol)
@@ -356,7 +365,19 @@ class BSplineMotionLaw:
         if isinstance(control_points, (ca.SX, ca.MX)):
             raise TypeError("control_points must be numeric for evaluation")
 
-        cp_vector = ca.DM(np.asarray(control_points).reshape((-1, 1)))
+        cp_numeric = np.asarray(control_points, dtype=float).reshape((-1,))
+
+        # Enforce boundary position/velocity conditions for evaluation.
+        cp_adjusted = cp_numeric.copy()
+        n_points = cp_adjusted.size
+        cp_adjusted[0] = self.params.initial_position
+        cp_adjusted[-1] = self.params.final_position
+        if n_points >= 2:
+            dt = self.params.cycle_time / self.params.spline_order
+            cp_adjusted[1] = cp_adjusted[0] + dt * self.params.initial_velocity
+            cp_adjusted[-2] = cp_adjusted[-1] - dt * self.params.final_velocity
+
+        cp_vector = ca.DM(cp_adjusted.reshape((-1, 1)))
         
         # Evaluate at time grid points
         results = {
@@ -367,10 +388,18 @@ class BSplineMotionLaw:
         }
         
         for i, t_val in enumerate(time_grid):
-            results['position'][i] = float(motion_law['position'](t_val, cp_vector))
-            results['velocity'][i] = float(motion_law['velocity'](t_val, cp_vector))
-            results['acceleration'][i] = float(motion_law['acceleration'](t_val, cp_vector))
-            results['jerk'][i] = float(motion_law['jerk'](t_val, cp_vector))
+            t_pos = float(t_val)
+            t_deriv = float(t_val)
+
+            if t_deriv <= 0.0:
+                t_deriv = np.nextafter(0.0, 1.0)
+            elif t_deriv >= self.params.cycle_time:
+                t_deriv = np.nextafter(self.params.cycle_time, 0.0)
+
+            results['position'][i] = float(motion_law['position'](t_pos, cp_vector))
+            results['velocity'][i] = float(motion_law['velocity'](t_deriv, cp_vector))
+            results['acceleration'][i] = float(motion_law['acceleration'](t_deriv, cp_vector))
+            results['jerk'][i] = float(motion_law['jerk'](t_deriv, cp_vector))
         
         return results
     

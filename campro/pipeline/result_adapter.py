@@ -9,6 +9,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from campro.optimization.solver_utils import solution_to_dict
+
 
 class ResultAdapter:
     """Adapts enhanced optimizer results to expected format."""
@@ -17,6 +19,8 @@ class ResultAdapter:
     def adapt_motion_law_result(enhanced_result: Dict[str, Any]) -> Dict[str, Any]:
         """Adapt enhanced motion law result to expected format."""
         logger.debug("Adapting enhanced motion law result to expected format")
+
+        enhanced_result = solution_to_dict(enhanced_result)
         
         # Convert lists to numpy arrays for FEA analyzer compatibility
         def ensure_numpy_array(data):
@@ -43,6 +47,8 @@ class ResultAdapter:
     def adapt_gear_result(enhanced_result: Dict[str, Any]) -> Dict[str, Any]:
         """Adapt enhanced gear result to expected format."""
         logger.debug("Adapting enhanced gear result to expected format")
+
+        enhanced_result = solution_to_dict(enhanced_result)
         
         # Convert lists to numpy arrays for FEA analyzer compatibility
         def ensure_numpy_array(data):
@@ -53,14 +59,32 @@ class ResultAdapter:
             else:
                 return np.array([data]) if data is not None else np.array([])
         
+        theta_raw = enhanced_result.get('theta_grid', [])
+        theta_array = ensure_numpy_array(theta_raw)
+        if theta_array.size and np.max(np.abs(theta_array)) <= (2 * np.pi + 1e-6):
+            theta_array = np.degrees(theta_array)
+
+        accum_angle = enhanced_result.get('accumulated_planet_angle_deg', 0.0)
+        if isinstance(accum_angle, (list, tuple, np.ndarray)):
+            accum_angle = np.asarray(accum_angle, dtype=float)
+            accum_angle = float(accum_angle.flatten()[0]) if accum_angle.size else 0.0
+        if abs(accum_angle) <= (2 * np.pi + 1e-6):
+            accum_angle = float(np.degrees(accum_angle))
+
+        phi_planet = enhanced_result.get('phi_planet')
+        if phi_planet is not None:
+            phi_planet = ensure_numpy_array(phi_planet)
+            if phi_planet.size and np.max(np.abs(phi_planet)) <= (2 * np.pi + 1e-6):
+                phi_planet = np.degrees(phi_planet)
+
         return {
-            'theta_deg': ensure_numpy_array(enhanced_result.get('theta_grid', [])),
+            'theta_deg': theta_array,
             'r_sun': ensure_numpy_array(enhanced_result.get('sun_radius', [])),
             'r_planet': ensure_numpy_array(enhanced_result.get('planet_radius', [])),
             'r_ring_inner': ensure_numpy_array(enhanced_result.get('ring_radius', [])),
             'instantaneous_ratio': ensure_numpy_array(enhanced_result.get('instantaneous_ratio', [])),
             'journal_offset': ensure_numpy_array(enhanced_result.get('journal_offset', [])),
-            'accumulated_planet_angle_deg': enhanced_result.get('accumulated_planet_angle_deg', 360.0),
+            'accumulated_planet_angle_deg': accum_angle,
             'gear_clearance': ensure_numpy_array(enhanced_result.get('gear_clearance', [])),
             'force_transfer_efficiency': ensure_numpy_array(enhanced_result.get('force_transfer_efficiency', [])),
             'max_contact_stress': enhanced_result.get('max_contact_stress', 0.0),
@@ -70,6 +94,7 @@ class ResultAdapter:
             'execution_time': enhanced_result.get('execution_time', 0.0),
             'solver_status': enhanced_result.get('solver_status', 'Unknown'),
             'success': enhanced_result.get('success', False),
+            'phi_planet_deg': phi_planet,
             # Add transmission data for advanced analysis
             'transmission_data': enhanced_result.get('transmission_data', {})
         }

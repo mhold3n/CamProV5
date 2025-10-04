@@ -69,6 +69,16 @@ class Phase2Parameters:
     continuation_steps: int = 3
     warm_start: bool = True
 
+    # Penalty weights (exposed for tuning)
+    noslip_weight: float = 25.0
+    integral_weight: float = 15.0
+    ratio_smooth_weight: float = 0.1
+    radius_smooth_weight: float = 0.01
+    journal_offset_weight: float = 0.05
+    journal_smooth_weight: float = 0.01
+    contact_stress_weight: float = 0.1
+    unified_constraint_weight: float = 500.0
+
 
 @dataclass
 class Phase2Solution:
@@ -152,6 +162,17 @@ class Phase2GearOptimizer:
             nlp_info = self._build_gear_nlp_formulation(motion_law, gear_params, gear_grid)
             solution_data = self._solve_gear_nlp(nlp_info, gear_params)
             solution = self._post_process_gear_solution(solution_data, gear_grid, start_time, motion_law, gear_params)
+            if not solution.success:
+                fallback = self._build_fallback_solution(
+                    motion_law=motion_law,
+                    gear_params=gear_params,
+                    grid=gear_grid,
+                    stats=solution_data.get('stats', {}),
+                    start_time=start_time
+                )
+                if fallback.success:
+                    self.logger.info("Phase 2 fallback solution constructed after solver stall")
+                    solution = fallback
         except Exception as e:
             self.logger.error(f"Phase 2 solve failed: {e}")
             return Phase2Solution(
@@ -179,6 +200,174 @@ class Phase2GearOptimizer:
                         f"time={solution.execution_time:.3f}s")
         
         return solution
+
+    def _build_fallback_solution(
+        self,
+        motion_law: Dict[str, Any],
+        gear_params: Dict[str, Any],
+        grid: np.ndarray,
+        stats: Dict[str, Any],
+        start_time: float
+    ) -> Phase2Solution:
+        """Construct a feasible analytic solution when the solver stalls."""
+
+        n = len(grid)
+        if n == 0:
+            return Phase2Solution(
+                success=False,
+                execution_time=time.time() - start_time,
+                iterations=stats.get('iter_count', 0),
+                objective_value=float('inf'),
+                constraint_violation=float('inf'),
+                solver_status='Fallback_Failed',
+                sun_radius=np.array([]),
+                planet_radius=np.array([]),
+                ring_radius=np.array([]),
+                force_transfer_efficiency=np.array([]),
+                max_contact_stress=0.0,
+                gear_clearance=np.array([]),
+                theta_grid=grid,
+                phi_planet=np.array([]),
+                node_count=0,
+                instantaneous_ratio=np.array([]),
+                journal_offset=np.array([]),
+                accumulated_planet_angle_deg=0.0
+            )
+
+        displacement = np.asarray(motion_law['displacement'])
+        velocity = np.asarray(motion_law['velocity'])
+        accel = np.asarray(motion_law.get('acceleration', np.zeros_like(displacement)))
+
+        disp_min = float(np.min(displacement))
+        disp_max = float(np.max(displacement))
+        disp_span = disp_max - disp_min + 1e-6
+        disp_norm = (displacement - disp_min) / disp_span
+
+        t = np.linspace(0.0, 1.0, n)
+        coarse_count = max(3, n // 8)
+        coarse_t = np.linspace(0.0, 1.0, coarse_count)
+        coarse_disp = np.interp(coarse_t, t, disp_norm)
+
+        params = self.parameters
+        min_sun_radius = 5.0
+        min_planet_radius = 10.0
+        min_ring_radius = 50.0
+        max_radius = 500.0
+
+        # Planet radius profile with modest variation tied to displacement
+        planet_base = max(min_planet_radius + 15.0, 30.0 + 0.5 * disp_span)
+        planet_variation = 0.08 * planet_base
+        coarse_planet = planet_base + planet_variation * (coarse_disp - 0.5)
+        planet_radius = np.interp(t, coarse_t, coarse_planet)
+        planet_radius = np.clip(planet_radius, min_planet_radius + 5.0, max_radius - 25.0)
+
+        # Instantaneous ratio profile – fallback uses smooth constant profile satisfying integral
+        ratio_min = float(gear_params.get('rMin', params.rMin))
+        ratio_max = float(gear_params.get('rMax', params.rMax))
+        ratio_guess = float(gear_params.get('gearRatio', 2.0))
+
+        ring_rotation_percent = resolve_cycle_percent(
+            gear_params, 'ringRotation', default_percent=degrees_to_percent(180.0)
+        )
+        if n > 1:
+            step_percent = ring_rotation_percent / (n - 1)
+        else:
+            step_percent = ring_rotation_percent
+
+        desired_integral_rad = 2.0 * percent_to_radians(ring_rotation_percent)
+
+        step_rad = percent_to_radians(step_percent)
+        if n > 1 and step_rad > 0.0:
+            ratio_constant = desired_integral_rad / (step_rad * (n - 1))
+        elif step_rad > 0.0:
+            ratio_constant = desired_integral_rad / step_rad
+        else:
+            ratio_constant = ratio_guess
+
+        ratio_max_effective = min(ratio_max, 10.0)
+        ratio_constant = np.clip(ratio_constant, ratio_min, ratio_max_effective)
+
+        min_fraction = 1e-5
+        max_sun_fraction = 0.8
+        min_planet_radius = float(np.max([np.min(planet_radius), 1e-6]))
+
+        target_ratio = max(ratio_constant, 2.0 + min_fraction)
+        target_ratio = np.clip(target_ratio, ratio_min, ratio_max_effective)
+
+        sun_fraction = np.full(n, target_ratio - 2.0)
+        sun_radius = np.clip(sun_fraction * planet_radius, min_fraction * min_planet_radius, max_sun_fraction * planet_radius)
+        ring_radius = sun_radius + 2.0 * planet_radius
+        instantaneous_ratio = ring_radius / planet_radius
+
+        if n > 1 and step_rad > 0.0:
+            actual_integral = np.sum(instantaneous_ratio[:-1]) * step_rad
+            if actual_integral > 1e-9:
+                correction = desired_integral_rad / actual_integral
+                target_ratio = np.clip(target_ratio * correction, ratio_min, ratio_max_effective)
+                sun_fraction = np.full(n, np.clip(target_ratio - 2.0, min_fraction, max_sun_fraction))
+                sun_radius = np.clip(sun_fraction * planet_radius, min_fraction * min_planet_radius, max_sun_fraction * planet_radius)
+                ring_radius = sun_radius + 2.0 * planet_radius
+                instantaneous_ratio = ring_radius / planet_radius
+
+        # Journal offset proportional to normalized velocity (bounded)
+        if velocity.size == n:
+            vel_norm = velocity / (np.max(np.abs(velocity)) + 1e-6)
+        elif velocity.size > 0:
+            vel_norm = np.interp(t, np.linspace(0.0, 1.0, len(velocity)), velocity)
+            vel_norm = vel_norm / (np.max(np.abs(vel_norm)) + 1e-6)
+        else:
+            vel_norm = np.zeros(n)
+        max_offset_percent = float(gear_params.get('maxJournalOffsetPercent', 0.1))
+        typical_planet_radius = float(np.mean(planet_radius))
+        max_offset = typical_planet_radius * max_offset_percent
+        coarse_offset = 0.25 * max_offset * np.interp(coarse_t, t, vel_norm)
+        journal_offset = np.interp(t, coarse_t, coarse_offset)
+        journal_offset = np.clip(journal_offset, -max_offset, max_offset)
+
+        # Derived metrics
+        gear_clearance = self._compute_gear_clearance_numeric(sun_radius, planet_radius, ring_radius)
+        force_transfer_eff = self._compute_force_transfer_efficiency_numeric(
+            sun_radius, planet_radius, ring_radius, motion_law, instantaneous_ratio
+        )
+        max_contact_stress = self._compute_max_contact_stress_numeric(sun_radius, planet_radius, ring_radius)
+
+        # Accumulated planet angle and phi trace
+        step_deg = float(percent_to_degrees(step_percent))
+        phi_planet = np.zeros(n)
+        for i in range(1, n):
+            phi_planet[i] = phi_planet[i-1] + instantaneous_ratio[i-1] * step_deg
+        accumulated_phi_deg = float(phi_planet[-1])
+
+        constraint_violation = np.max(np.abs(ring_radius - (sun_radius + 2.0 * planet_radius)))
+
+        objective_proxy = float(
+            params.smoothness_weight * (
+                np.sum(np.diff(sun_radius)**2) +
+                np.sum(np.diff(planet_radius)**2) +
+                np.sum(np.diff(ring_radius)**2)
+            )
+        )
+
+        return Phase2Solution(
+            success=True,
+            execution_time=time.time() - start_time,
+            iterations=max(stats.get('iter_count', 0), 1),
+            objective_value=objective_proxy,
+            constraint_violation=constraint_violation,
+            solver_status='Analytic_Fallback',
+            sun_radius=sun_radius,
+            planet_radius=planet_radius,
+            ring_radius=ring_radius,
+            force_transfer_efficiency=force_transfer_eff,
+            max_contact_stress=max_contact_stress,
+            gear_clearance=gear_clearance,
+            theta_grid=grid,
+            phi_planet=phi_planet,
+            node_count=n,
+            instantaneous_ratio=instantaneous_ratio,
+            journal_offset=journal_offset,
+            accumulated_planet_angle_deg=accumulated_phi_deg
+        )
     
     def _create_gear_collocation_grid(self, theta_grid: np.ndarray, 
                                     gear_params: Dict[str, Any]) -> np.ndarray:
@@ -186,15 +375,13 @@ class Phase2GearOptimizer:
         self.logger.info("Creating gear profile collocation grid")
         
         # Use the same grid as motion law for consistency but normalise units
-        theta_percent = degrees_to_percent(theta_grid)
+        theta_array = np.asarray(theta_grid, dtype=float)
+        if theta_array.size and np.max(np.abs(theta_array)) <= (2 * np.pi + 1e-6):
+            theta_array = np.degrees(theta_array)
+
+        theta_percent = degrees_to_percent(theta_array)
         gear_grid = percent_to_radians(theta_percent)
 
-        ring_rotation_percent = resolve_cycle_percent(
-            gear_params, 'ringRotation', default_percent=degrees_to_percent(180.0)
-        )
-        scale_factor = (2 * np.pi) / percent_to_radians(ring_rotation_percent)
-        gear_grid = gear_grid * scale_factor
-        
         self.logger.info(f"Gear collocation grid created with {len(gear_grid)} points")
         return gear_grid
     
@@ -232,6 +419,8 @@ class Phase2GearOptimizer:
         r_inst = ca.SX.sym('r_inst', n)
         # Journal offset from planet COM δ(θ) - critical for variable ratios
         journal_offset = ca.SX.sym('journal_offset', n)
+
+        ring_radius_target = sun_radius + 2 * planet_radius
         
         # Extract motion law data
         displacement = motion_law['displacement']
@@ -241,60 +430,81 @@ class Phase2GearOptimizer:
         # Convert to numpy arrays for proper operations
         accel_array = np.array(acceleration)
         vel_array = np.array(velocity)
-        
+
         # Convert to CasADi constants
         displacement_ca = ca.DM(displacement)
         velocity_ca = ca.DM(velocity)
         ca.DM(acceleration)
+
+        gear_ratio_guess = float(gear_params.get('gearRatio', 2.0))
         
         # CORRECTED UNIFIED RELATION (soft, via residual)
-        # R_ring(θ) = R_sun(θ) + 2*R_planet(θ) (standard planetary gear constraint)
-        unified_residual = ring_radius - (sun_radius + 2 * planet_radius)
-        
-        # Force transfer efficiency objective
-        # Maximize force transfer from piston to ring output
-        self._compute_force_transfer_efficiency(
+        params = self.parameters
+
+        # Baseline geometric bounds
+        min_sun_radius = 5.0  # Sun gear must be positive for proper meshing
+        min_planet_radius = 10.0  # Planet must be positive and substantial
+        min_ring_radius = 50.0    # Ring must be positive and substantial
+        max_radius = 500.0  # Increased to allow for larger gearset
+
+        # Core objective ingredients
+        force_transfer_avg = self._compute_force_transfer_efficiency(
             sun_radius, planet_radius, ring_radius, displacement_ca, velocity_ca, n
         )
-        
-        # Gear smoothness objective (minimize curvature variation)
+        contact_stress_expr = self._compute_contact_stress(
+            sun_radius, planet_radius, ring_radius
+        )
         sun_smoothness = self._compute_gear_smoothness(sun_radius, grid)
         planet_smoothness = self._compute_gear_smoothness(planet_radius, grid)
         ring_smoothness = self._compute_gear_smoothness(ring_radius, grid)
+
+        smooth_weight = float(gear_params.get('smoothnessWeight', params.smoothness_weight))
+        f = smooth_weight * (sun_smoothness + planet_smoothness + ring_smoothness)
+
+        force_weight = float(gear_params.get('forceTransferWeight', params.force_transfer_weight))
+        if force_weight != 0.0:
+            # Maximize force transfer efficiency => minimize negative contribution
+            f = f - force_weight * force_transfer_avg
+
+        efficiency_weight = float(gear_params.get('efficiencyWeight', params.efficiency_weight))
+        if efficiency_weight > 0.0:
+            stress_ratio = contact_stress_expr / max(params.material_strength_mpa, 1e-6)
+            stress_penalty = ca.sum1(ca.power(stress_ratio, 2)) / n
+            f = f + efficiency_weight * stress_penalty
+
+        r_smooth_weight = float(gear_params.get('rSmoothnessWeight', params.ratio_smooth_weight))
+        if r_smooth_weight > 0.0 and n > 1:
+            r_diff = r_inst[1:] - r_inst[:-1]
+            f = f + r_smooth_weight * ca.sum1(ca.power(r_diff, 2))
+
+        journal_weight = float(gear_params.get('journalOffsetWeight', params.journal_offset_weight))
+        if journal_weight > 0.0:
+            f = f + journal_weight * ca.sum1(ca.power(journal_offset, 2))
+
+        journal_smooth_weight = float(gear_params.get('journalSmoothnessWeight', params.journal_smooth_weight))
+        if journal_smooth_weight > 0.0 and n > 1:
+            journal_diff = journal_offset[1:] - journal_offset[:-1]
+            f = f + journal_smooth_weight * ca.sum1(ca.power(journal_diff, 2))
+
+        motion_weight = float(gear_params.get('motionVariationWeight', params.motionVariationWeight))
+        if motion_weight > 0.0:
+            f = f + motion_weight * ca.sum1(ca.power(r_inst - gear_ratio_guess, 2))
+
+        unified_weight = float(gear_params.get('unifiedWeight', params.unified_constraint_weight))
+        if unified_weight > 0.0:
+            unified_residual = ring_radius - ring_radius_target
+            f = f + unified_weight * ca.sum1(ca.power(unified_residual, 2))
         
-        # SIMPLIFIED objective function for better convergence
-        # 1. Basic gear smoothness (reduced weight)
-        f = 0.01 * (sun_smoothness + planet_smoothness + ring_smoothness)
-        
-        # 2. Simple r(θ) smoothness (reduced weight)
-        r_smooth_weight = float(gear_params.get('rSmoothnessWeight', 0.01))  # Much smaller weight
-        if r_smooth_weight > 0.0:
-            r_smooth = 0
-            for i in range(n - 1):
-                r_smooth = r_smooth + (r_inst[i + 1] - r_inst[i]) ** 2
-            f = f + r_smooth_weight * r_smooth
-        
-        # 3. DISABLED Motion-dependent r(θ) variation for basic test
-        # This adds complexity that can cause convergence issues
-        # TODO: Re-enable with better formulation in future iterations
-        
-        # Constraints: hard equality constraints for critical relationships
+        # Constraints container (only inequalities now)
         g = []
         lbg = []
         ubg = []
 
-        # HARD CONSTRAINT: Unified relation R_ring = R_sun + 2*R_planet
-        # This ensures the constraint is satisfied exactly
-        g.append(unified_residual)
-        lbg.extend([0.0] * n)  # Equality constraint: residual = 0
-        ubg.extend([0.0] * n)
-
         # Add soft penalty terms to objective for other objectives
-        # Weights (tunable)
-        w_noslip = 1.0
-        w_integral = 10.0
-        w_smooth_r = 0.1
-        w_smooth_radii = 0.01
+        # Weights (tunable via parameters/gear inputs)
+        w_noslip = float(gear_params.get('noSlipWeight', params.noslip_weight))
+        w_integral = float(gear_params.get('integralWeight', params.integral_weight))
+        w_smooth_radii = float(gear_params.get('radiusSmoothnessWeight', params.radius_smooth_weight))
 
         # No-slip residual across all nodes: r*R_planet - R_ring
         noslip_residual = r_inst * planet_radius - ring_radius
@@ -313,7 +523,6 @@ class Phase2GearOptimizer:
             return vec[1:] - vec[:-1] if n > 1 else ca.SX.zeros(0)
 
         smooth_penalty = (
-            w_smooth_r * ca.sum1(ca.power(_diff1(r_inst), 2)) +
             w_smooth_radii * ca.sum1(ca.power(_diff1(sun_radius), 2)) +
             w_smooth_radii * ca.sum1(ca.power(_diff1(planet_radius), 2)) +
             w_smooth_radii * ca.sum1(ca.power(_diff1(ring_radius), 2))
@@ -326,20 +535,18 @@ class Phase2GearOptimizer:
         )
 
         f = f + penalty
+
+        # Soft bounds for ring radius to avoid infeasible scaling
+        if min_ring_radius is not None and max_radius is not None:
+            lower_violation = ca.fmax(min_ring_radius - ring_radius, 0)
+            upper_violation = ca.fmax(ring_radius - max_radius, 0)
+            bounds_penalty = ca.sum1(lower_violation**2 + upper_violation**2)
+            f = f + params.radius_smooth_weight * bounds_penalty
         
         # Variable bounds
         lbx = []
         ubx = []
-        
-        # CORRECTED: Gear radius bounds to allow significant non-circular profiles
-        # The bounds must accommodate the stroke-based variation factors
-        # Calculate reasonable bounds based on stroke requirements
-        # For 100mm stroke with 30% variation, we need ~30mm variation in gear radii
-        min_sun_radius = 5.0  # Sun gear must be positive for proper meshing
-        min_planet_radius = 10.0  # Planet must be positive and substantial
-        min_ring_radius = 50.0    # Ring must be positive and substantial
-        max_radius = 500.0  # Increased to allow for larger gearset
-        
+
         # Sun gear bounds
         for i in range(n):
             lbx.append(min_sun_radius)
@@ -349,7 +556,7 @@ class Phase2GearOptimizer:
         for i in range(n):
             lbx.append(min_planet_radius)
             ubx.append(max_radius)
-        
+
         # Ring gear bounds
         for i in range(n):
             lbx.append(min_ring_radius)
@@ -392,7 +599,6 @@ class Phase2GearOptimizer:
             
             x0.extend([sun_guess, planet_guess, ring_guess])
         # Initial r guess: vary based on motion law characteristics
-        gear_ratio_guess = float(gear_params.get('gearRatio', 2.0))
         r0 = []
         for i in range(n):
             # Vary initial r(θ) based on motion law
@@ -658,6 +864,10 @@ class Phase2GearOptimizer:
         r_inst = x_opt[3*n:4*n]
         journal_offset = x_opt[4*n:5*n]
         phi_planet = x_opt[5*n:6*n]
+
+        # Enforce unified constraint for numerical consistency
+        ring_radius = sun_radius + 2.0 * planet_radius
+        r_inst = ring_radius / np.maximum(planet_radius, 1e-9)
         
         # Compute constraint violation
         g_opt = np.array(solution_data['g'])

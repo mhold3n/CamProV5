@@ -4,11 +4,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.campro.v5.models.ConvergenceStatus
 import com.campro.v5.models.OptimizationParameters
 import com.campro.v5.models.OptimizationResult
 import com.campro.v5.optimization.OptimizationState
@@ -380,31 +383,98 @@ private fun OptimizationStatus(optimizationState: OptimizationState) {
 
 @Composable
 private fun OptimizationResultsVisualization(result: OptimizationResult, modifier: Modifier = Modifier) {
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTabIndex by rememberSaveable(result.status) { mutableStateOf(0) }
 
-    val tabs = listOf(
-        "Motion Law",
-        "Gear Profiles",
-        "Efficiency",
-        "FEA Analysis",
-        "Advanced",
-    )
+    val tabItems = remember(result) {
+        listOf(
+            ResultTab("Motion Law") {
+                MotionLawVisualization(
+                    motionLaw = result.motionLaw,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            },
+            ResultTab("Gear Profiles") {
+                GearProfileVisualization(
+                    gearProfiles = result.optimalProfiles,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            },
+            ResultTab("Efficiency") {
+                EfficiencyAnalysisVisualization(
+                    gearProfiles = result.optimalProfiles,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            },
+            ResultTab("FEA Analysis") {
+                FEAAnalysisVisualization(
+                    feaAnalysis = result.feaAnalysis,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            },
+            ResultTab("Advanced") {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "Advanced Features Panel (Temporarily Disabled)",
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            },
+        )
+    }
+
+    LaunchedEffect(tabItems.size) {
+        if (selectedTabIndex >= tabItems.size) {
+            selectedTabIndex = 0
+        }
+    }
 
     Column(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        // Results header - fixed height
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-            ),
-            modifier = Modifier.height(60.dp),
+        ResultSummaryHeader(result)
+
+        ResultTabRow(
+            tabs = tabItems,
+            selectedIndex = selectedTabIndex,
+            onTabSelected = { selectedTabIndex = it },
+        )
+
+        ResultTabContent(
+            tabs = tabItems,
+            selectedIndex = selectedTabIndex,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+private data class ResultTab(
+    val label: String,
+    val content: @Composable () -> Unit,
+)
+
+@Composable
+private fun ResultSummaryHeader(result: OptimizationResult, modifier: Modifier = Modifier) {
+    val convergence = result.convergence
+    val statusColor = if (result.isSuccess()) Color(0xFF4CAF50) else Color(0xFFF44336)
+
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        ),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(12.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -415,7 +485,7 @@ private fun OptimizationResultsVisualization(result: OptimizationResult, modifie
                     Icon(
                         imageVector = if (result.isSuccess()) Icons.Default.CheckCircle else Icons.Default.Error,
                         contentDescription = null,
-                        tint = if (result.isSuccess()) Color(0xFF4CAF50) else Color(0xFFF44336),
+                        tint = statusColor,
                     )
                     Text(
                         text = "Optimization Results",
@@ -430,64 +500,102 @@ private fun OptimizationResultsVisualization(result: OptimizationResult, modifie
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
             }
-        }
 
-        // Tab row - fixed height to prevent squishing
-        TabRow(
-            selectedTabIndex = selectedTab,
-            modifier = Modifier.height(48.dp),
-        ) {
-            tabs.forEachIndexed { index, tab ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    modifier = Modifier.height(48.dp),
-                    text = {
-                        Text(
-                            text = tab,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    },
+            result.getErrorMessage()?.let { errorMessage ->
+                Text(
+                    text = errorMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
                 )
             }
-        }
 
-        // Tab content - takes remaining space
-        Card(
-            modifier = Modifier.weight(1f),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                when (selectedTab) {
-                    0 -> MotionLawVisualization(
-                        motionLaw = result.motionLaw,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    1 -> GearProfileVisualization(
-                        gearProfiles = result.optimalProfiles,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    2 -> EfficiencyAnalysisVisualization(
-                        gearProfiles = result.optimalProfiles,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    3 -> FEAAnalysisVisualization(
-                        feaAnalysis = result.feaAnalysis,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    4 -> Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = "Advanced Features Panel (Temporarily Disabled)",
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    }
-                }
-            }
+            convergence?.let { DiagnosticsMetricsRow(it) }
         }
     }
 }
+
+@Composable
+private fun ResultTabRow(
+    tabs: List<ResultTab>,
+    selectedIndex: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ScrollableTabRow(
+        selectedTabIndex = selectedIndex,
+        modifier = modifier.height(48.dp),
+        edgePadding = 0.dp,
+    ) {
+        tabs.forEachIndexed { index, tab ->
+            Tab(
+                selected = selectedIndex == index,
+                onClick = { onTabSelected(index) },
+                modifier = Modifier.height(48.dp),
+                text = {
+                    Text(
+                        text = tab.label,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ResultTabContent(
+    tabs: List<ResultTab>,
+    selectedIndex: Int,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            tabs.getOrNull(selectedIndex)?.content?.invoke()
+        }
+    }
+}
+
+@Composable
+private fun DiagnosticsMetricsRow(convergence: ConvergenceStatus, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        MetricChip(
+            label = "Converged",
+            value = if (convergence.converged) "Yes" else "No",
+            tint = if (convergence.converged) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+        )
+        convergence.kktError?.let { MetricChip(label = "KKT", value = it.asDisplayString()) }
+        convergence.constraintTotalViolation?.let { MetricChip(label = "Constraints", value = it.asDisplayString()) }
+        convergence.iterations?.let { MetricChip(label = "Iterations", value = it.toString()) }
+        convergence.solverSuccess?.let { MetricChip(label = "Solver", value = if (it) "Success" else "Fallback") }
+    }
+}
+
+@Composable
+private fun MetricChip(label: String, value: String, tint: Color = MaterialTheme.colorScheme.secondary) {
+    Surface(
+        color = tint.copy(alpha = 0.15f),
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        shape = MaterialTheme.shapes.small,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+    ) {
+        Text(
+            text = "$label: $value",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+        )
+    }
+}
+
+private fun Double.asDisplayString(): String =
+    when {
+        kotlin.math.abs(this) >= 1.0 -> String.format("%.2f", this)
+        else -> String.format("%.2e", this)
+    }

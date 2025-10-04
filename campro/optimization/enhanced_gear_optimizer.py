@@ -197,15 +197,13 @@ class EnhancedGearOptimizer:
         """Create collocation grid for gear profile optimization."""
         self.logger.info("Creating gear profile collocation grid")
         
-        # Use the same grid as motion law for consistency but normalise units
-        theta_percent = degrees_to_percent(theta_grid)
-        gear_grid = percent_to_radians(theta_percent)
+        theta_array = np.asarray(theta_grid, dtype=float)
+        if theta_array.size and np.max(np.abs(theta_array)) <= (2 * np.pi + 1e-6):
+            theta_array = np.degrees(theta_array)
 
-        ring_rotation_percent = resolve_cycle_percent(
-            gear_params, 'ringRotation', default_percent=degrees_to_percent(180.0)
-        )
-        scale_factor = (2 * np.pi) / percent_to_radians(ring_rotation_percent)
-        gear_grid = gear_grid * scale_factor
+        # Use the same grid as motion law for consistency but normalise units
+        theta_percent = degrees_to_percent(theta_array)
+        gear_grid = percent_to_radians(theta_percent)
 
         self.logger.info(f"Gear collocation grid created with {len(gear_grid)} points")
         return gear_grid
