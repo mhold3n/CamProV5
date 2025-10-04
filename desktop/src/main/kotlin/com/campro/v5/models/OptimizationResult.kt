@@ -91,6 +91,8 @@ data class GearProfileData(
     val accumulatedPlanetAngleDeg: Double = 0.0,
     // Discrete efficiency values for each angle
     val forceTransferEfficiency: DoubleArray = doubleArrayOf(),
+    val powerTransferEfficiency: DoubleArray = doubleArrayOf(),
+    val thermalEfficiency: DoubleArray = doubleArrayOf(),
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

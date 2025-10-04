@@ -80,6 +80,7 @@ class UnifiedOptimizationBridge {
     private fun validateParameters(parameters: OptimizationParameters) {
         require(parameters.samplingStepDeg > 0) { "Sampling step must be positive" }
         require(parameters.strokeLengthMm > 0) { "Stroke length must be positive" }
+        require(parameters.pistonDiameterMm > 0) { "Piston diameter must be positive" }
         require(parameters.gearRatio > 0) { "Gear ratio must be positive" }
         require(parameters.rpm > 0) { "RPM must be positive" }
         require(parameters.planetCount > 0) { "Planet count must be positive" }
@@ -97,6 +98,8 @@ class UnifiedOptimizationBridge {
         "ringRotationDeg" to parameters.ringRotationDeg,
         "gearRatio" to parameters.gearRatio,
         "strokeLengthMm" to parameters.strokeLengthMm,
+        "pistonDiameterMm" to parameters.pistonDiameterMm,
+        "pistonAreaMm2" to parameters.pistonAreaMm2(),
         "rodLength" to parameters.rodLength,
         "journalRadius" to parameters.journalRadius,
         "interferenceBuffer" to parameters.interferenceBuffer,
@@ -167,15 +170,35 @@ class UnifiedOptimizationBridge {
                     .directory(File(System.getProperty("user.dir")))
                     .start()
 
-                val success = process.waitFor(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                val completed = process.waitFor(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                val exitCode = if (completed) process.exitValue() else -1
+                val stdout = process.inputStream.bufferedReader().use { it.readText() }
+                val stderr = process.errorStream.bufferedReader().use { it.readText() }
+                val outputExists = outputFile.toFile().exists()
 
-                if (success && process.exitValue() == 0) {
+                if (completed && exitCode == 0) {
                     logger.info("Python pipeline completed successfully")
                     return true
+                }
+
+                if (!completed) {
+                    process.destroyForcibly()
+                    logger.warn("Python pipeline timed out (attempt ${retryCount + 1})")
+                    lastException = RuntimeException("Pipeline timed out")
                 } else {
-                    val errorOutput = process.errorStream.bufferedReader().readText()
-                    logger.warn("Python pipeline failed (attempt ${retryCount + 1}): $errorOutput")
-                    lastException = RuntimeException("Pipeline failed: $errorOutput")
+                    logger.warn("Python pipeline exited with code $exitCode (attempt ${retryCount + 1})")
+                    if (stdout.isNotBlank()) {
+                        logger.debug("Python stdout: $stdout")
+                    }
+                    if (stderr.isNotBlank()) {
+                        logger.debug("Python stderr: $stderr")
+                    }
+                    lastException = RuntimeException("Pipeline exited with code $exitCode")
+                }
+
+                if (outputExists) {
+                    logger.info("Python pipeline produced output file despite non-zero exit code; attempting to parse results")
+                    return true
                 }
             } catch (e: Exception) {
                 logger.warn("Python pipeline exception (attempt ${retryCount + 1}): ${e.message}")
@@ -240,11 +263,22 @@ class UnifiedOptimizationBridge {
             return list.mapNotNull { (it as? Number)?.toDouble() }.toDoubleArray()
         }
 
+        fun DoubleArray.applyScale(scale: Double): DoubleArray {
+            if (isEmpty() || scale == 1.0) return this
+            return DoubleArray(size) { this[it] * scale }
+        }
+
+        val lengthScale = 1_000.0 // Python pipeline provides meters; UI expects millimeters
+
+        val displacement = toDoubleArray("displacement").applyScale(lengthScale)
+        val velocity = toDoubleArray("velocity").applyScale(lengthScale)
+        val acceleration = toDoubleArray("acceleration").applyScale(lengthScale)
+
         return MotionLawData(
             thetaDeg = toDoubleArray("theta_deg"),
-            displacement = toDoubleArray("displacement"),
-            velocity = toDoubleArray("velocity"),
-            acceleration = toDoubleArray("acceleration"),
+            displacement = displacement,
+            velocity = velocity,
+            acceleration = acceleration,
         )
     }
 
@@ -275,6 +309,20 @@ class UnifiedOptimizationBridge {
         val accumulatedPlanetAngleDeg = (profilesData["accumulated_planet_angle_deg"] as? Number)?.toDouble() ?: 0.0
         // Discrete efficiency values for each angle
         val forceTransferEfficiency = toDoubleArray("force_transfer_efficiency")
+        val powerTransferEfficiency = toDoubleArray("power_transfer_efficiency")
+        val thermalEfficiency = toDoubleArray("thermal_efficiency_curve")
+
+        val powerEfficiencySamples = if (powerTransferEfficiency.isNotEmpty()) {
+            powerTransferEfficiency
+        } else {
+            forceTransferEfficiency
+        }
+
+        val forceEfficiencySamples = if (forceTransferEfficiency.isNotEmpty()) {
+            forceTransferEfficiency
+        } else {
+            powerEfficiencySamples
+        }
 
         return GearProfileData(
             rSun = rSun,
@@ -286,7 +334,9 @@ class UnifiedOptimizationBridge {
             instantaneousRatio = instantaneousRatio,
             journalOffset = journalOffset,
             accumulatedPlanetAngleDeg = accumulatedPlanetAngleDeg,
-            forceTransferEfficiency = forceTransferEfficiency,
+            forceTransferEfficiency = forceEfficiencySamples,
+            powerTransferEfficiency = powerEfficiencySamples,
+            thermalEfficiency = thermalEfficiency,
         )
     }
 

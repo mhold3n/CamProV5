@@ -87,6 +87,8 @@ class ResultAdapter:
             'accumulated_planet_angle_deg': accum_angle,
             'gear_clearance': ensure_numpy_array(enhanced_result.get('gear_clearance', [])),
             'force_transfer_efficiency': ensure_numpy_array(enhanced_result.get('force_transfer_efficiency', [])),
+            'power_transfer_efficiency': ensure_numpy_array(enhanced_result.get('power_transfer_efficiency', [])),
+            'thermal_efficiency_curve': ensure_numpy_array(enhanced_result.get('thermal_efficiency_curve', [])),
             'max_contact_stress': enhanced_result.get('max_contact_stress', 0.0),
             'objective_value': enhanced_result.get('objective_value', 0.0),
             'constraint_violation': enhanced_result.get('constraint_violation', 0.0),
@@ -94,6 +96,7 @@ class ResultAdapter:
             'execution_time': enhanced_result.get('execution_time', 0.0),
             'solver_status': enhanced_result.get('solver_status', 'Unknown'),
             'success': enhanced_result.get('success', False),
+            'efficiency': enhanced_result.get('efficiency', 0.0),
             'phi_planet_deg': phi_planet,
             # Add transmission data for advanced analysis
             'transmission_data': enhanced_result.get('transmission_data', {})
@@ -164,7 +167,8 @@ class ResultAdapter:
         """Ensure all array fields are numpy arrays."""
         array_fields = ['grid', 'theta_deg', 'displacement', 'velocity', 'acceleration', 
                        'r_sun', 'r_planet', 'r_ring_inner', 'instantaneous_ratio', 
-                       'journal_offset', 'gear_clearance', 'force_transfer_efficiency']
+                       'journal_offset', 'gear_clearance', 'force_transfer_efficiency',
+                       'power_transfer_efficiency', 'thermal_efficiency_curve']
         
         for field in array_fields:
             if field in result and isinstance(result[field], list):

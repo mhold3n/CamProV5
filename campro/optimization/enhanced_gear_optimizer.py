@@ -805,8 +805,47 @@ class EnhancedGearOptimizer:
         
         # Calculate additional required fields
         gear_clearance = np.abs(ring_radius - sun_radius - 2 * planet_radius)
-        force_transfer_efficiency = np.ones_like(sun_radius) * 0.85  # Default efficiency
-        max_contact_stress = 500.0  # Default stress in MPa
+
+        power_transfer_efficiency = np.array(
+            transmission_data.get('power_transfer_efficiency', []),
+            dtype=float
+        )
+        if power_transfer_efficiency.size != n:
+            # Fallback to analytic estimate when transmission data is unavailable
+            power_transfer_efficiency = self._compute_force_transfer_efficiency_numeric(
+                sun_radius,
+                planet_radius,
+                ring_radius,
+                motion_law,
+                r_inst
+            )
+        power_transfer_efficiency = np.clip(power_transfer_efficiency, 0.0, 1.0)
+
+        contact_stress_pa = np.array(
+            transmission_data.get('contact_stress_Pa', []),
+            dtype=float
+        )
+        if contact_stress_pa.size:
+            max_contact_stress = float(np.max(contact_stress_pa) / 1e6)
+        else:
+            max_contact_stress = float(
+                np.max(self._compute_contact_stress_numeric(sun_radius, planet_radius, ring_radius)) / 1e6
+            )
+
+        thermo_data = motion_law.get('thermodynamic_data', {})
+        thermal_efficiency_curve = np.array(
+            thermo_data.get('thermal_efficiency_curve', []),
+            dtype=float
+        )
+        if thermal_efficiency_curve.size and thermal_efficiency_curve.size != n:
+            # Interpolate/trim to match node count
+            thermal_efficiency_curve = np.interp(
+                np.linspace(0, 1, n),
+                np.linspace(0, 1, thermal_efficiency_curve.size),
+                thermal_efficiency_curve
+            )
+
+        average_efficiency = float(np.mean(power_transfer_efficiency)) if power_transfer_efficiency.size else 0.0
         
         # Create enhanced gear profiles
         gear_profiles = {
@@ -825,8 +864,11 @@ class EnhancedGearOptimizer:
             'theta_grid': grid.tolist(),
             'node_count': len(grid),
             'gear_clearance': gear_clearance.tolist(),
-            'force_transfer_efficiency': force_transfer_efficiency.tolist(),
+            'force_transfer_efficiency': power_transfer_efficiency.tolist(),
+            'power_transfer_efficiency': power_transfer_efficiency.tolist(),
             'max_contact_stress': max_contact_stress,
+            'efficiency': average_efficiency,
+            'thermal_efficiency_curve': thermal_efficiency_curve.tolist(),
             'transmission_data': transmission_data  # NEW
         }
         
@@ -845,16 +887,26 @@ class EnhancedGearOptimizer:
         displacement = np.array(motion_law['displacement'])
         velocity = np.array(motion_law['velocity'])
         acceleration = np.array(motion_law['acceleration'])  # noqa: F841
-        
-        # Calculate kinematic coupling
+        thermo_data = motion_law.get('thermodynamic_data', {})
+
+        # Kinematics: angular velocity derived from instantaneous ratio
         angular_velocity = r_inst * velocity
-        
-        # Calculate piston force (simplified)
-        piston_force = np.full_like(displacement, 1000.0)  # Simplified constant force
-        
-        # Calculate output torque
-        output_torque = piston_force * displacement * r_inst
-        
+
+        # Determine piston force from thermodynamic profile when available
+        piston_force = np.array(thermo_data.get('piston_force_N', []), dtype=float)
+        if piston_force.size != displacement.size:
+            pressure_trace = np.array(thermo_data.get('pressure_Pa', []), dtype=float)
+            if pressure_trace.size == displacement.size:
+                piston_area = float(thermo_data.get('piston_area_m2', self.params.piston_area_mm2 * 1e-6))
+                piston_force = pressure_trace * piston_area
+            else:
+                # Fallback: approximate from UI parameters (bar → Pa)
+                piston_area = self.params.piston_area_mm2 * 1e-6
+                piston_force = np.full_like(displacement, self.params.cylinder_pressure_bar * 1e5 * piston_area)
+
+        # Calculate output torque about the ring gear outer diameter
+        output_torque = piston_force * ring_radius
+
         # Calculate contact force and stress
         contact_force = (sun_radius + planet_radius) * 1000.0  # Simplified
         contact_radius = (sun_radius + planet_radius) / 2.0
@@ -864,11 +916,18 @@ class EnhancedGearOptimizer:
         efficiency = self.transmission_efficiency.calculate_transmission_efficiency(
             contact_stress, velocity, angular_velocity
         )
-        
+
+        # Apply efficiency degradation to torque for delivered power estimate
+        delivered_torque = output_torque * efficiency
+
+        # Calculate power terms at discrete samples
+        input_power = piston_force * velocity
+        output_power = delivered_torque * angular_velocity
+
         # Calculate friction power loss
         friction_force = contact_force * 0.1  # Simplified friction coefficient
         friction_power_loss = friction_force * np.abs(velocity)
-        
+
         # Calculate fatigue safety factor
         safety_factor = self.contact_mechanics.calculate_fatigue_safety_factor(contact_stress)
         
@@ -882,12 +941,19 @@ class EnhancedGearOptimizer:
             }
         )
         
+        # Power transfer efficiency measured at ring gear outer diameter
+        denominator = np.maximum(np.abs(input_power), 1e-6)
+        power_transfer_efficiency = np.clip(np.abs(output_power) / denominator, 0.0, 1.0)
+
         return {
             'angular_velocity_rad_s': angular_velocity.tolist(),
             'piston_force_N': piston_force.tolist(),
-            'output_torque_Nm': output_torque.tolist(),
+            'output_torque_Nm': delivered_torque.tolist(),
             'contact_force_N': contact_force.tolist(),
             'contact_stress_Pa': contact_stress.tolist(),
+            'input_power_W': input_power.tolist(),
+            'output_power_W': output_power.tolist(),
+            'power_transfer_efficiency': power_transfer_efficiency.tolist(),
             'transmission_efficiency': efficiency.tolist(),
             'friction_power_loss_W': friction_power_loss.tolist(),
             'fatigue_safety_factor': safety_factor.tolist(),

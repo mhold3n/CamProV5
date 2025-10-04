@@ -1,5 +1,7 @@
 package com.campro.v5.models
 
+import kotlin.math.PI
+
 /**
  * Optimization parameters for the unified optimization pipeline.
  *
@@ -15,6 +17,7 @@ data class OptimizationParameters(
     // Gear design parameters
     val gearRatio: Double = 2.0,
     val strokeLengthMm: Double = 10.0,
+    val pistonDiameterMm: Double = 70.0,
     val rodLength: Double = 80.0,
     val journalRadius: Double = 5.0,
     val interferenceBuffer: Double = 0.5,
@@ -105,6 +108,10 @@ data class OptimizationParameters(
             errors.add("Gear ratio must be between 0 and 10")
         }
 
+        if (pistonDiameterMm <= 0 || pistonDiameterMm > 200) {
+            errors.add("Piston diameter must be between 0 and 200 mm")
+        }
+
         if (rpm <= 0 || rpm > 20000) {
             errors.add("RPM must be between 0 and 20000")
         }
@@ -149,6 +156,7 @@ data class OptimizationParameters(
         gearRatio: Double = this.gearRatio,
         strokeLengthMm: Double = this.strokeLengthMm,
         rodLength: Double = this.rodLength,
+        pistonDiameterMm: Double = this.pistonDiameterMm,
         journalRadius: Double = this.journalRadius,
         interferenceBuffer: Double = this.interferenceBuffer,
         ringThickness: Double = this.ringThickness,
@@ -186,6 +194,7 @@ data class OptimizationParameters(
         gearRatio = gearRatio,
         strokeLengthMm = strokeLengthMm,
         rodLength = rodLength,
+        pistonDiameterMm = pistonDiameterMm,
         journalRadius = journalRadius,
         interferenceBuffer = interferenceBuffer,
         ringThickness = ringThickness,
@@ -254,4 +263,6 @@ data class OptimizationParameters(
             ringThickness = 3.0,
         )
     }
+
+    fun pistonAreaMm2(): Double = PI * pistonDiameterMm * pistonDiameterMm / 4.0
 }

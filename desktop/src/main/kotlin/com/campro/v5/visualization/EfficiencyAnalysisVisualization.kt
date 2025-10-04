@@ -207,6 +207,13 @@ private fun EfficiencyBreakdown(gearProfiles: GearProfileData) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
+            val powerEfficiency = if (gearProfiles.powerTransferEfficiency.isNotEmpty()) {
+                gearProfiles.powerTransferEfficiency
+            } else {
+                gearProfiles.forceTransferEfficiency
+            }
+            val thermalEfficiency = gearProfiles.thermalEfficiency
+
             // Efficiency metrics
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -219,10 +226,9 @@ private fun EfficiencyBreakdown(gearProfiles: GearProfileData) {
                 )
 
                 EfficiencyMetric(
-                    label = "Avg Efficiency",
-                    value = if (gearProfiles.forceTransferEfficiency.isNotEmpty()) {
-                        val avgEfficiency = gearProfiles.forceTransferEfficiency.average()
-                        String.format("%.2f%%", avgEfficiency * 100)
+                    label = "Avg Power Transfer",
+                    value = if (powerEfficiency.isNotEmpty()) {
+                        String.format("%.2f%%", powerEfficiency.average() * 100)
                     } else {
                         "N/A"
                     },
@@ -230,11 +236,10 @@ private fun EfficiencyBreakdown(gearProfiles: GearProfileData) {
                 )
 
                 EfficiencyMetric(
-                    label = "Efficiency Range",
-                    value = if (gearProfiles.forceTransferEfficiency.isNotEmpty()) {
-                        val minEff = gearProfiles.forceTransferEfficiency.minOrNull() ?: 0.0
-                        val maxEff = gearProfiles.forceTransferEfficiency.maxOrNull() ?: 0.0
-                        String.format("%.1f-%.1f%%", minEff * 100, maxEff * 100)
+                    label = "Thermal Eff (final)",
+                    value = if (thermalEfficiency.isNotEmpty()) {
+                        val finalEff = thermalEfficiency.lastOrNull() ?: 0.0
+                        String.format("%.1f%%", finalEff * 100)
                     } else {
                         "N/A"
                     },
@@ -242,10 +247,19 @@ private fun EfficiencyBreakdown(gearProfiles: GearProfileData) {
                 )
             }
 
-            // Discrete efficiency chart
-            if (gearProfiles.forceTransferEfficiency.isNotEmpty()) {
+            if (powerEfficiency.isNotEmpty()) {
                 DiscreteEfficiencyChart(
-                    efficiencyData = gearProfiles.forceTransferEfficiency,
+                    title = "Power Transfer Efficiency",
+                    efficiencyData = powerEfficiency,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                )
+            }
+
+            if (thermalEfficiency.isNotEmpty()) {
+                ThermalEfficiencyChart(
+                    efficiencyData = thermalEfficiency,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp)
@@ -279,6 +293,7 @@ private fun EfficiencyMetric(label: String, value: String, color: Color) {
 
 @Composable
 private fun DiscreteEfficiencyChart(
+    title: String,
     efficiencyData: DoubleArray,
     modifier: Modifier = Modifier
 ) {
@@ -293,7 +308,7 @@ private fun DiscreteEfficiencyChart(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "Efficiency vs. Angle",
+                text = title,
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -363,6 +378,99 @@ private fun DiscreteEfficiencyChart(
                 )
                 Text(
                     text = "Avg: ${String.format("%.3f%%", efficiencyData.average() * 100)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThermalEfficiencyChart(
+    efficiencyData: DoubleArray,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        ),
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = "Thermal Efficiency vs. Angle",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = MaterialTheme.shapes.small,
+                    )
+                    .padding(8.dp)
+            ) {
+                Canvas(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    val canvasWidth = size.width
+                    val canvasHeight = size.height
+                    val maxEfficiency = efficiencyData.maxOrNull() ?: 1.0
+                    val minEfficiency = efficiencyData.minOrNull() ?: 0.0
+                    val efficiencyRange = maxEfficiency - minEfficiency
+
+                    if (efficiencyData.size > 1) {
+                        val stepX = canvasWidth / (efficiencyData.size - 1)
+                        var lastPoint: Offset? = null
+
+                        efficiencyData.forEachIndexed { index, efficiency ->
+                            val normalized = if (efficiencyRange > 0) {
+                                (efficiency - minEfficiency) / efficiencyRange
+                            } else {
+                                0.5
+                            }
+
+                            val x = stepX * index
+                            val y = canvasHeight - (normalized * canvasHeight).toFloat()
+                            val currentPoint = Offset(x.toFloat(), y)
+
+                            lastPoint?.let { previous ->
+                                drawLine(
+                                    color = Color(0xFF03A9F4),
+                                    start = previous,
+                                    end = currentPoint,
+                                    strokeWidth = 4f
+                                )
+                            }
+                            lastPoint = currentPoint
+                        }
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "Start: ${String.format("%.2f%%", (efficiencyData.firstOrNull() ?: 0.0) * 100)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = "Avg: ${String.format("%.2f%%", efficiencyData.average() * 100)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = "End: ${String.format("%.2f%%", (efficiencyData.lastOrNull() ?: 0.0) * 100)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

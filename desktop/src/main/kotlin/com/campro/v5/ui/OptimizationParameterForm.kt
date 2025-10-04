@@ -241,6 +241,14 @@ private fun BasicParametersSection(
             )
         }
 
+        ParameterField(
+            label = "Piston Diameter",
+            value = parameters.pistonDiameterMm,
+            unit = "mm",
+            onValueChange = { onParametersChanged(parameters.copy(pistonDiameterMm = it)) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
         // Row 2: Gear ratio and RPM
         Row(
             modifier = Modifier.fillMaxWidth(),

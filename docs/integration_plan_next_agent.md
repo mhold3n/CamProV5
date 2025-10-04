@@ -291,7 +291,7 @@ class TestEnhancedPipelineIntegration:
         
         # Verify motion parameters
         assert motion_params.node_count == 16
-        assert motion_params.thermo_params.piston_area_m2 == 100.0 * 1e-6
+        assert motion_params.thermo_params.piston_area_m2 == math.pi * (70.0 ** 2) / 4.0 * 1e-6
         assert motion_params.thermo_params.gamma == 1.35
         
         # Verify gear parameters

@@ -859,7 +859,12 @@ class EnhancedMotionLawOptimizer:
 
         # Calculate thermodynamic data (NEW)
         theta_deg = np.degrees(grid)
-        thermo_data = self._calculate_thermodynamic_data(displacement, velocity_padded, acceleration_padded, theta_deg)
+        thermo_data = self._calculate_thermodynamic_data(
+            displacement,
+            velocity_padded,
+            acceleration_padded,
+            theta_deg
+        )
         
         # Create enhanced motion law
         motion_law = {
@@ -908,32 +913,55 @@ class EnhancedMotionLawOptimizer:
         """
         # Calculate volume: V(t) = V_c + A_p x(t)
         volume = self.thermo_calc.calculate_volume(displacement)
-        
+
         # Calculate pressure: pV^γ = const
         pressure = self.thermo_calc.calculate_pressure_polytropic(volume)
-        
+
         # Calculate temperature
         temperature = self.thermo_calc.calculate_temperature(pressure, volume)
-        
+
         # Calculate indicated work: W_id = ∮ p dV
         indicated_work = self.thermo_calc.calculate_indicated_work(pressure, volume)
-        
+
         # Calculate valve lift profiles
         valve_lift = self.valve_model.calculate_valve_lift_profiles(theta_deg)
-        
+
         # Calculate combustion heat release
         heat_release = self.combustion_model.calculate_combustion_heat_release(theta_deg)
-        
+
+        # Cumulative work profile for per-angle efficiency analysis
+        cumulative_work = np.zeros_like(volume)
+        if len(volume) > 1:
+            for i in range(1, len(volume)):
+                delta_volume = volume[i] - volume[i - 1]
+                avg_pressure = 0.5 * (pressure[i] + pressure[i - 1])
+                incremental_work = avg_pressure * delta_volume
+                cumulative_work[i] = cumulative_work[i - 1] + incremental_work
+
+        # Instantaneous piston force (for downstream power calculations)
+        piston_force = pressure * self.thermo_params.piston_area_m2
+
+        # Thermal efficiency curve referenced to cumulative heat release
+        heat_release_array = np.asarray(heat_release, dtype=float)
+        thermal_efficiency_curve = np.zeros_like(heat_release_array)
+        usable_heat = np.maximum(np.abs(heat_release_array), 1e-9)
+        thermal_efficiency_curve = np.clip(np.abs(cumulative_work) / usable_heat, 0.0, 1.2)
+        thermal_efficiency_curve[heat_release_array < 1e-6] = 0.0
+
         # Calculate thermodynamic objectives
         thermo_objectives = self.thermo_optimizer.calculate_thermodynamic_objectives(displacement, theta_deg)
-        
+
         return {
             'volume_m3': volume.tolist(),
             'pressure_Pa': pressure.tolist(),
             'temperature_K': temperature.tolist(),
             'indicated_work_J': indicated_work,
             'valve_lift_m': valve_lift,
-            'heat_release_J': heat_release.tolist(),
+            'heat_release_J': heat_release_array.tolist(),
+            'cumulative_work_J': cumulative_work.tolist(),
+            'thermal_efficiency_curve': thermal_efficiency_curve.tolist(),
+            'piston_force_N': piston_force.tolist(),
+            'piston_area_m2': self.thermo_params.piston_area_m2,
             'thermodynamic_objectives': thermo_objectives
         }
     
