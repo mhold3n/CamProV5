@@ -10,7 +10,7 @@ import java.util.Locale
 
 plugins {
     kotlin("jvm")
-    id("org.jetbrains.compose") version "1.5.11"
+    id("org.jetbrains.compose") version "1.9.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
     jacoco
@@ -137,23 +137,23 @@ dependencies {
     implementation(compose.runtime)
 
     // JSON
-    implementation("com.google.code.gson:gson:2.11.0")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
+    implementation("com.google.code.gson:gson:2.13.2")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.20.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.20.0")
 
     // Logging (quick wins)
-    implementation("org.slf4j:slf4j-api:2.0.13")
-    runtimeOnly("ch.qos.logback:logback-classic:1.5.9")
+    implementation("org.slf4j:slf4j-api:2.0.17")
+    runtimeOnly("ch.qos.logback:logback-classic:1.5.19")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.4")
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2")
 
     // Testing UI
     // testImplementation("androidx.compose.ui:ui-test-junit4:1.5.8")
     // testImplementation("androidx.compose.ui:ui-test-manifest:1.5.8")
-    testImplementation("io.mockk:mockk:1.13.8")
+    testImplementation("io.mockk:mockk:1.14.6")
 
     // Testing dependencies
     testImplementation(kotlin("test"))
