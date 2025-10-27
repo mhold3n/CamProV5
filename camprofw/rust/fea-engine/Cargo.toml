@@ -31,7 +31,7 @@ lazy_static = "1.4"
 
 [dev-dependencies]
 approx = "0.5"
-criterion = "0.5"
+criterion = "0.7"
 
 [lib]
 name = "fea_engine"
