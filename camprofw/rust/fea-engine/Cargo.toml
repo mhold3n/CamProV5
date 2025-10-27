@@ -20,7 +20,7 @@ description = "High-performance FEA engine for cam profile simulation"
 [dependencies]
 rayon = "1.7"
 serde_json = "1.0"
-toml = "0.7"
+toml = "0.9"
 nalgebra = "0.32"
 nalgebra-sparse = "0.9"
 thiserror = "1.0"
